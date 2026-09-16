@@ -63,5 +63,17 @@ Single-page React (Vite + Tailwind) app. Main content lives in `src/App.jsx`
   reaches the Diamond tier threshold). The Start-Up Zone (€9.5k/€16k) deliberately stays
   accessible and is not benchmarked against New York. The commercial master
   still carries the earlier set — update at the next master revision.
+- DECIDED (Stuart, 16 Sep 2026) reconciling Olivia's 2027 master product
+  list: Badge Sponsor back to €32,000 (the master's figure, reversing the
+  4 Sep move to €30,800); Media Lounge renamed Media Zone; Leadership
+  Branded Session to 6 slots and Stage 2 Branded Session to 4, per the
+  master's per-day allocations. Stage 3 Day 2 is the workshop track, so
+  the Stage 3 both-days exclusive is withdrawn and the per-day partner
+  and presenter become Day 1 exclusives. The Start-Up Zone is retired -
+  the expo floor absorbs it, New York never carried one and only
+  NEXTPredict 2026 ran it. Exhibition booths now split turnkey vs
+  space-only, space-only at 88% of the turnkey rate (6x8 €135k/€119k,
+  8x4 €110k/€97k, 6x4 €75k/€66k), each pair an either/or route - the
+  master priced both routes identically, which gave the build away free.
 - A small set of held items and unvalidated concepts is intentionally NOT in
   the brochure; the list lives in the commercial master, not in this repo.

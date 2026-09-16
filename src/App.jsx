@@ -297,7 +297,7 @@ const pricing = [
     quote: '"Every seat in the main conference room, both days. Chair branding puts your logo in every audience shot of the headline programme."',
     bullets: 'Branding on all seats in the main conference hall on both event days\nSummit-wide general branding\nWebsite, social and aftermovie visibility\n2 Full Event passes',
     impact: ['Brand Awareness'], type: ['Branding & Visibility'] },
-  { id: 15, cat: 'Leadership Stage', title: 'Leadership Stage Branded Session', price: 30000, exclusive: false, avail: 4,
+  { id: 15, cat: 'Leadership Stage', title: 'Leadership Stage Branded Session', price: 30000, exclusive: false, avail: 6,
     quote: '"A \'Powered by\' session on the main stage: 25-30 minutes of your expertise, with your C-level speaker, in front of the whole event."',
     bullets: '"Powered by" session, 25-30 minutes\n1 C-level sponsor speaker\nSession branding on agenda, website and screens\n1 Full Event pass + 1 Speaker pass\n📅 Two slots on Day 1 and two on Day 2, subject to programme.',
     impact: ['Thought Leadership'], type: ['Speaking & Content'] },
@@ -313,7 +313,7 @@ const pricing = [
     impact: ['Brand Awareness', 'Thought Leadership'], type: ['Speaking & Content', 'Branding & Visibility'] },
   { id: 18, cat: 'Stage 2 Hub', title: 'Stage 2 Partner (Per Day)', price: 65000, exclusive: false, avail: 2,
     quote: '"Own the second stage for a full day: backdrop, chair branding, a custom panel and a one-day hub presence built around your brand."',
-    bullets: 'Stage 2 backdrop branding around the two stage screens\nDelegate-chair branding\n1 Custom Panel session included\nFull one-day hub presence\nWebsite, social and aftermovie visibility\n3 Full Event passes + 1 Speaker pass\n📅 One Day 1 and one Day 2 partnership available.\n⚠️ Either/or route with the both-days exclusive - never sold together.',
+    bullets: 'Stage 2 backdrop branding around the two stage screens\nDelegate-chair branding\n1 Custom Panel session included\nFull one-day hub presence\nWebsite, social and aftermovie visibility\n3 Full Event passes + 1 Speaker pass\n📅 One partnership available. Stage 3 runs its panel programme on Day 1; Day 2 is the workshop track.',
     impact: ['Brand Awareness', 'Thought Leadership'], type: ['Speaking & Content', 'Branding & Visibility'] },
   { id: 19, cat: 'Stage 2 Hub', title: 'Stage 2 Presenter', price: 55000, exclusive: false, avail: 2,
     quote: '"A 20-minute C-level keynote on Stage 2, presented by your brand, with full production support."',
@@ -323,7 +323,7 @@ const pricing = [
     quote: '"Your C-level and a guest C-level in a moderated Stage 2 fireside, presented by your brand."',
     bullets: 'Sponsor C-level plus guest C-level participant\n25-30 minute moderated discussion or fireside format\n"Presented by" session title on agenda, website and screens\n1 Full Event pass + 2 Speaker passes\n📅 One slot per day, subject to content approval.',
     impact: ['Thought Leadership'], type: ['Speaking & Content'] },
-  { id: 21, cat: 'Stage 2 Hub', title: 'Stage 2 Branded Session', price: 25000, exclusive: false, avail: 2,
+  { id: 21, cat: 'Stage 2 Hub', title: 'Stage 2 Branded Session', price: 25000, exclusive: false, avail: 4,
     quote: '"A \'Powered by\' Stage 2 session: 25-30 minutes with your C-level speaker and your brand on the room."',
     bullets: '"Powered by" session, 25-30 minutes\n1 C-level sponsor speaker\nSession branding on agenda, website and screens\n1 Full Event pass + 1 Speaker pass\n📅 One slot per day, subject to programme.',
     impact: ['Thought Leadership'], type: ['Speaking & Content'] },
@@ -333,15 +333,11 @@ const pricing = [
     impact: ['Thought Leadership'], type: ['Speaking & Content'] },
 
   // Stage 3 Hub
-  { id: 23, cat: 'Stage 3 Hub', title: 'Stage 3 Partner (Both-Days Exclusive)', price: 60000, exclusive: true, avail: null,
-    quote: '"An event-long hub on the third stage: branding, chairs, a custom panel and two days of owned presence at the most accessible partner price on a stage."',
-    bullets: 'Event-long exclusive Stage 3 hub across both days\nBranding on stage returns and content-screen surrounds\nChair branding and branded holding slide\n1 Custom Panel session included\nFull two-day hub presence\nWebsite, social and aftermovie visibility\n2 Full Event passes + 1 Speaker pass\n⚠️ Either/or route with the two per-day Stage 3 partnerships - never sold together.',
-    impact: ['Brand Awareness', 'Thought Leadership'], type: ['Speaking & Content', 'Branding & Visibility'] },
-  { id: 24, cat: 'Stage 3 Hub', title: 'Stage 3 Partner (Per Day)', price: 33000, exclusive: false, avail: 2,
+  { id: 24, cat: 'Stage 3 Hub', title: 'Stage 3 Partner (Day 1)', price: 33000, exclusive: true, avail: null,
     quote: '"A full day of Stage 3 ownership: stage branding, chair branding, a holding slide, a custom panel and a one-day hub presence."',
-    bullets: 'Branding on stage returns and content-screen surrounds\nChair branding and branded holding slide\n1 Custom Panel session included\nFull one-day hub presence\nWebsite, social and aftermovie visibility\n2 Full Event passes + 1 Speaker pass\n📅 One Day 1 and one Day 2 partnership available.\n⚠️ Either/or route with the both-days exclusive - never sold together.',
+    bullets: 'Branding on stage returns and content-screen surrounds\nChair branding and branded holding slide\n1 Custom Panel session included\nFull one-day hub presence\nWebsite, social and aftermovie visibility\n2 Full Event passes + 1 Speaker pass\n📅 One partnership available. Stage 3 runs its panel programme on Day 1; Day 2 is the workshop track.',
     impact: ['Brand Awareness', 'Thought Leadership'], type: ['Speaking & Content', 'Branding & Visibility'] },
-  { id: 25, cat: 'Stage 3 Hub', title: 'Stage 3 Presenter', price: 30000, exclusive: false, avail: 2,
+  { id: 25, cat: 'Stage 3 Hub', title: 'Stage 3 Presenter', price: 30000, exclusive: true, avail: null,
     quote: '"A 20-minute C-level keynote on Stage 3, presented by your brand."',
     bullets: '20-minute C-level keynote\nFull AV and production support\n"Presented by" session title on agenda and website\n1 Full Event pass + 1 Speaker pass\n📅 One slot per day.',
     impact: ['Thought Leadership'], type: ['Speaking & Content'] },
@@ -349,7 +345,7 @@ const pricing = [
     quote: '"Your C-level and a guest C-level in a moderated Stage 3 conversation, presented by your brand."',
     bullets: 'Sponsor C-level plus guest C-level participant\n25-30 minute moderated discussion or fireside format\n"Presented by" session title on agenda, website and screens\n2 Speaker passes\n📅 Current availability is exclusive to Day 1.',
     impact: ['Thought Leadership'], type: ['Speaking & Content'] },
-  { id: 27, cat: 'Stage 3 Hub', title: 'Stage 3 Branded Session', price: 13500, exclusive: false, avail: 1,
+  { id: 27, cat: 'Stage 3 Hub', title: 'Stage 3 Branded Session', price: 13500, exclusive: false, avail: 2,
     quote: '"The entry point to branded stage time: a \'Powered by\' Stage 3 session with your C-level speaker."',
     bullets: '"Powered by" session, 25-30 minutes\n1 C-level sponsor speaker\nSession branding on agenda, website and screens\n1 Speaker pass\n📅 Current availability is exclusive to Day 1.',
     impact: ['Thought Leadership'], type: ['Speaking & Content'] },
@@ -369,34 +365,26 @@ const pricing = [
     impact: ['Deal Flow', 'Lead Generation'], type: ['Networking & Hospitality'] },
 
   // Exhibition & Start-Up Zone
-  { id: 31, cat: 'Exhibition & Start-Up Zone', title: 'Exhibition Stand 6x8, Gallery Showcase', price: 135000, exclusive: true, avail: null,
+  { id: 31, cat: 'Exhibition', title: 'Exhibition Stand 6x8, Gallery Showcase, Turnkey', price: 135000, exclusive: true, avail: null,
     quote: '"The largest showcase position on the floor: a 6x8 gallery landmark for a brand that wants to anchor the exhibition."',
-    bullets: 'Premium 6x8 landmark position in the gallery\nBuild route or space-only route, agreed at contract\nWebsite and floorplan listing\nSignage and furniture/power package on the build route\nLead-capture eligibility, subject to registration and data setup\nIndividual pre-event welcome post on social media\nLogo on the partners section of the website\nLogo within the event guide\nMention in the post-event aftermovie\n4 Full Event passes\n📅 One position available.',
+    bullets: 'Premium 6x8 landmark position in the gallery\nTurnkey route: NEXT.io designs, builds, breaks down and cleans the stand\nWebsite and floorplan listing\nSignage, furniture and power package included\nLead-capture eligibility, subject to registration and data setup\nIndividual pre-event welcome post on social media\nLogo on the partners section of the website\nLogo within the event guide\nMention in the post-event aftermovie\n4 Full Event passes\n📅 One position available.\n⚠️ Either/or route with the space-only option for the same booth - never sold together.',
     impact: ['Lead Generation', 'Brand Awareness'], type: ['Exhibition'] },
-  { id: 32, cat: 'Exhibition & Start-Up Zone', title: 'Exhibition Stand 8x4, Planner Area Showcase', price: 110000, exclusive: true, avail: null,
+  { id: 32, cat: 'Exhibition', title: 'Exhibition Stand 8x4, Planner Area Showcase, Turnkey', price: 110000, exclusive: true, avail: null,
     quote: '"An 8x4 showcase in the planner area - a landmark footprint where delegates plan their day and the traffic concentrates."',
-    bullets: 'Premium 8x4 position in the delegate planning zone\n⚠️ Quantities and positions reflect the reference venue layout - final spec confirmed when the venue is announced\nBuild route or space-only route, agreed at contract\nWebsite and floorplan listing\nSignage and furniture/power package on the build route\nLead-capture eligibility, subject to registration and data setup\nIndividual pre-event welcome post on social media\nLogo on the partners section of the website\nLogo within the event guide\nMention in the post-event aftermovie\n4 Full Event passes\n📅 One position available.',
+    bullets: 'Premium 8x4 position in the delegate planning zone\n⚠️ Quantities and positions reflect the reference venue layout - final spec confirmed when the venue is announced\nTurnkey route: NEXT.io designs, builds, breaks down and cleans the stand\nWebsite and floorplan listing\nSignage, furniture and power package included\nLead-capture eligibility, subject to registration and data setup\nIndividual pre-event welcome post on social media\nLogo on the partners section of the website\nLogo within the event guide\nMention in the post-event aftermovie\n4 Full Event passes\n📅 One position available.\n⚠️ Either/or route with the space-only option for the same booth - never sold together.',
     impact: ['Lead Generation', 'Brand Awareness'], type: ['Exhibition'] },
-  { id: 33, cat: 'Exhibition & Start-Up Zone', title: 'Exhibition Stand 6x4, Premium Gallery Position', price: 75000, exclusive: true, avail: null,
+  { id: 33, cat: 'Exhibition', title: 'Exhibition Stand 6x4, Premium Gallery Position, Turnkey', price: 75000, exclusive: true, avail: null,
     quote: '"A top-position 6x4 physical showcase with premium gallery visibility."',
-    bullets: 'Premium 6x4 gallery position with top visibility\nTurnkey format: furniture and power package included\nWebsite and floorplan listing\nAgreed signage package\nLead-capture eligibility, subject to registration and data setup\nIndividual pre-event welcome post on social media\nLogo on the partners section of the website\nLogo within the event guide\nMention in the post-event aftermovie\n4 Full Event passes\n📅 One position available.',
+    bullets: 'Premium 6x4 gallery position with top visibility\nTurnkey route: NEXT.io designs, builds, breaks down and cleans the stand, with furniture and power included\nWebsite and floorplan listing\nAgreed signage package\nLead-capture eligibility, subject to registration and data setup\nIndividual pre-event welcome post on social media\nLogo on the partners section of the website\nLogo within the event guide\nMention in the post-event aftermovie\n4 Full Event passes\n📅 One position available.\n⚠️ Either/or route with the space-only option for the same booth - never sold together.',
     impact: ['Lead Generation', 'Brand Awareness'], type: ['Exhibition'] },
-  { id: 57, cat: 'Exhibition & Start-Up Zone', title: 'Exhibition Stand 6x2, Turnkey', price: 60000, exclusive: false, avail: 6,
+  { id: 57, cat: 'Exhibition', title: 'Exhibition Stand 6x2, Turnkey', price: 60000, exclusive: false, avail: 6,
     quote: '"A double-width turnkey footprint on the cluster floor - room for a working team and a meeting corner without a landmark build."',
-    bullets: 'Branded 6x2 physical footprint, formed from two adjacent 3x2 positions\nTurnkey format: standard furniture and power package included\nAdditional meeting space and clearer floor presence than a single cluster unit\nWebsite and floorplan listing\nAgreed signage package\nLead-capture eligibility, subject to registration and data setup\nLogo on the partners section of the website\nLogo within the event guide\nMention in the post-event aftermovie\n3 Full Event passes\n📅 Up to six positions, drawn from the twelve-position cluster pool.',
+    bullets: 'Branded 6x2 physical footprint, formed from two adjacent 3x2 cluster positions - it is not separate stock\nTurnkey format: standard furniture and power package included\nAdditional meeting space and clearer floor presence than a single cluster unit\nWebsite and floorplan listing\nAgreed signage package\nLead-capture eligibility, subject to registration and data setup\nLogo on the partners section of the website\nLogo within the event guide\nMention in the post-event aftermovie\n3 Full Event passes\n📅 Limited: every 6x2 built removes two 3x2 positions from the twelve-position cluster pool, so a maximum of six can be built.',
     impact: ['Lead Generation', 'Brand Awareness'], type: ['Exhibition'] },
-  { id: 34, cat: 'Exhibition & Start-Up Zone', title: 'Exhibition Stand 3x2, Turnkey', price: 33000, exclusive: false, avail: 12,
+  { id: 34, cat: 'Exhibition', title: 'Exhibition Stand 3x2, Turnkey', price: 33000, exclusive: false, avail: 12,
     quote: '"The core exhibition product: a turnkey 3x2 branded footprint on the floor where the market does its walking."',
     bullets: 'Branded 3x2 physical footprint\nTurnkey format: standard furniture and power package included\nWebsite and floorplan listing\nAgreed signage package\nLead-capture eligibility, subject to registration and data setup\nLogo on the partners section of the website\nLogo within the event guide\nMention in the post-event aftermovie\n2 Full Event passes\n📅 Twelve positions available. For a double-width footprint, see the 6x2 Turnkey stand.',
     impact: ['Lead Generation', 'Brand Awareness'], type: ['Exhibition'] },
-  { id: 35, cat: 'Exhibition & Start-Up Zone', title: 'Start-Up Activation, Double Stand', price: 16000, exclusive: false, avail: 4,
-    quote: '"A double activation position in the shared start-up zone - room to demo, priced for builders."',
-    bullets: 'Double activation position in the shared start-up zone\nWebsite and floorplan listing\nAgreed signage package\nLead-capture eligibility, subject to registration and data setup\nLogo on the partners section of the website\nLogo within the event guide\nMention in the post-event aftermovie\n2 Full Event passes\n📅 Four positions available.',
-    impact: ['Lead Generation'], type: ['Exhibition'] },
-  { id: 36, cat: 'Exhibition & Start-Up Zone', title: 'Start-Up Activation, Single Stand', price: 9500, exclusive: false, avail: 8,
-    quote: '"The most accessible physical presence at the event: a single activation position in the shared start-up zone."',
-    bullets: 'Single activation position in the shared start-up zone\nWebsite and floorplan listing\nAgreed signage package\nLead-capture eligibility, subject to registration and data setup\nLogo on the partners section of the website\nLogo within the event guide\nMention in the post-event aftermovie\n1 Full Event pass\n📅 Eight positions available.',
-    impact: ['Lead Generation'], type: ['Exhibition'] },
 
   // Private Meeting Rooms
   { id: 37, cat: 'Private Meeting Rooms', title: 'Private Meeting Room, 12 Person', price: 62000, exclusive: true, avail: null,
@@ -439,7 +427,7 @@ const pricing = [
     quote: '"Reach the market that could not fly in. The livestream carries the event beyond the room - with your brand on every frame."',
     bullets: 'Logo on the event livestream\nBranded video in stream breaks\nPre-event and daily social promotion\nEmail promotion before the stream goes live\nSponsor-use livestream link for your own channels\nSummit-wide general branding\n4 Full Event passes',
     impact: ['Brand Awareness', 'Thought Leadership'], type: ['Media'] },
-  { id: 46, cat: 'Media & Content', title: 'Media Lounge Sponsor', price: 65000, exclusive: true, avail: null,
+  { id: 46, cat: 'Media & Content', title: 'Media Zone Sponsor', price: 65000, exclusive: true, avail: null,
     quote: '"The room where the interviews happen: media zone branding and a hosted content presence at the centre of event coverage."',
     bullets: 'Media zone branding across both event days\nWelcome-area and backdrop branding\nDedicated social promotion\nSummit-wide general branding\n3 Full Event passes\n⚠️ Interview formats and content slots are scoped with the NEXT.io media team at contract.',
     impact: ['Brand Awareness', 'Thought Leadership'], type: ['Media'] },
@@ -465,7 +453,7 @@ const pricing = [
     quote: '"Fifteen stair risers behind registration, plus an LCD video position - branding every delegate climbs past all day."',
     bullets: 'Branding across 15 stair risers behind registration\n⚠️ Quantities and positions reflect the reference venue layout - final spec confirmed when the venue is announced\nLCD video advertisement\nSummit-wide general branding\n2 Full Event passes',
     impact: ['Brand Awareness'], type: ['Branding & Visibility'] },
-  { id: 52, cat: 'Venue Branding', title: 'Badge Sponsor', price: 30800, exclusive: true, avail: null,
+  { id: 52, cat: 'Venue Branding', title: 'Badge Sponsor', price: 32000, exclusive: true, avail: null,
     quote: '"On every delegate, in every conversation, in every photo: your logo on all event badges."',
     bullets: 'Logo on all delegate badges\nSummit-wide general branding\nWebsite and shared social visibility\nCredited in the official aftermovie\n2 Full Event passes',
     impact: ['Brand Awareness'], type: ['Branding & Visibility'] },
@@ -485,6 +473,18 @@ const pricing = [
     quote: '"Delegates type your brand to get online: custom network name and password, plus badge visibility."',
     bullets: 'Logo on delegate badges in the Wi-Fi section\nCustom network name and password\nSummit-wide general branding\nWebsite, social and aftermovie visibility\n2 Full Event passes',
     impact: ['Brand Awareness'], type: ['Branding & Visibility'] },
+  { id: 58, cat: 'Exhibition', title: 'Exhibition Stand 6x8, Gallery Showcase, Space Only', price: 119000, exclusive: true, avail: null,
+    quote: '"The largest showcase position on the floor, space only: a 6x8 gallery landmark for a brand that wants to anchor the exhibition."',
+    bullets: 'Premium 6x8 landmark position in the gallery\nSpace-only route: the partner designs and builds the stand at their own cost\nWebsite and floorplan listing\nNEXT.io can introduce a stand-build supplier on request\nLead-capture eligibility, subject to registration and data setup\nIndividual pre-event welcome post on social media\nLogo on the partners section of the website\nLogo within the event guide\nMention in the post-event aftermovie\n4 Full Event passes\n📅 One position available.\n⚠️ Either/or route with the turnkey option for the same booth - never sold together.',
+    impact: ['Lead Generation', 'Brand Awareness'], type: ['Exhibition'] },
+  { id: 59, cat: 'Exhibition', title: 'Exhibition Stand 8x4, Planner Area Showcase, Space Only', price: 97000, exclusive: true, avail: null,
+    quote: '"An 8x4 showcase in the planner area - a landmark footprint where delegates plan their day and the traffic concentrates."',
+    bullets: 'Premium 8x4 position in the delegate planning zone\n⚠️ Quantities and positions reflect the reference venue layout - final spec confirmed when the venue is announced\nSpace-only route: the partner designs and builds the stand at their own cost\nWebsite and floorplan listing\nNEXT.io can introduce a stand-build supplier on request\nLead-capture eligibility, subject to registration and data setup\nIndividual pre-event welcome post on social media\nLogo on the partners section of the website\nLogo within the event guide\nMention in the post-event aftermovie\n4 Full Event passes\n📅 One position available.\n⚠️ Either/or route with the turnkey option for the same booth - never sold together.',
+    impact: ['Lead Generation', 'Brand Awareness'], type: ['Exhibition'] },
+  { id: 60, cat: 'Exhibition', title: 'Exhibition Stand 6x4, Premium Gallery Position, Space Only', price: 66000, exclusive: true, avail: null,
+    quote: '"A top-position 6x4 physical showcase with premium gallery visibility."',
+    bullets: 'Premium 6x4 gallery position with top visibility\nSpace-only route: the partner designs and builds the stand at their own cost\nWebsite and floorplan listing\nAgreed signage package\nLead-capture eligibility, subject to registration and data setup\nIndividual pre-event welcome post on social media\nLogo on the partners section of the website\nLogo within the event guide\nMention in the post-event aftermovie\n4 Full Event passes\n📅 One position available.\n⚠️ Either/or route with the turnkey option for the same booth - never sold together.',
+    impact: ['Lead Generation', 'Brand Awareness'], type: ['Exhibition'] },
 ]
 
 // ─── SALES DESK ─────────────────────────────────────────────────────────────
@@ -501,8 +501,10 @@ const CONFLICTS = {
   3: [6], 6: [3],    // Day 2 NEXTworking: exclusive vs non-exclusive
   4: [7], 7: [4],    // Pre-Registration Event: exclusive vs non-exclusive
   17: [18], 18: [17], // Stage 2: both-days exclusive vs per-day
-  23: [24], 24: [23], // Stage 3: both-days exclusive vs per-day
   42: [43], 43: [42], // Nourish Bars: all-three exclusive vs individual
+  31: [58], 58: [31], // Exhibition booth: turnkey vs space-only
+  32: [59], 59: [32], // Exhibition booth: turnkey vs space-only
+  33: [60], 60: [33], // Exhibition booth: turnkey vs space-only
 }
 
 const categories = [...new Set(pricing.map((p) => p.cat))]
