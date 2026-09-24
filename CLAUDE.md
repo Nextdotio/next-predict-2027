@@ -77,3 +77,47 @@ Single-page React (Vite + Tailwind) app. Main content lives in `src/App.jsx`
   master priced both routes identically, which gave the build away free.
 - A small set of held items and unvalidated concepts is intentionally NOT in
   the brochure; the list lives in the commercial master, not in this repo.
+
+## Navigation and card anatomy (23 Sep 2026)
+
+Stuart: "it's hard to find products when i have to scroll right down for them",
+and "beautify the brochures". The page is now products first.
+
+- **Section order:** hero → `ProductMenu` (#menu) → rate card (#pricing) →
+  recognition → about → the room (#audience) → tickets → rebooking. About and
+  The Room used to sit above the rate card and put the first product seven
+  phone screens down. The nav "Rate Card" link shows at every width.
+- **`ProductMenu`** lists every card with its entry price (`menuPrice`: "from"
+  the lowest open route, POA, or Sold / Reserved from `PRODUCT_STATUS`), every
+  family heading links to its group, and tickets link to their ladder rows
+  (`t-<slug>`). On phones each family is a row that opens its list.
+- **`FamilyBar`** is `position: sticky` inside #pricing, so it leaves with the
+  section; IntersectionObserver scroll-spy lights the family in view and a
+  phone keeps that chip scrolled into view.
+- **Anchors:** every card is `p-<slug of its title>` (`productId`), every family
+  the slug of its name (`catId`). A route card also carries `p-<slug>` of each
+  route's full product title, which opens the card on that route, so older
+  links keep working. `.jump-target` / `.jump-section` / `.jump-near`
+  (index.css) offset landings by `--nav-h` and `--bar-h`, which App measures
+  with a ResizeObserver - never hardcode them. First-load deep links are landed
+  after render. Jumps go through `onJump`, which clears a filter that hides the
+  target. Anchor ancestors use `.clip-box` (overflow: clip), not
+  `overflow-hidden`: a hidden ancestor is a scroll container and cut the scroll
+  margin (the first ticket row landed under the nav).
+- **Route cards (`ROUTE_CARDS`):** an exclusive/shared or turnkey/space-only pair
+  over the same inventory is one card with option tiles. The card title is the
+  part of the two product names they share; each tile is the rest of its name,
+  verbatim. Each route keeps its own price, deliverables, terms, status and
+  calculator line. Every pair must also be in `CONFLICTS`. The Nourish Bars
+  pair stays as two cards: their names share no stem.
+- **Terms:** `splitBullets` moves 📅 / ⚠️ lines into the always-visible
+  "Availability & terms" block (`TermsList`), word for word, with small icons -
+  never pills, never red. Deliverables collapse after four lines on a narrow
+  card (never to hide a single line) and show in full on a wide one. Both
+  PDFs mirror this; they also write NEXTPredict with no `text-transform`.
+- **Lede:** `quote` renders plain through `Lede` (no quote marks, no italics).
+- **No orphans:** `familySpans` / `spanClass` balance each family's grid (two up
+  from md, three up from xl); a card left alone on a row spans it and lays
+  itself out wide by container query (`@2xl` on the card).
+- **Type:** Inter via `--font-sans` in `src/index.css`. The Tailwind v3 name
+  `--font-family-sans` was ignored, so the page rendered the system font.

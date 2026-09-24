@@ -1,13 +1,16 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react'
 import {
   Mail, Calculator, Download, X, TrendingUp, CalendarDays, MapPin,
   CircleCheck, ChevronDown, ShieldCheck, Ticket, Layers, Users,
-  LineChart, Landmark, Scale, Cpu, Newspaper, Banknote, Trophy, Sparkles
+  LineChart, Landmark, Scale, Cpu, Newspaper, Banknote, Trophy, Sparkles,
+  Info, ArrowRight, ArrowUp, Crown, Martini, Mic, Presentation, MonitorPlay,
+  Handshake, Store, DoorClosed, Coffee, Video, Flag
 } from 'lucide-react'
 
 const base = import.meta.env.BASE_URL
 
 const fmtPrice = (n) => `€${n.toLocaleString('en-US')}`
+const fmtUsd = (n) => `$${n.toLocaleString('en-US')}`
 
 // ─── Partner Recognition Levels ────────────────────────────────────────────
 // Recognition is earned on TOTAL spend across all NEXTPredict 2027 products.
@@ -55,6 +58,37 @@ function buildMailto(cart, rebooking) {
   return `mailto:sales@next.io?subject=${subject}&body=${body}`
 }
 
+// ─── Printed outputs ────────────────────────────────────────────────────────
+// Both print windows mirror the page: deliverables as a list, then the 📅 / ⚠️
+// lines in a quiet "Availability & terms" block with small icons - never red or
+// yellow boxes - the lede set plain, and the brand written NEXTPredict (no
+// text-transform on anything that carries it). Inter is requested and print
+// waits for it, falling back to the system face offline.
+const PRINT_HEAD = `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">`
+const printOnLoad = (delay) => `<script>window.addEventListener('load',function(){var go=function(){setTimeout(function(){window.print()},${delay})};(document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(go,go)});<\/script>`
+const escHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+const ICON_CAL = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#a37d00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>'
+const ICON_INFO = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#8a8a8a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>'
+const PRINT_TERMS_CSS = `.incl{padding-left:18px;margin:0}.incl li{margin-bottom:2px}
+    .terms{margin-top:10px;padding-top:8px;border-top:1px solid #ececec}
+    .tlabel{font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#8a8a8a;margin-bottom:5px}
+    .terms ul{list-style:none;padding:0;margin:0}
+    .terms li{display:flex;gap:7px;align-items:flex-start;font-size:11px;color:#555;line-height:1.5;margin-bottom:3px}
+    .terms svg{flex:none;margin-top:3px}`
+function printDeliverables(bullets) {
+  const { items, terms } = splitBullets(bullets)
+  const lis = items.map((l) => `<li>${escHtml(l)}</li>`).join('')
+  const tls = terms.map((t) => `<li>${t.kind === 'avail' ? ICON_CAL : ICON_INFO}<span>${escHtml(t.text)}</span></li>`).join('')
+  return `${lis ? `<ul class="incl">${lis}</ul>` : ''}${tls ? `<div class="terms"><p class="tlabel">Availability &amp; terms</p><ul>${tls}</ul></div>` : ''}`
+}
+const openPrintWindow = (html) => {
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  window.open(url, '_blank')
+  setTimeout(() => URL.revokeObjectURL(url), 120000)
+}
+
 // ─── PDF proposal generator ─────────────────────────────────────────────────
 function downloadProposalPDF(cart, rebooking) {
   const total = cart.reduce((s, i) => s + (i.poa ? 0 : (rebooking ? Math.round(i.price * 0.85) : i.price)), 0)
@@ -64,18 +98,11 @@ function downloadProposalPDF(cart, rebooking) {
   const tierColor = tierColors[tier.name] || '#ffcf33'
   const rows = cart.map((item) => {
     const p = rebooking ? Math.round(item.price * 0.85) : item.price
-    const bulletItems = item.bullets
-      ? item.bullets.split('\n').map((b) => b.trim()).filter(Boolean)
-          .map((b) => `<li style="margin-bottom:3px">${b.replace(/^📅|^⚠️/, '').trim()}</li>`).join('')
-      : ''
-    const bulletsHtml = bulletItems
-      ? `<ul style="margin:8px 0 0 0;padding-left:18px;font-size:12px;color:#555;line-height:1.6;list-style:disc">${bulletItems}</ul>`
-      : ''
     return `<tr>
       <td style="padding:12px 16px;border-bottom:1px solid #e5e5e5;vertical-align:top">
-        <div style="font-weight:600">${item.title}</div>
-        <div style="font-size:12px;color:#888;margin-top:2px">${item.cat}</div>
-        ${bulletsHtml}
+        <div style="font-weight:700">${escHtml(item.title)}</div>
+        <div style="font-size:12px;color:#888;margin-top:2px">${escHtml(item.cat)}</div>
+        <div class="deliv">${printDeliverables(item.bullets)}</div>
       </td>
       <td style="padding:12px 16px;border-bottom:1px solid #e5e5e5;text-align:right;font-weight:700;vertical-align:top;white-space:nowrap">${item.poa ? 'POA' : '&#8364;' + p.toLocaleString('en-US')}</td>
     </tr>`
@@ -83,12 +110,13 @@ function downloadProposalPDF(cart, rebooking) {
   const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
   <title>NEXTPredict 2027 - Partnership Proposal</title>
-  <script>window.addEventListener('load',function(){setTimeout(function(){window.print()},500)});<\/script>
+  ${PRINT_HEAD}
+  ${printOnLoad(500)}
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1a1a1a;background:#fff}
+    body{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1a1a1a;background:#fff}
     .header{background:#242426;color:#fff;padding:48px 48px 40px}
-    .logo{font-size:26px;font-weight:900;text-transform:uppercase;letter-spacing:-0.5px;margin-bottom:6px}
+    .logo{font-size:26px;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px}
     .logo span{color:#ffcf33}
     .sub{color:#888888;font-size:13px;margin-top:4px}
     .body{padding:40px 48px}
@@ -102,12 +130,14 @@ function downloadProposalPDF(cart, rebooking) {
     thead tr{background:#f5f5f5}
     th{padding:10px 16px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#999}
     th:last-child{text-align:right}
+    .deliv{margin-top:8px;font-size:12px;color:#555;line-height:1.6}
+    ${PRINT_TERMS_CSS}
     .total td{background:#242426;color:#fff;padding:16px;font-weight:900;font-size:15px}
     .total td:last-child{text-align:right;color:#ffcf33;font-size:20px}
     .footer{padding:32px 48px;border-top:3px solid #ffcf33;margin-top:40px}
     .footer p{font-size:13px;color:#666;line-height:1.7}
     .footer strong{color:#1a1a1a}
-    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}tr{page-break-inside:avoid}}
   </style></head><body>
   <div class="header">
     <div class="logo">NEXT<span>Predict</span> 2027</div>
@@ -150,59 +180,76 @@ function downloadProposalPDF(cart, rebooking) {
     NEXTPredict 2027 &nbsp;&middot;&nbsp; October 2027 &nbsp;&middot;&nbsp; New York City &nbsp;&middot;&nbsp; Exact dates and venue to be announced</p>
   </div>
   </body></html>`
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  window.open(url, '_blank')
-  setTimeout(() => URL.revokeObjectURL(url), 120000)
+  openPrintWindow(html)
 }
 
 // ─── Full rate card PDF ─────────────────────────────────────────────────────
+// Printed card by card, in page order. A card with two routes prints its route
+// tiles, then each route's lede, deliverables and terms under its own heading.
 function downloadRateCardPDF() {
   const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-  const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  const cats = [...new Set(pricing.map((p) => p.cat))]
-  const body = cats.map((cat) => {
-    const items = pricing.filter((p) => p.cat === cat)
-    const rows = items.map((item) => {
-      const lines = item.bullets.split('\n')
-      const lis = lines.map((l) => {
-        if (l.startsWith('📅')) return `<li class="note">${esc(l.slice(2).trim())}</li>`
-        if (l.startsWith('⚠️')) return `<li class="warn">${esc(l.slice(2).trim())}</li>`
-        return `<li>${esc(l)}</li>`
-      }).join('')
-      const availLabel = item.status === 'sold' ? 'SOLD' : item.status === 'reserved' ? 'RESERVED'
-        : item.exclusive ? 'Exclusive' : item.avail ? `${item.avail} available` : ''
-      return `<div class="product">
-        <div class="phead"><div><h3>${esc(item.title)}</h3><span class="avail">${availLabel}</span></div>
-        <div class="price">${item.poa ? 'POA' : '&#8364;' + item.price.toLocaleString('en-US')}</div></div>
-        <p class="quote">${esc(item.quote.replace(/^"|"$/g, ''))}</p>
-        <ul>${lis}</ul>
+  const price = (p) => (p.poa ? 'POA' : '&#8364;' + p.price.toLocaleString('en-US'))
+  const avail = (p) => (p.status === 'sold' ? 'SOLD' : p.status === 'reserved' ? 'RESERVED'
+    : p.exclusive ? 'Exclusive' : p.avail ? `${p.avail} available` : '')
+  const lede = (p) => `<p class="lede">${escHtml(stripQuotes(p.quote))}</p>`
+  const body = CARDS.map(({ cat, cards }) => {
+    const rows = cards.map((card) => {
+      if (card.options.length === 1) {
+        const p = card.options[0]
+        const a = avail(p)
+        return `<div class="product">
+        <div class="phead"><div><h3>${escHtml(p.title)}</h3>${a ? `<span class="avail">${a}</span>` : ''}</div>
+        <div class="price">${price(p)}</div></div>
+        ${lede(p)}
+        ${printDeliverables(p.bullets)}
+      </div>`
+      }
+      // as on the page: a tile names its route and price, plus its count or status
+      const tileSub = (p) => (isOut(p) ? avail(p) : !p.exclusive && p.avail ? avail(p) : '')
+      const tiles = card.options.map((p) => `<div class="tile"><span class="tl">${escHtml(routeLabel(card, p))}</span><span class="tp">${price(p)}</span>${tileSub(p) ? `<span class="ta">${tileSub(p)}</span>` : ''}</div>`).join('')
+      const routes = card.options.map((p) => `<div class="route">
+          <div class="rhead"><h4>${escHtml(routeLabel(card, p))}</h4><span class="rprice">${price(p)}</span></div>
+          ${lede(p)}
+          ${printDeliverables(p.bullets)}
+        </div>`).join('')
+      return `<div class="product multi">
+        <div class="phead"><div><h3>${escHtml(card.title)}</h3></div></div>
+        <div class="tiles">${tiles}</div>
+        ${routes}
       </div>`
     }).join('')
-    return `<section><h2>${esc(cat)}</h2>${rows}</section>`
+    return `<section><h2>${escHtml(cat)}</h2>${rows}</section>`
   }).join('')
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
   <title>NEXTPredict 2027 - Partnership Rate Card</title>
-  <script>window.addEventListener('load',function(){setTimeout(function(){window.print()},600)});<\/script>
+  ${PRINT_HEAD}
+  ${printOnLoad(600)}
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1a1a1a;background:#fff;font-size:12px;line-height:1.5}
+    body{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1a1a1a;background:#fff;font-size:12px;line-height:1.5}
     .cover{background:#242426;color:#fff;padding:56px 48px}
-    .cover h1{font-size:30px;font-weight:900;text-transform:uppercase;letter-spacing:-0.5px}
+    .cover h1{font-size:30px;font-weight:900;letter-spacing:-0.5px}
     .cover h1 span{color:#ffcf33}
     .cover p{color:#888888;margin-top:8px;font-size:13px}
     section{padding:28px 48px 8px;page-break-before:auto}
     h2{font-size:18px;font-weight:900;text-transform:uppercase;border-bottom:3px solid #ffcf33;padding-bottom:6px;margin-bottom:16px;page-break-after:avoid}
     .product{border:1px solid #e5e5e5;border-radius:8px;padding:14px 16px;margin-bottom:14px;page-break-inside:avoid}
+    .product.multi{page-break-inside:auto}
     .phead{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
     .phead h3{font-size:14px;font-weight:800;display:inline}
-    .avail{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#996c00;background:#fff6da;border-radius:4px;padding:2px 8px;margin-left:8px;white-space:nowrap}
+    .avail{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#6b6b6b;border:1px solid #dcdcdc;border-radius:4px;padding:1px 7px;margin-left:8px;white-space:nowrap}
     .price{font-size:16px;font-weight:900;white-space:nowrap}
-    .quote{font-style:italic;color:#555;margin:6px 0 8px}
-    ul{padding-left:18px}
-    li{margin-bottom:2px}
-    li.note{list-style:none;margin-left:-18px;background:#fff8e1;border:1px solid #f2dd9a;border-radius:4px;padding:3px 8px;font-size:11px;margin-top:4px}
-    li.warn{list-style:none;margin-left:-18px;background:#fdecec;border:1px solid #f3b8b8;border-radius:4px;padding:3px 8px;font-size:11px;margin-top:4px}
+    .lede{color:#444;margin:6px 0 8px;padding-left:9px;border-left:2px solid #ffcf33}
+    .tiles{display:flex;gap:8px;margin:10px 0 4px}
+    .tile{flex:1;border:1px solid #e0e0e0;border-radius:6px;padding:7px 10px;display:flex;flex-direction:column;gap:2px}
+    .tile .tl{font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#555}
+    .tile .tp{font-size:14px;font-weight:900}
+    .tile .ta{font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#888}
+    .route{margin-top:12px;padding-top:10px;border-top:1px dashed #e0e0e0;page-break-inside:avoid}
+    .rhead{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+    .rhead h4{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#444}
+    .rprice{font-size:14px;font-weight:900;white-space:nowrap}
+    ${PRINT_TERMS_CSS}
     .foot{padding:24px 48px 40px;border-top:3px solid #ffcf33;margin-top:24px;color:#666;font-size:11px;line-height:1.7}
     @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
   </style></head><body>
@@ -215,28 +262,30 @@ function downloadRateCardPDF() {
   Exclusive and shared routes over the same physical inventory are alternatives, never sold together.<br>
   Contact: <strong>sales@next.io</strong> &nbsp;&middot;&nbsp; next.io</div>
   </body></html>`
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  window.open(url, '_blank')
-  setTimeout(() => URL.revokeObjectURL(url), 120000)
+  openPrintWindow(html)
 }
 
 // ─── Scroll animation hook ──────────────────────────────────────────────────
-function useScrollAnimation() {
+// Reveals [data-anim] blocks as they scroll in. `key` re-runs it when blocks
+// mount later (a filter bringing a family back): with a mount-only effect those
+// blocks were created at opacity 0 and never observed, so they stayed invisible.
+const anim = { opacity: 0, transform: 'translateY(20px)', transition: 'opacity .6s ease, transform .6s ease' }
+function useScrollAnimation(key) {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => entries.forEach((e) => {
         if (e.isIntersecting) {
           e.target.style.opacity = '1'
           e.target.style.transform = 'none'
+          e.target.dataset.shown = '1'
           observer.unobserve(e.target)
         }
       }),
       { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
     )
-    document.querySelectorAll('[data-anim]').forEach((el) => observer.observe(el))
+    document.querySelectorAll('[data-anim]:not([data-shown])').forEach((el) => observer.observe(el))
     return () => observer.disconnect()
-  }, [])
+  }, [key])
 }
 
 // ─── Pricing data ───────────────────────────────────────────────────────────
@@ -520,6 +569,116 @@ const ticketLadder = [
   { type: 'Operator & Regulator', eb: 650, std: 900, late: 1050, note: 'Verified operators and regulators. Verification required at checkout.' },
 ]
 
+// ─── Cards: one card per decision ───────────────────────────────────────────
+// Exclusive and shared routes over the same inventory are one decision, so each
+// pair sits on one card as option tiles rather than as two cards a family
+// apart. Every route stays its own product - price, deliverables, terms, status
+// and calculator line - and every pair here is also a CONFLICT. The card title
+// is the part of the two names the routes share; each tile carries the rest of
+// its own name, verbatim ("Exclusive Partner", "Space Only").
+const ROUTE_CARDS = [
+  { title: 'Day 1 NEXTworking', ids: [2, 5] },
+  { title: 'Day 2 NEXTworking', ids: [3, 6] },
+  { title: 'Pre-Registration Event', ids: [4, 7] },
+  { title: 'Stage 2 Partner', ids: [17, 18] },
+  { title: 'Exhibition Stand 6x8, Gallery Showcase', ids: [31, 58] },
+  { title: 'Exhibition Stand 8x4, Planner Area Showcase', ids: [32, 59] },
+  { title: 'Exhibition Stand 6x4, Premium Gallery Position', ids: [33, 60] },
+]
+const byId = Object.fromEntries(pricing.map((p) => [p.id, p]))
+// a renamed product that no longer starts with the card title keeps its full name on its tile
+const routeLabel = (card, p) => (p.title.startsWith(card.title)
+  ? p.title.slice(card.title.length).replace(/^,\s*/, '').replace(/^\s*\((.*)\)$/, '$1').trim()
+  : p.title)
+
+// families in rate-card order, each holding its cards in rate-card order
+const CARDS = categories.map((cat) => {
+  const cards = []
+  const done = new Set()
+  pricing.filter((p) => p.cat === cat).forEach((p) => {
+    const route = ROUTE_CARDS.find((r) => r.ids.includes(p.id) && r.ids.every((id) => byId[id]?.cat === cat))
+    if (!route) { cards.push({ key: String(p.id), title: p.title, cat, options: [p], featured: !!p.featured }); return }
+    if (done.has(route.title)) return
+    done.add(route.title)
+    const options = route.ids.map((id) => byId[id])
+    cards.push({ key: route.ids.join('-'), title: route.title, cat, options, featured: options.some((o) => o.featured) })
+  })
+  return { cat, cards }
+})
+const CARD_COUNT = CARDS.reduce((n, g) => n + g.cards.length, 0)
+
+// ─── Anchors ────────────────────────────────────────────────────────────────
+// Every card is `p-<slug of its title>`; a two-route card also carries an
+// anchor per route, `p-<slug of that product's full title>`, which opens the
+// card on that route. Families are the slug of the family name, tickets
+// `t-<slug>`. `.jump-target` / `.jump-section` (index.css) offset every landing
+// by the measured nav (and family bar) height.
+const slugify = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+const productId = (x) => `p-${slugify(x.title)}`
+const catId = (cat) => slugify(cat)
+const ticketId = (t) => `t-${slugify(t.type)}`
+
+const FAMILY_META = {
+  'Category Ownership': { short: 'Category Ownership', icon: Crown },
+  'NEXTworking Evening Events': { short: 'NEXTworking', icon: Martini },
+  'Leadership Stage': { short: 'Leadership Stage', icon: Mic },
+  'Stage 2 Hub': { short: 'Stage 2', icon: Presentation },
+  'Stage 3 Hub': { short: 'Stage 3', icon: MonitorPlay },
+  'Workshops & Curated Networking': { short: 'Workshops', icon: Handshake },
+  'Exhibition': { short: 'Exhibition', icon: Store },
+  'Private Meeting Rooms': { short: 'Meeting Rooms', icon: DoorClosed },
+  'Hospitality & Lounges': { short: 'Hospitality', icon: Coffee },
+  'Media & Content': { short: 'Media', icon: Video },
+  'Venue Branding': { short: 'Venue Branding', icon: Flag },
+}
+
+const isOut = (p) => p.status === 'sold' || p.status === 'reserved'
+const availLabel = (p) => (p.status === 'sold' ? 'Sold Out' : p.status === 'reserved' ? 'Reserved'
+  : p.exclusive ? 'Exclusive' : p.avail ? `${p.avail} Available` : null)
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+// The entry price a menu line quotes: the lowest open route ("from" when the
+// routes differ), POA, or Sold / Reserved once nothing on the card is open.
+function menuPrice(card) {
+  const open = card.options.filter((o) => !isOut(o))
+  if (!open.length) return { text: card.options.some((o) => o.status === 'reserved') ? 'Reserved' : 'Sold', out: true }
+  const priced = open.filter((o) => !o.poa)
+  if (!priced.length) return { text: 'POA' }
+  const low = Math.min(...priced.map((o) => o.price))
+  return { from: new Set(priced.map((o) => o.price)).size > 1, text: fmtPrice(low) }
+}
+function familyFrom(cards) {
+  const prices = cards.flatMap((c) => c.options.filter((o) => !isOut(o) && !o.poa).map((o) => o.price))
+  if (!prices.length) return null
+  return `${new Set(prices).size > 1 ? 'from ' : ''}${fmtPrice(Math.min(...prices))}`
+}
+
+// Balanced spans: two up from md, three up from xl (six tracks). A last row of
+// two splits the width and a last row of one takes all of it - the card then
+// lays itself out wide by container query - so no grid ends on an empty cell.
+function spanClass(i, n) {
+  let xl = 'xl:col-span-2'
+  if (n % 3 === 2 && i >= n - 2) xl = 'xl:col-span-3'
+  if (n % 3 === 1 && i === n - 1) xl = 'xl:col-span-6'
+  const md = n % 2 === 1 && i === n - 1 ? 'md:col-span-2' : 'md:col-span-1'
+  return `${md} ${xl}`
+}
+// spans for a family: featured cards take the full row; each run of regular
+// cards between them is balanced on its own
+function familySpans(cards) {
+  const spans = []
+  let i = 0
+  while (i < cards.length) {
+    if (cards[i].featured) { spans.push(''); i++; continue }
+    let j = i
+    while (j < cards.length && !cards[j].featured) j++
+    for (let k = i; k < j; k++) spans.push(spanClass(k - i, j - i))
+    i = j
+  }
+  return spans
+}
+
 // ─── Tier Progress bar ──────────────────────────────────────────────────────
 function TierProgress({ total, cart }) {
   const current = resolveTier(total, cart)
@@ -547,51 +706,167 @@ function TierProgress({ total, cart }) {
   )
 }
 
-// ─── Deliverables List (collapsible) ────────────────────────────────────────
-function DeliverablesList({ bullets, textClass = 'text-brand-white/90', spacing = 'space-y-3', collapsedCount = 5 }) {
+// ─── Deliverables and terms ─────────────────────────────────────────────────
+// A bullet string carries two kinds of line. Plain lines are what the partner
+// gets; they collapse after `collapsedCount`. Lines opening 📅 (availability)
+// or ⚠️ (a condition) are terms: they never collapse and sit together under
+// their own quiet heading, word for word - a buyer should not have to expand a
+// list to find a rule, and a rule should not shout like a warning either.
+function splitBullets(bullets) {
+  const items = []
+  const terms = []
+  bullets.split('\n').map((l) => l.trim()).filter(Boolean).forEach((line) => {
+    if (line.startsWith('📅')) terms.push({ kind: 'avail', text: line.slice(2).trim() })
+    else if (line.startsWith('⚠️')) terms.push({ kind: 'cond', text: line.slice(2).trim() })
+    else items.push(line)
+  })
+  return { items, terms }
+}
+
+function TermsList({ terms }) {
+  if (!terms.length) return null
+  return (
+    <div className="mt-5 pt-4 border-t border-brand-white/10">
+      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-gray mb-2.5">Availability &amp; terms</p>
+      <ul className="space-y-2">
+        {terms.map((t, i) => {
+          const Icon = t.kind === 'avail' ? CalendarDays : Info
+          return (
+            <li key={i} className="flex items-start gap-2.5 text-[12.5px] leading-relaxed text-brand-gray">
+              <Icon className={`w-3.5 h-3.5 shrink-0 mt-[3px] ${t.kind === 'avail' ? 'text-brand-yellow/75' : 'text-brand-gray/70'}`} aria-hidden />
+              <span>{t.text}</span>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
+// A card laid out wide (its container at @2xl) has the room, so it shows every
+// line and drops the toggle; the collapse is for narrow cards only.
+function DeliverablesList({ bullets, featured = false }) {
   const [expanded, setExpanded] = useState(false)
-  const lines = bullets.split('\n')
-  const visible = expanded ? lines : lines.slice(0, collapsedCount)
-  const hiddenCount = lines.length - collapsedCount
-
-  const renderLine = (line, i) => {
-    if (line.startsWith('📅')) return (
-      <li key={i} className="flex items-center gap-2 bg-brand-yellow/8 border border-brand-yellow/20 rounded-lg px-3 py-2 text-xs text-brand-yellow/90 font-medium">
-        <CalendarDays className="w-3.5 h-3.5 shrink-0 text-brand-yellow" aria-hidden />
-        <span>{line.slice(2).trim()}</span>
-      </li>
-    )
-    if (line.startsWith('⚠️')) return (
-      <li key={i} className="flex items-start gap-2 bg-red-500/8 border border-red-500/25 rounded-lg px-3 py-2 text-xs text-red-300/90 font-medium">
-        <span className="shrink-0 mt-0.5">⚠️</span>
-        <span>{line.slice(2).trim()}</span>
-      </li>
-    )
-    return (
-      <li key={i} className={`flex items-start text-sm ${textClass}`}>
-        <CircleCheck className="text-brand-yellow mr-3 shrink-0 mt-0.5 w-4 h-4" aria-hidden />
-        <span className="leading-relaxed">{line}</span>
-      </li>
-    )
-  }
-
+  const { items, terms } = splitBullets(bullets)
+  // collapse only when it hides at least two lines - "Show 1 more" is a wasted tap
+  const collapsedCount = items.length - (featured ? 10 : 4) >= 2 ? (featured ? 10 : 4) : items.length
+  const hiddenCount = items.length - collapsedCount
   return (
     <>
-      <ul className={spacing}>{visible.map(renderLine)}</ul>
+      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-gray mb-3">What&rsquo;s included</p>
+      <ul className={featured ? 'space-y-3' : 'space-y-2'}>
+        {items.map((line, i) => (
+          <li key={i} className={`items-start text-sm ${featured ? 'text-brand-white/90' : 'text-brand-white/80'} ${i < collapsedCount || expanded ? 'flex' : 'hidden @2xl:flex'}`}>
+            <CircleCheck className="text-brand-yellow mr-3 shrink-0 mt-0.5 w-4 h-4" aria-hidden />
+            <span className="leading-relaxed">{line}</span>
+          </li>
+        ))}
+      </ul>
       {hiddenCount > 0 && (
-        <button
-          onClick={() => setExpanded((v) => !v)}
-          className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-brand-yellow hover:text-brand-yellow/80 transition-colors"
-        >
+        <button type="button" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded}
+          className="@2xl:hidden mt-1.5 -ml-1 inline-flex items-center gap-1.5 min-h-10 px-1 text-xs font-bold uppercase tracking-wider text-brand-yellow hover:text-brand-yellow/80 transition-colors">
           {expanded ? 'Show less' : `Show ${hiddenCount} more`}
           <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} aria-hidden />
         </button>
       )}
+      <TermsList terms={terms} />
     </>
   )
 }
 
-// ─── Pricing cards ──────────────────────────────────────────────────────────
+// ─── Card pieces ────────────────────────────────────────────────────────────
+// Route tiles: a radio group (arrow keys move the choice, Tab leaves it). Each
+// tile shows its route, its price and its availability, so the buyer reads both
+// routes before choosing, not after.
+function OptionTiles({ card, sel, setSel, rebooking }) {
+  const opts = card.options
+  const pick = (e, j) => {
+    e.preventDefault()
+    setSel(opts[j].id)
+    e.currentTarget.querySelectorAll('[role="radio"]')[j]?.focus()
+  }
+  const onKey = (e) => {
+    const i = opts.findIndex((o) => o.id === sel)
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') pick(e, (i + 1) % opts.length)
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') pick(e, (i - 1 + opts.length) % opts.length)
+    else if (e.key === 'Home') pick(e, 0)
+    else if (e.key === 'End') pick(e, opts.length - 1)
+  }
+  return (
+    <div role="radiogroup" aria-label={`${card.title}: choose a route`} onKeyDown={onKey}
+      className="grid grid-cols-2 gap-2 mb-5">
+      {opts.map((o) => {
+        const on = o.id === sel
+        const a = availLabel(o)
+        const shown = o.status === 'sold' ? 'Sold' : o.status === 'reserved' ? 'Reserved'
+          : o.poa ? 'POA' : fmtPrice(rebooking ? Math.round(o.price * 0.85) : o.price)
+        return (
+          <button key={o.id} type="button" role="radio" aria-checked={on} tabIndex={on ? 0 : -1} data-title={o.title}
+            onClick={() => setSel(o.id)}
+            className={`flex flex-col items-start justify-between gap-2 rounded-xl border px-3.5 py-3 min-h-[4.75rem] text-left transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-yellow ${on
+              ? 'border-brand-yellow bg-brand-yellow/[0.12] shadow-[inset_0_0_0_1px_#ffcf33]'
+              : 'border-brand-white/12 bg-brand-white/[0.03] hover:border-brand-white/30 hover:bg-brand-white/[0.07]'}`}>
+            <span className={`text-[10.5px] font-black uppercase tracking-[0.1em] leading-tight ${on ? 'text-brand-yellow' : 'text-brand-white/80'}`}>{routeLabel(card, o)}</span>
+            <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span className={`text-[15px] font-black tabular-nums leading-none whitespace-nowrap ${on ? 'text-brand-white' : 'text-brand-gray'}`}>{shown}</span>
+              {!o.exclusive && o.avail && !isOut(o) && <span className="text-[9.5px] font-bold uppercase tracking-[0.12em] text-brand-gray/80 whitespace-nowrap">{a}</span>}
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function PriceBlock({ item, rebooking, featured }) {
+  const size = featured ? 'text-4xl md:text-5xl' : 'text-[1.75rem] leading-none'
+  if (item.poa) return <p className={`${size} font-black text-brand-yellow mb-5 leading-none`}>POA</p>
+  if (rebooking) return (
+    <div className="mb-5">
+      <p className={`${featured ? 'text-xl' : 'text-sm'} text-brand-gray/50 line-through tabular-nums`}>{fmtPrice(item.price)}</p>
+      <p className={`${size} font-black text-brand-yellow leading-none tabular-nums`}>{fmtPrice(Math.round(item.price * 0.85))}</p>
+      <p className="text-[11px] text-brand-yellow/70 font-semibold mt-1.5 uppercase tracking-wide">15% rebooking rate applied</p>
+    </div>
+  )
+  return <p className={`${size} font-black text-brand-yellow mb-5 leading-none tabular-nums`}>{fmtPrice(item.price)}</p>
+}
+
+// The product lede - the pitch in one breath. It is set plain, in the reading
+// colour, with the yellow rule as its only accent: in quote marks and italics
+// it read like a testimonial nobody gave.
+const stripQuotes = (s) => s.replace(/^["“]\s*/, '').replace(/\s*["”]$/, '')
+function Lede({ text, featured }) {
+  return (
+    <p className={`border-l-2 border-brand-yellow/60 pl-4 leading-relaxed text-brand-white/75 ${featured ? 'text-[15px] mb-6' : 'text-[13.5px] mb-5'}`}>
+      {stripQuotes(text)}
+    </p>
+  )
+}
+
+function CornerBadge({ item, featured }) {
+  const label = availLabel(item)
+  const pos = 'absolute top-0 right-0 z-20 text-[10px] font-black uppercase tracking-widest rounded-bl-xl'
+  if (featured && !isOut(item)) return <div className={`${pos} bg-brand-yellow text-brand-dark px-5 py-2 shadow-md`}>✦ {label || 'Featured'}</div>
+  if (!label) return null
+  const tone = item.status === 'sold' ? 'bg-brand-white/15 text-brand-white'
+    : item.status === 'reserved' ? 'bg-brand-yellow/15 text-brand-yellow'
+      : 'bg-brand-white/10 text-brand-gray'
+  return <div className={`${pos} px-4 py-1.5 ${tone}`}>{label}</div>
+}
+
+function TagRow({ item, featured, className = '' }) {
+  return (
+    <div className={`flex flex-wrap gap-1.5 ${className}`}>
+      {item.impact.map((t) => (
+        <span key={t} className={`px-2 py-1 rounded-md font-medium uppercase tracking-wider ${featured ? 'bg-brand-white/10 text-brand-white text-[10px]' : 'bg-brand-white/[0.07] text-brand-gray text-[9.5px]'}`}>{t}</span>
+      ))}
+      {featured && item.type.map((t) => (
+        <span key={t} className="px-2 py-1 bg-brand-yellow/20 text-brand-yellow text-[10px] uppercase tracking-wider rounded-md font-medium">{t}</span>
+      ))}
+    </div>
+  )
+}
+
 function cardCtaLabel(item, { atLimit, conflicted }) {
   if (item.status === 'sold') return 'Sold Out'
   if (item.status === 'reserved') return 'Reserved'
@@ -600,148 +875,332 @@ function cardCtaLabel(item, { atLimit, conflicted }) {
   return 'Add to Calculator'
 }
 
-function FeaturedPricingCard({ item, onAdd, rebooking, cartCount = 0, conflicted = false }) {
-  const discountedPrice = Math.round(item.price * 0.85)
+function AddButton({ item, count, conflicted, onAdd, featured }) {
   const max = item.exclusive ? 1 : (item.avail ?? Infinity)
-  const atLimit = cartCount >= max || item.status === 'sold' || item.status === 'reserved' || conflicted
+  const atLimit = count >= max || isOut(item) || conflicted
   return (
-    <div className="col-span-full relative overflow-hidden rounded-2xl border border-brand-yellow/40 bg-gradient-to-br from-brand-yellow/[0.18] via-brand-dark/95 to-brand-dark group hover:border-brand-yellow/70 transition-all duration-300 shadow-[0_0_60px_rgba(255,207,51,0.08)] hover:shadow-[0_0_80px_rgba(255,207,51,0.16)]">
-      <div className="absolute top-0 left-0 w-80 h-80 bg-brand-yellow/8 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-0 right-0 bg-brand-yellow text-brand-dark text-[10px] font-black uppercase tracking-widest px-5 py-2 rounded-bl-xl z-20 shadow-md">✦ {item.exclusive ? 'Exclusive' : 'Featured'}</div>
-      <div className="relative z-10 p-8 md:p-10 flex flex-col lg:flex-row gap-8 lg:gap-14">
-        <div className="lg:w-5/12">
-          <h4 className="text-3xl md:text-4xl font-black text-brand-white mb-5 leading-tight pr-4">{item.title}</h4>
-          {item.poa ? (
-            <p className="text-4xl md:text-5xl font-black text-brand-yellow mb-5 leading-none">POA</p>
-          ) : rebooking ? (
-            <div className="mb-5">
-              <p className="text-xl text-brand-gray/50 line-through">{fmtPrice(item.price)}</p>
-              <p className="text-4xl md:text-5xl font-black text-brand-yellow leading-none">{fmtPrice(discountedPrice)}</p>
-              <p className="text-xs text-brand-yellow/70 font-semibold mt-1.5 uppercase tracking-wide">15% rebooking rate applied</p>
-            </div>
-          ) : (
-            <p className="text-4xl md:text-5xl font-black text-brand-yellow mb-5 leading-none">{fmtPrice(item.price)}</p>
-          )}
-          <div className="mb-6 relative">
-            <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-brand-yellow/60 rounded-full" />
-            <p className="text-brand-gray/80 italic leading-relaxed text-sm pl-4">{item.quote.replace(/^"|"$/g, '')}</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {item.impact.map((t) => (
-              <span key={t} className="px-2 py-1 bg-brand-white/10 text-brand-white text-[10px] uppercase tracking-wider rounded-md font-medium">{t}</span>
-            ))}
-            {item.type.map((t) => (
-              <span key={t} className="px-2 py-1 bg-brand-yellow/20 text-brand-yellow text-[10px] uppercase tracking-wider rounded-md font-medium">{t}</span>
-            ))}
-          </div>
+    <button type="button" onClick={() => onAdd(item)} disabled={atLimit}
+      className={`w-full rounded-xl font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-300 ${featured ? 'py-4 text-sm' : 'py-3.5 text-xs'} ${atLimit
+        ? (featured ? 'bg-brand-yellow/25 text-brand-yellow cursor-not-allowed' : 'bg-brand-white/10 text-brand-gray cursor-not-allowed')
+        : (featured ? 'bg-brand-yellow text-brand-dark hover:brightness-110 shadow-[0_0_20px_rgba(255,207,51,0.3)]' : 'bg-brand-yellow/15 text-brand-yellow border border-brand-yellow/40 hover:bg-brand-yellow hover:text-brand-dark')}`}>
+      <Calculator className="w-4 h-4" aria-hidden />
+      {cardCtaLabel(item, { atLimit, conflicted })}
+    </button>
+  )
+}
+
+// ─── Product card ───────────────────────────────────────────────────────────
+// One component for every card. `featured` is the gold full-row treatment; a
+// regular card that ends up alone on its row (see `spanClass`) keeps the regular
+// look but, being wide, switches to the same two-column layout by container
+// query (`@2xl`), so it never reads as a stretched narrow card.
+function ProductCard({ card, span = '', rebooking, cartCounts, conflictedIds, onAdd }) {
+  const featured = card.featured
+  const multi = card.options.length > 1
+  // opens on the first route still open; a deep link to a route overrides it
+  const [sel, setSel] = useState(() => (card.options.find((o) => !isOut(o)) || card.options[0]).id)
+  // a deep link to one route (#p-<full product title>) opens the card on it
+  useEffect(() => {
+    if (!multi) return
+    const fromHash = () => {
+      const h = decodeURIComponent(window.location.hash.slice(1))
+      const hit = card.options.find((o) => productId(o) === h)
+      if (hit) setSel(hit.id)
+    }
+    fromHash()
+    window.addEventListener('hashchange', fromHash)
+    return () => window.removeEventListener('hashchange', fromHash)
+  }, [card, multi])
+  const item = card.options.find((o) => o.id === sel) || card.options[0]
+  const count = cartCounts[item.id] || 0
+  const conflicted = conflictedIds.has(item.id)
+  const allSold = card.options.every((o) => o.status === 'sold')
+  const shell = featured
+    ? `col-span-full border-brand-yellow/40 bg-gradient-to-br from-brand-yellow/[0.16] via-brand-dark/95 to-brand-dark shadow-[0_0_60px_rgba(255,207,51,0.08)] hover:border-brand-yellow/70 hover:shadow-[0_0_80px_rgba(255,207,51,0.16)] ${allSold ? 'opacity-60' : ''}`
+    : `${span} bg-brand-white/[0.04] ${allSold ? 'border-brand-white/5 opacity-60' : 'border-brand-white/10 hover:border-brand-yellow/40 hover:bg-brand-white/[0.07]'}`
+  return (
+    <article id={productId(card)} aria-labelledby={`${productId(card)}-title`}
+      className={`jump-target clip-box @container relative flex flex-col rounded-2xl border transition-colors duration-300 ${shell}`}>
+      {multi && card.options.map((o) => <span key={o.id} id={productId(o)} className="jump-target absolute top-0 left-0" aria-hidden="true" />)}
+      {featured && <div className="absolute top-0 left-0 w-80 h-80 bg-brand-yellow/8 rounded-full blur-3xl pointer-events-none" />}
+      <CornerBadge item={item} featured={featured} />
+      {/* narrow: the title starts under the corner badge and runs full width; wide: side by side */}
+      <div className={`relative z-10 flex-1 flex flex-col @2xl:flex-row @2xl:gap-12 ${featured
+        ? 'px-6 sm:px-8 md:px-10 pt-12 pb-6 sm:pb-8 md:pb-10 @2xl:pt-10'
+        : 'px-5 sm:px-7 pt-10 pb-5 sm:pb-7 @2xl:pt-7'}`}>
+        <div className="@2xl:w-5/12 flex flex-col">
+          <h4 id={`${productId(card)}-title`}
+            className={`font-black text-brand-white leading-tight ${featured ? 'text-[1.75rem] sm:text-3xl md:text-4xl mb-5 @2xl:pr-4' : 'text-xl @2xl:text-2xl mb-3.5'}`}>
+            {card.title}
+          </h4>
+          {multi && <OptionTiles card={card} sel={item.id} setSel={setSel} rebooking={rebooking} />}
+          <PriceBlock item={item} rebooking={rebooking} featured={featured} />
+          <Lede text={item.quote} featured={featured} />
+          <TagRow item={item} featured={featured} className="hidden @2xl:flex" />
         </div>
-        <div className="lg:w-7/12 flex flex-col">
+        <div className="@2xl:w-7/12 flex-1 flex flex-col">
           <div className="flex-1">
-            <DeliverablesList bullets={item.bullets} textClass="text-brand-white/90" spacing="space-y-3" />
+            <DeliverablesList key={item.id} bullets={item.bullets} featured={featured} />
           </div>
-          <div className="mt-8 pt-6 border-t border-brand-white/10">
-            <button
-              onClick={() => onAdd(item)}
-              disabled={atLimit}
-              className={`w-full py-4 rounded-xl font-black uppercase tracking-widest text-sm transition-all duration-300 flex items-center justify-center gap-2 ${atLimit ? 'bg-brand-yellow/30 text-brand-yellow cursor-not-allowed' : 'bg-brand-yellow text-brand-dark hover:brightness-110 shadow-[0_0_20px_rgba(255,207,51,0.3)]'}`}
-            >
-              <Calculator className="w-4 h-4" />
-              {cardCtaLabel(item, { atLimit, conflicted })}
-            </button>
+          <TagRow item={item} featured={featured} className="@2xl:hidden mt-5" />
+          <div className="mt-5 pt-5 border-t border-brand-white/10">
+            <AddButton item={item} count={count} conflicted={conflicted} onAdd={onAdd} featured={featured} />
           </div>
         </div>
       </div>
+    </article>
+  )
+}
+
+// ─── Section heading ────────────────────────────────────────────────────────
+// Every section opens the same way: a centred uppercase heading, white with a
+// yellow accent, and a grey lede under it.
+function SectionHead({ title, accent, sub, lede, children }) {
+  return (
+    <div className="text-center mb-12 md:mb-14" data-anim style={anim}>
+      <h2 className="text-[2rem] leading-[1.05] sm:text-4xl md:text-5xl font-black text-brand-white uppercase tracking-tight">
+        {title}{accent && <> <span className="text-brand-yellow whitespace-nowrap">{accent}</span></>}
+      </h2>
+      {sub && <h3 className="text-lg sm:text-2xl md:text-3xl font-bold text-brand-yellow uppercase mt-3 leading-tight">{sub}</h3>}
+      {lede && <p className="text-brand-gray text-base md:text-lg max-w-3xl mx-auto mt-5 leading-relaxed">{lede}</p>}
+      {children}
     </div>
   )
 }
 
-function PricingCard({ item, onAdd, rebooking, cartCount = 0, conflicted = false }) {
-  const discountedPrice = Math.round(item.price * 0.85)
-  const max = item.exclusive ? 1 : (item.avail ?? Infinity)
-  const atLimit = cartCount >= max || item.status === 'sold' || item.status === 'reserved' || conflicted
-  const availLabel = item.status === 'sold' ? 'Sold Out' : item.status === 'reserved' ? 'Reserved'
-    : item.exclusive ? 'Exclusive' : item.avail ? `${item.avail} Available` : null
+// ─── Navigation: the product menu and the family bar ───────────────────────
+// Stuart, 23 Sep 2026: "it's hard to find products when i have to scroll right
+// down for them". The page opens on a menu of every product and its entry
+// price, each line a link to its card; among the cards a slim bar keeps every
+// family one tap away. Clicks go through `onJump`, which brings back a card an
+// objective or format filter has hidden before it scrolls.
+function MenuLine({ href, onClick, title, price }) {
   return (
-    <div className={`relative flex flex-col rounded-2xl border bg-brand-white/5 transition-all duration-300 overflow-hidden ${item.status === 'sold' ? 'border-brand-white/5 opacity-50' : 'border-brand-white/10 hover:border-brand-yellow/50 hover:bg-brand-white/10 hover:shadow-[0_0_40px_rgba(255,207,51,0.08)]'}`}>
-      {availLabel && (
-        <div className={`absolute top-0 right-0 text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-bl-xl z-10 ${item.status === 'sold' ? 'bg-red-500/80 text-white' : item.status === 'reserved' ? 'bg-amber-500/90 text-brand-dark' : 'bg-brand-white/10 text-brand-gray'}`}>
-          {availLabel}
-        </div>
-      )}
-      <div className="p-6 md:p-7 flex flex-col flex-1">
-        <h4 className="text-xl font-black text-brand-white mb-3 leading-snug pr-20">{item.title}</h4>
-        {item.poa ? (
-          <p className="text-3xl font-black text-brand-yellow mb-4 leading-none">POA</p>
-        ) : rebooking ? (
-          <div className="mb-4">
-            <p className="text-sm text-brand-gray/50 line-through">{fmtPrice(item.price)}</p>
-            <p className="text-3xl font-black text-brand-yellow leading-none">{fmtPrice(discountedPrice)}</p>
+    <li>
+      <a href={href} onClick={onClick}
+        className="group/row flex items-end gap-2 pl-10 pr-3 md:px-0 min-h-11 md:min-h-0 py-2.5 md:py-[6px] text-[13.5px] leading-snug">
+        <span className="text-brand-white/85 group-hover/row:text-brand-yellow transition-colors">{title}</span>
+        <span className="flex-1 min-w-4 mb-[5px] border-b border-dotted border-brand-white/20 group-hover/row:border-brand-yellow/50 transition-colors" aria-hidden />
+        <span className={`shrink-0 whitespace-nowrap tabular-nums ${price.out ? 'text-[12px] font-bold uppercase tracking-wider text-brand-gray' : 'font-bold text-brand-white'}`}>
+          {price.from && <span className="mr-1 text-[11px] font-medium text-brand-gray">from</span>}{price.text}
+        </span>
+      </a>
+    </li>
+  )
+}
+
+function MenuBlock({ id, icon: Icon, label, from, open, onToggle, href, onJump, allLabel, className = '', children }) {
+  return (
+    <div className={`break-inside-avoid border-b border-brand-white/8 last:border-b-0 md:border-b-0 md:mb-7 ${className}`}>
+      {/* phone: the family is a row that opens its list */}
+      <button type="button" onClick={onToggle} aria-expanded={open} aria-controls={id}
+        className="md:hidden w-full flex items-center gap-3 px-3 min-h-[3.25rem] py-2 text-left">
+        <Icon className="w-4 h-4 text-brand-yellow shrink-0" aria-hidden />
+        <span className="flex-1 min-w-0 text-[14px] font-bold text-brand-white leading-snug">{label}</span>
+        <span className="text-[12px] text-brand-gray tabular-nums whitespace-nowrap">{from || 'POA'}</span>
+        <ChevronDown className={`w-4 h-4 text-brand-gray shrink-0 transition-transform duration-300 ${open ? 'rotate-180' : ''}`} aria-hidden />
+      </button>
+      {/* desktop: the family heading links to its group */}
+      <a href={href} onClick={(e) => onJump(e, href.slice(1))} className="group/fam hidden md:flex items-center gap-2.5 mb-2">
+        <span className="w-7 h-7 rounded-full bg-brand-yellow/15 text-brand-yellow flex items-center justify-center shrink-0"><Icon className="w-3.5 h-3.5" aria-hidden /></span>
+        <span className="text-[13.5px] font-black text-brand-white leading-tight group-hover/fam:text-brand-yellow transition-colors">{label}</span>
+        <ArrowRight className="w-3 h-3 text-brand-gray/60 group-hover/fam:text-brand-yellow transition-colors ml-auto shrink-0" aria-hidden />
+      </a>
+      <ul id={id} className={`${open ? 'block' : 'hidden'} md:block pb-2 md:pb-0`}>
+        {children}
+        <li className="md:hidden">
+          <a href={href} onClick={(e) => onJump(e, href.slice(1))}
+            className="flex items-center gap-1.5 pl-10 pr-3 min-h-11 text-[11px] font-black uppercase tracking-[0.14em] text-brand-yellow">
+            {allLabel} <ArrowRight className="w-3.5 h-3.5" aria-hidden />
+          </a>
+        </li>
+      </ul>
+    </div>
+  )
+}
+
+function ProductMenu({ onJump }) {
+  const [open, setOpen] = useState(null)
+  const toggle = (k) => setOpen((v) => (v === k ? null : k))
+  const ticketFrom = `from ${fmtUsd(Math.min(...ticketLadder.map((t) => t.eb)))}`
+  const ticketLines = ticketLadder.map((t) => (
+    <MenuLine key={t.type} href={`#${ticketId(t)}`} onClick={(e) => onJump(e, ticketId(t))} title={t.type} price={{ from: true, text: fmtUsd(t.eb) }} />
+  ))
+  return (
+    <section id="menu" aria-label="Rate card at a glance" className="jump-near relative bg-brand-dark pb-16 sm:pb-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8">
+        <div className="rounded-3xl border border-brand-white/12 bg-brand-white/[0.03] overflow-hidden shadow-[0_40px_90px_-30px_rgba(0,0,0,0.75)]">
+          <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4 px-5 sm:px-8 pt-6 sm:pt-7 pb-5 sm:pb-6 border-b border-brand-white/10">
+            <div className="min-w-0 max-w-2xl">
+              <p className="text-[11px] font-black uppercase tracking-[0.22em] text-brand-yellow mb-2">Rate card at a glance</p>
+              <p className="text-brand-white text-lg sm:text-2xl font-bold leading-snug">{CARD_COUNT} partnership products in {CARDS.length} families, plus delegate tickets</p>
+              <p className="text-brand-gray text-[12.5px] sm:text-sm mt-1.5">Partnership prices in EUR and exclude VAT · ticket prices in USD · pick any line to open it</p>
+            </div>
+            <button type="button" onClick={downloadRateCardPDF}
+              className="inline-flex items-center gap-2 min-h-10 px-5 rounded-full border border-brand-yellow/50 text-brand-yellow font-bold text-[11px] sm:text-xs uppercase tracking-widest hover:bg-brand-yellow/10 transition-colors whitespace-nowrap">
+              <Download className="w-4 h-4" aria-hidden /> Download Full Rate Card
+            </button>
           </div>
-        ) : (
-          <p className="text-3xl font-black text-brand-yellow mb-4 leading-none">{fmtPrice(item.price)}</p>
-        )}
-        <p className="text-brand-gray/80 italic text-xs leading-relaxed mb-4 border-l-2 border-brand-yellow/40 pl-3">{item.quote.replace(/^"|"$/g, '')}</p>
-        <div className="flex-1">
-          <DeliverablesList bullets={item.bullets} textClass="text-brand-white/80" spacing="space-y-2" collapsedCount={4} />
+          <div className="px-2 sm:px-5 md:px-8 py-2 md:pt-7 md:pb-0 md:columns-2 lg:columns-3 md:gap-8 xl:gap-12">
+            {CARDS.map(({ cat, cards }) => (
+              <MenuBlock key={cat} id={`menu-${catId(cat)}`} icon={FAMILY_META[cat]?.icon || Layers} label={cat}
+                from={familyFrom(cards)} open={open === cat} onToggle={() => toggle(cat)}
+                href={`#${catId(cat)}`} onJump={onJump} allLabel={`Go to ${FAMILY_META[cat]?.short || cat}`}>
+                {cards.map((c) => (
+                  <MenuLine key={c.key} href={`#${productId(c)}`} onClick={(e) => onJump(e, productId(c))} title={c.title} price={menuPrice(c)} />
+                ))}
+              </MenuBlock>
+            ))}
+            {/* phone: tickets are one more row of the list */}
+            <MenuBlock id="menu-tickets" icon={Ticket} label="Delegate Tickets" from={ticketFrom} className="md:hidden"
+              open={open === 'tickets'} onToggle={() => toggle('tickets')} href="#tickets" onJump={onJump} allLabel="Go to Tickets">
+              {ticketLines}
+            </MenuBlock>
+          </div>
+          {/* wider screens: tickets run as one row under the families, so the columns above stay even */}
+          <div className="hidden md:block px-8 pt-5 pb-5 border-t border-brand-white/10">
+            <a href="#tickets" onClick={(e) => onJump(e, 'tickets')} className="group/fam inline-flex items-center gap-2.5 mb-2.5">
+              <span className="w-7 h-7 rounded-full bg-brand-yellow/15 text-brand-yellow flex items-center justify-center shrink-0"><Ticket className="w-3.5 h-3.5" aria-hidden /></span>
+              <span className="text-[13.5px] font-black text-brand-white group-hover/fam:text-brand-yellow transition-colors">Delegate Tickets</span>
+              <span className="text-[11px] text-brand-gray">USD</span>
+              <ArrowRight className="w-3 h-3 text-brand-gray/60 group-hover/fam:text-brand-yellow transition-colors shrink-0" aria-hidden />
+            </a>
+            <ul className="flex flex-wrap gap-x-9 gap-y-1">
+              {ticketLadder.map((t) => (
+                <li key={t.type}>
+                  <a href={`#${ticketId(t)}`} onClick={(e) => onJump(e, ticketId(t))} className="group/row inline-flex items-baseline gap-2 py-1 text-[13.5px]">
+                    <span className="text-brand-white/85 group-hover/row:text-brand-yellow transition-colors">{t.type}</span>
+                    <span className="whitespace-nowrap tabular-nums font-bold text-brand-white"><span className="mr-1 text-[11px] font-medium text-brand-gray">from</span>{fmtUsd(t.eb)}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-1 px-5 sm:px-8 py-3 sm:py-4 border-t border-brand-white/10 text-[11px] font-black uppercase tracking-[0.14em]">
+            <span className="text-brand-gray/70">Also on this page</span>
+            {[['Recognition', 'recognition'], ['About', 'about'], ['The Room', 'audience']].map(([t, id]) => (
+              <a key={id} href={`#${id}`} onClick={(e) => onJump(e, id)} className="inline-flex items-center gap-1.5 min-h-10 text-brand-white hover:text-brand-yellow transition-colors">
+                {t} <ArrowRight className="w-3 h-3" aria-hidden />
+              </a>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-wrap gap-1.5 mt-4 mb-5">
-          {item.impact.map((t) => (
-            <span key={t} className="px-2 py-0.5 bg-brand-white/8 text-brand-gray text-[9px] uppercase tracking-wider rounded font-medium">{t}</span>
-          ))}
-        </div>
-        <button
-          onClick={() => onAdd(item)}
-          disabled={atLimit}
-          className={`w-full py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all duration-300 flex items-center justify-center gap-2 ${atLimit ? 'bg-brand-white/10 text-brand-gray cursor-not-allowed' : 'bg-brand-yellow/15 text-brand-yellow border border-brand-yellow/40 hover:bg-brand-yellow hover:text-brand-dark'}`}
-        >
-          <Calculator className="w-3.5 h-3.5" />
-          {cardCtaLabel(item, { atLimit, conflicted })}
-        </button>
       </div>
+    </section>
+  )
+}
+
+// Sticks under the fixed nav while the rate card is on screen: it lives inside
+// #pricing, so it leaves with the section. The family in view is highlighted;
+// on a phone the row scrolls and keeps that chip in view.
+function FamilyBar({ groups, active, onJump, barRef }) {
+  const rowRef = useRef(null)
+  useEffect(() => {
+    const row = rowRef.current
+    const chip = row?.querySelector('[aria-current="true"]')
+    if (!row || !chip) return
+    const left = chip.offsetLeft - (row.clientWidth - chip.offsetWidth) / 2
+    row.scrollTo({ left: Math.max(0, left), behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
+  }, [active])
+  return (
+    <div ref={barRef} className="sticky z-30 bg-brand-dark/95 backdrop-blur-md border-y border-brand-white/10 shadow-[0_10px_30px_-14px_rgba(0,0,0,0.7)]"
+      style={{ top: 'var(--nav-h, 72px)' }}>
+      <nav aria-label="Product families" className="max-w-7xl mx-auto px-2 sm:px-8">
+        <div ref={rowRef} className="no-scrollbar fade-x relative flex items-center gap-0.5 overflow-x-auto py-1.5">
+          <a href="#menu" onClick={(e) => onJump(e, 'menu')}
+            className="shrink-0 inline-flex items-center gap-1.5 h-10 sm:h-9 rounded-full px-2.5 text-[12.5px] font-bold text-brand-white hover:text-brand-yellow transition-colors whitespace-nowrap">
+            <ArrowUp className="w-3.5 h-3.5" aria-hidden /> Menu
+          </a>
+          <span className="w-px h-5 bg-brand-white/15 mx-1 shrink-0" aria-hidden />
+          {groups.map(({ cat }) => {
+            const on = active === cat
+            return (
+              <a key={cat} href={`#${catId(cat)}`} onClick={(e) => onJump(e, catId(cat))} aria-current={on ? 'true' : undefined}
+                className={`shrink-0 inline-flex items-center h-10 sm:h-9 whitespace-nowrap rounded-full px-3 text-[12.5px] font-bold transition-colors ${on ? 'bg-brand-yellow text-brand-dark' : 'text-brand-gray hover:text-brand-white'}`}>
+                {FAMILY_META[cat]?.short || cat}
+              </a>
+            )
+          })}
+        </div>
+      </nav>
+    </div>
+  )
+}
+
+function FamilyHeading({ cat, count }) {
+  const Icon = FAMILY_META[cat]?.icon || Layers
+  return (
+    <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+      <span className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-brand-yellow/15 text-brand-yellow flex items-center justify-center shrink-0"><Icon className="w-5 h-5" aria-hidden /></span>
+      <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-brand-white uppercase leading-tight">{cat.replace(/-/g, '‑')}</h3>
+      <div className="h-px bg-brand-yellow/30 flex-1 min-w-6" />
+      <span className="hidden sm:block text-[11px] font-black uppercase tracking-[0.16em] text-brand-gray whitespace-nowrap">{count} product{count === 1 ? '' : 's'}</span>
+    </div>
+  )
+}
+
+function FilterRow({ label, options, active, setActive }) {
+  return (
+    <div className="no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 flex items-center gap-2 overflow-x-auto sm:flex-wrap sm:justify-center">
+      <span className="shrink-0 text-[10px] uppercase tracking-widest text-brand-gray font-bold mr-1">{label}:</span>
+      {options.map((f) => (
+        <button key={f} type="button" onClick={() => setActive(active === f ? null : f)} aria-pressed={active === f}
+          className={`shrink-0 inline-flex items-center h-10 sm:h-9 px-3.5 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider border transition-all whitespace-nowrap ${active === f ? 'bg-brand-yellow text-brand-dark border-brand-yellow' : 'border-brand-white/20 text-brand-gray hover:border-brand-yellow/60 hover:text-brand-white'}`}>
+          {f}
+        </button>
+      ))}
     </div>
   )
 }
 
 // ─── Tickets section ────────────────────────────────────────────────────────
-function TicketsSection({ anim }) {
+// One table: a ruled ladder from md, and on a phone each ticket becomes its own
+// block with its three stage prices side by side (the old table scrolled
+// sideways there, hiding Standard, Late and the access notes).
+function TicketsSection() {
   return (
-    <section id="tickets" className="py-24 bg-brand-dark relative border-b border-brand-white/10">
-      <div className="max-w-7xl mx-auto px-8">
-        <div className="text-center mb-14" data-anim style={anim}>
-          <h2 className="text-4xl md:text-5xl font-bold text-brand-yellow mb-4 uppercase">Delegate Tickets</h2>
-          <p className="text-brand-gray max-w-3xl mx-auto">
+    <section id="tickets" className="jump-section py-20 md:py-24 bg-brand-dark relative border-b border-brand-white/10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8">
+        <SectionHead title="Delegate" accent="Tickets">
+          <p className="text-brand-gray max-w-3xl mx-auto mt-5 leading-relaxed">
             Three published price stages: <strong className="text-brand-white">Early Bird</strong>, <strong className="text-brand-white">Standard</strong> and <strong className="text-brand-white">Late</strong>.
             Early Bird pricing goes live on <strong className="text-brand-white">16 November 2026</strong>. Each stage closes on its published date or when its allocation
             sells out, whichever comes first - and prices never come back down.
           </p>
-        </div>
+        </SectionHead>
 
-        <div className="overflow-x-auto rounded-2xl border border-brand-white/10 mb-8" data-anim style={anim}>
-          <table className="w-full text-left min-w-[640px]">
-            <thead>
-              <tr className="bg-brand-dark text-[11px] uppercase tracking-widest text-brand-gray">
-                <th className="px-6 py-4 font-bold">Ticket</th>
-                <th className="px-6 py-4 font-bold text-brand-yellow">Early Bird</th>
-                <th className="px-6 py-4 font-bold">Standard</th>
-                <th className="px-6 py-4 font-bold">Late</th>
-                <th className="px-6 py-4 font-bold hidden md:table-cell">Access</th>
+        {/* the ladder stays at rest (no reveal): its rows are deep-link targets */}
+        <div className="clip-box rounded-2xl border border-brand-white/10 mb-8 bg-brand-white/[0.02]">
+          <table className="w-full text-left">
+            <caption className="sr-only">Delegate ticket prices in USD, by stage</caption>
+            <thead className="hidden md:table-header-group">
+              <tr className="text-[11px] uppercase tracking-widest text-brand-gray border-b border-brand-white/10">
+                <th scope="col" className="px-6 py-4 font-bold">Ticket</th>
+                <th scope="col" className="px-6 py-4 font-bold text-brand-yellow">Early Bird</th>
+                <th scope="col" className="px-6 py-4 font-bold">Standard</th>
+                <th scope="col" className="px-6 py-4 font-bold">Late</th>
+                <th scope="col" className="px-6 py-4 font-bold">Access</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="block md:table-row-group">
               {ticketLadder.map((t) => (
-                <tr key={t.type} className="border-t border-brand-white/8 hover:bg-brand-white/[0.03] transition-colors">
-                  <td className="px-6 py-4 font-bold text-brand-white whitespace-nowrap">{t.type}</td>
-                  <td className="px-6 py-4 font-semibold text-brand-yellow whitespace-nowrap">${t.eb.toLocaleString('en-US')}</td>
-                  <td className="px-6 py-4 text-brand-white/90 whitespace-nowrap">${t.std.toLocaleString('en-US')}</td>
-                  <td className="px-6 py-4 text-brand-white/90 whitespace-nowrap">${t.late.toLocaleString('en-US')}</td>
-                  <td className="px-6 py-4 text-xs text-brand-gray hidden md:table-cell">{t.note}</td>
+                <tr key={t.type} id={ticketId(t)}
+                  className="jump-near grid grid-cols-3 gap-x-2 gap-y-2.5 px-4 sm:px-5 py-5 border-t first:border-t-0 border-brand-white/8 md:table-row md:p-0 md:hover:bg-brand-white/[0.03] transition-colors">
+                  <th scope="row" className="col-span-3 md:px-6 md:py-4 font-bold text-brand-white text-base whitespace-nowrap">{t.type}</th>
+                  {[['Early Bird', t.eb, true], ['Standard', t.std, false], ['Late', t.late, false]].map(([stage, v, eb]) => (
+                    <td key={stage} className={`rounded-lg px-3 py-2.5 md:rounded-none md:bg-transparent md:px-6 md:py-4 whitespace-nowrap ${eb ? 'bg-brand-yellow/[0.1]' : 'bg-brand-white/[0.04]'}`}>
+                      <span className={`block md:hidden text-[9.5px] font-black uppercase tracking-[0.14em] mb-1 ${eb ? 'text-brand-yellow' : 'text-brand-gray'}`}>{stage}</span>
+                      <span className={`tabular-nums ${eb ? 'font-semibold text-brand-yellow' : 'text-brand-white/90'}`}>{fmtUsd(v)}</span>
+                    </td>
+                  ))}
+                  <td className="col-span-3 md:px-6 md:py-4 text-xs text-brand-gray leading-relaxed">{t.note}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6" data-anim style={anim}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6" data-anim style={anim}>
           <div className="bg-brand-white/5 border border-brand-white/10 rounded-2xl p-6">
             <div className="flex items-center gap-2 mb-3">
               <Users className="w-5 h-5 text-brand-yellow" aria-hidden />
@@ -787,28 +1246,36 @@ function CalculatorPanel({ cart, onRemove, rebooking, setRebooking, open, setOpe
   const total = cart.reduce((s, i) => s + (i.poa ? 0 : (rebooking ? Math.round(i.price * 0.85) : i.price)), 0)
   const tier = resolveTier(total, cart)
   const next = nextSpendTier(total, cart)
+  const closeRef = useRef(null)
+  useEffect(() => {
+    if (!open) return
+    closeRef.current?.focus()
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, setOpen])
   return (
     <>
       {/* Bottom bar */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-brand-dark/95 backdrop-blur-md border-t border-brand-yellow/30 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
         <TierProgress total={total} cart={cart} />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <Calculator className="w-5 h-5 text-brand-yellow shrink-0" aria-hidden />
+            <Calculator className="hidden sm:block w-5 h-5 text-brand-yellow shrink-0" aria-hidden />
             <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-widest text-brand-gray font-bold">Your Selection · {cart.length} item{cart.length === 1 ? '' : 's'}</p>
-              <p className="font-black text-brand-white text-lg leading-tight truncate">
-                {fmtPrice(total)} <span className={`text-xs font-bold uppercase ${tier.color}`}>· {tier.name} Partner</span>
+              <p className="text-[10px] uppercase tracking-widest text-brand-gray font-bold truncate"><span className="hidden sm:inline">Your Selection · </span>{cart.length} item{cart.length === 1 ? '' : 's'}</p>
+              <p className="font-black text-brand-white text-base sm:text-lg leading-tight truncate tabular-nums">
+                {fmtPrice(total)} <span className={`text-xs font-bold uppercase ${tier.color}`}>· {tier.name}<span className="hidden sm:inline"> Partner</span></span>
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={() => setOpen(!open)}
-              className="px-4 py-2.5 rounded-xl border border-brand-white/20 text-brand-white text-xs font-bold uppercase tracking-widest hover:border-brand-yellow transition-colors">
+            <button type="button" onClick={() => setOpen(!open)}
+              className="h-10 px-3.5 sm:px-4 rounded-xl border border-brand-white/20 text-brand-white text-xs font-bold uppercase tracking-widest hover:border-brand-yellow transition-colors">
               {open ? 'Close' : 'Review'}
             </button>
             <a href={buildMailto(cart, rebooking)}
-              className="px-4 py-2.5 rounded-xl bg-brand-yellow text-brand-dark text-xs font-black uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-1.5">
+              className="h-10 px-3.5 sm:px-4 rounded-xl bg-brand-yellow text-brand-dark text-xs font-black uppercase tracking-widest hover:brightness-110 transition-all inline-flex items-center gap-1.5">
               <Mail className="w-3.5 h-3.5" aria-hidden /> Enquire
             </a>
           </div>
@@ -817,12 +1284,12 @@ function CalculatorPanel({ cart, onRemove, rebooking, setRebooking, open, setOpe
 
       {/* Slide-over */}
       {open && (
-        <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-label="Investment calculator">
+        <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label="Investment calculator">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div className="relative w-full max-w-md bg-brand-dark border-l border-brand-white/10 h-full overflow-y-auto p-6 pb-40">
+          <div className="relative w-full max-w-md bg-brand-dark border-l border-brand-white/10 h-full overflow-y-auto p-5 sm:p-6 pb-40">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-black text-brand-white uppercase">Investment Calculator</h3>
-              <button onClick={() => setOpen(false)} className="text-brand-gray hover:text-brand-white" aria-label="Close calculator"><X className="w-6 h-6" /></button>
+              <button ref={closeRef} type="button" onClick={() => setOpen(false)} className="w-10 h-10 -mr-2 shrink-0 flex items-center justify-center rounded-full text-brand-gray hover:text-brand-white" aria-label="Close calculator"><X className="w-6 h-6" /></button>
             </div>
             <label className="flex items-center gap-3 bg-brand-white/5 border border-brand-white/10 rounded-xl px-4 py-3 mb-6 cursor-pointer">
               <input type="checkbox" checked={rebooking} onChange={(e) => setRebooking(e.target.checked)}
@@ -837,14 +1304,14 @@ function CalculatorPanel({ cart, onRemove, rebooking, setRebooking, open, setOpe
             ) : (
               <ul className="space-y-3 mb-6">
                 {cart.map((item, idx) => (
-                  <li key={idx} className="flex items-start justify-between gap-3 bg-brand-white/5 border border-brand-white/10 rounded-xl px-4 py-3">
-                    <div>
+                  <li key={idx} className="flex items-start justify-between gap-3 bg-brand-white/5 border border-brand-white/10 rounded-xl pl-4 pr-3 py-3">
+                    <div className="min-w-0">
                       <p className="text-sm font-bold text-brand-white leading-snug">{item.title}</p>
                       <p className="text-xs text-brand-gray mt-0.5">{item.cat}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-sm font-black text-brand-yellow">{item.poa ? 'POA' : fmtPrice(rebooking ? Math.round(item.price * 0.85) : item.price)}</p>
-                      <button onClick={() => onRemove(idx)} className="text-[10px] uppercase tracking-widest text-brand-gray hover:text-red-400 font-bold mt-1">Remove</button>
+                      <p className="text-sm font-black text-brand-yellow tabular-nums">{item.poa ? 'POA' : fmtPrice(rebooking ? Math.round(item.price * 0.85) : item.price)}</p>
+                      <button type="button" onClick={() => onRemove(idx)} className="min-h-8 text-[10px] uppercase tracking-widest text-brand-gray hover:text-brand-white font-bold">Remove</button>
                     </div>
                   </li>
                 ))}
@@ -853,14 +1320,14 @@ function CalculatorPanel({ cart, onRemove, rebooking, setRebooking, open, setOpe
             <div className="border-t border-brand-white/10 pt-4 space-y-1 mb-6">
               <div className="flex justify-between text-sm text-brand-gray"><span>Recognition level</span><span className={`font-black uppercase ${tier.color}`}>{tier.name} Partner</span></div>
               {next && <div className="flex justify-between text-xs text-brand-gray/70"><span>Next level</span><span>{fmtPrice(next.min - total)} to {next.name}</span></div>}
-              <div className="flex justify-between text-lg font-black text-brand-white pt-2"><span>Total</span><span className="text-brand-yellow">{fmtPrice(total)}</span></div>
+              <div className="flex justify-between text-lg font-black text-brand-white pt-2"><span>Total</span><span className="text-brand-yellow tabular-nums">{fmtPrice(total)}</span></div>
             </div>
             <div className="space-y-3">
               <a href={buildMailto(cart, rebooking)}
                 className="w-full py-3.5 rounded-xl bg-brand-yellow text-brand-dark font-black uppercase tracking-widest text-sm flex items-center justify-center gap-2 hover:brightness-110 transition-all">
                 <Mail className="w-4 h-4" aria-hidden /> Contact Sales
               </a>
-              <button onClick={() => downloadProposalPDF(cart, rebooking)} disabled={!cart.length}
+              <button type="button" onClick={() => downloadProposalPDF(cart, rebooking)} disabled={!cart.length}
                 className={`w-full py-3.5 rounded-xl border font-black uppercase tracking-widest text-sm flex items-center justify-center gap-2 transition-all ${cart.length ? 'border-brand-yellow/50 text-brand-yellow hover:bg-brand-yellow/10' : 'border-brand-white/10 text-brand-gray cursor-not-allowed'}`}>
                 <Download className="w-4 h-4" aria-hidden /> Download Proposal PDF
               </button>
@@ -873,14 +1340,28 @@ function CalculatorPanel({ cart, onRemove, rebooking, setRebooking, open, setOpe
 }
 
 // ─── App ────────────────────────────────────────────────────────────────────
-export default function App() {
-  useScrollAnimation()
+// Section order is products first: hero → product menu → rate card →
+// recognition → about → the room → tickets → rebooking. The story sections
+// used to sit between the hero and the rate card, which put the first product
+// seven phone screens down.
+const AUDIENCE = [
+  ['Prediction Market Platforms', LineChart],
+  ['Exchanges & Trading Venues', Landmark],
+  ['Market Makers & Traders', TrendingUp],
+  ['Sportsbooks & Operators', Trophy],
+  ['Data & Odds Providers', Cpu],
+  ['Payments & Fintech', Banknote],
+  ['Regulators & Legal', Scale],
+  ['Media & Research', Newspaper],
+]
 
+export default function App() {
   const [activeImpact, setActiveImpact] = useState(null)
   const [activeType, setActiveType] = useState(null)
   const [cart, setCart] = useState([])
   const [rebooking, setRebooking] = useState(false)
   const [calcOpen, setCalcOpen] = useState(false)
+  useScrollAnimation(`${activeImpact}|${activeType}`)
 
   const addToCart = useCallback((item) => {
     if (item.status === 'sold' || item.status === 'reserved') return
@@ -897,44 +1378,118 @@ export default function App() {
   const cartCounts = cart.reduce((acc, i) => { acc[i.id] = (acc[i.id] || 0) + 1; return acc }, {})
   const conflictedIds = new Set(cart.flatMap((i) => CONFLICTS[i.id] || []))
 
-  const filtered = pricing.filter((p) => {
-    const impactOk = !activeImpact || p.impact.includes(activeImpact)
-    const typeOk = !activeType || p.type.includes(activeType)
-    return impactOk && typeOk
-  })
-  const filteredByCategory = categories
-    .map((cat) => ({ cat, items: filtered.filter((p) => p.cat === cat) }))
-    .filter((g) => g.items.length > 0)
+  // a card stays on the rate card while any of its routes matches the filters
+  const matches = (p) => (!activeImpact || p.impact.includes(activeImpact)) && (!activeType || p.type.includes(activeType))
+  const visibleGroups = CARDS
+    .map(({ cat, cards }) => ({ cat, cards: cards.filter((c) => c.options.some(matches)) }))
+    .filter((g) => g.cards.length > 0)
+  const shownCount = visibleGroups.reduce((n, g) => n + g.cards.length, 0)
+  const filtering = Boolean(activeImpact || activeType)
 
-  const anim = { opacity: 0, transform: 'translateY(20px)', transition: 'opacity .6s ease, transform .6s ease' }
+  // The fixed nav and the family bar change height by breakpoint; anchored
+  // jumps read both from CSS variables (--nav-h, --bar-h) rather than a
+  // hardcoded offset, and the scroll-spy reads the same numbers.
+  const navRef = useRef(null)
+  const barRef = useRef(null)
+  const [dims, setDims] = useState({ nav: 72, bar: 52, vh: 900 })
+  useLayoutEffect(() => {
+    const root = document.documentElement
+    const set = () => {
+      const nav = navRef.current?.offsetHeight || 72
+      const bar = barRef.current?.offsetHeight || 0
+      root.style.setProperty('--nav-h', `${nav}px`)
+      root.style.setProperty('--bar-h', `${bar}px`)
+      const vh = window.innerHeight
+      setDims((d) => (d.nav === nav && d.bar === bar && d.vh === vh ? d : { nav, bar, vh }))
+    }
+    set()
+    const ro = new ResizeObserver(set)
+    if (navRef.current) ro.observe(navRef.current)
+    if (barRef.current) ro.observe(barRef.current)
+    window.addEventListener('resize', set)
+    return () => { ro.disconnect(); window.removeEventListener('resize', set) }
+  }, [])
 
-  const audience = [
-    ['Prediction Market Platforms', LineChart],
-    ['Exchanges & Trading Venues', Landmark],
-    ['Market Makers & Traders', TrendingUp],
-    ['Sportsbooks & Operators', Trophy],
-    ['Data & Odds Providers', Cpu],
-    ['Payments & Fintech', Banknote],
-    ['Regulators & Legal', Scale],
-    ['Media & Research', Newspaper],
-  ]
+  // A deep link (#p-headline-partner, #exhibition, #t-vip) lands on its target.
+  // React renders after the browser's own hash jump, so the jump is made here,
+  // then again once late layout (web fonts) has settled - unless the reader has
+  // started scrolling by then.
+  useEffect(() => {
+    const id = decodeURIComponent(window.location.hash.slice(1))
+    if (!id || !document.getElementById(id)) return
+    let stopped = false
+    const land = () => { if (!stopped) document.getElementById(id)?.scrollIntoView({ block: 'start', behavior: 'instant' }) }
+    const stop = () => { stopped = true }
+    const raf = requestAnimationFrame(land)
+    const t = setTimeout(land, 450)
+    document.fonts?.ready.then(() => requestAnimationFrame(land))
+    const evs = ['wheel', 'touchstart', 'keydown', 'mousedown']
+    evs.forEach((ev) => window.addEventListener(ev, stop, { passive: true, once: true }))
+    return () => { stop(); cancelAnimationFrame(raf); clearTimeout(t); evs.forEach((ev) => window.removeEventListener(ev, stop)) }
+  }, [])
+
+  // Menu, bar and nav clicks scroll in JS: a card a filter has hidden is brought
+  // back first, then the page moves once it has rendered. The hash is pushed
+  // like a native anchor, so Back returns to where the reader was.
+  const [jumpReq, setJumpReq] = useState(null)
+  const onJump = useCallback((e, id) => {
+    e?.preventDefault()
+    if (!document.getElementById(id)) { setActiveImpact(null); setActiveType(null) }
+    setJumpReq({ id, at: Date.now() })
+  }, [])
+  useEffect(() => {
+    if (!jumpReq) return
+    const raf = requestAnimationFrame(() => {
+      const el = document.getElementById(jumpReq.id)
+      if (!el) return
+      el.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' })
+      if (window.location.hash !== `#${jumpReq.id}`) window.history.pushState(null, '', `#${jumpReq.id}`)
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [jumpReq])
+
+  // Scroll-spy: the family whose heading has passed under the bar is the one in
+  // view. The observer watches a one-pixel reading line just below the bar and
+  // re-reads the family positions whenever a family - or a page section, so a
+  // jump out of the rate card clears the highlight - crosses it.
+  const [activeCat, setActiveCat] = useState(null)
+  const catKey = visibleGroups.map((g) => g.cat).join('|')
+  useEffect(() => {
+    const els = (catKey ? catKey.split('|') : []).map((c) => document.getElementById(catId(c))).filter(Boolean)
+    if (!els.length) { setActiveCat(null); return }
+    const line = dims.nav + dims.bar + 24
+    const pick = () => {
+      let cur = null
+      els.forEach((el) => { if (el.getBoundingClientRect().top <= line) cur = el.dataset.cat })
+      setActiveCat(cur)
+    }
+    const io = new IntersectionObserver(pick, { rootMargin: `-${line}px 0px -${Math.max(0, dims.vh - line - 1)}px 0px`, threshold: 0 })
+    els.forEach((el) => io.observe(el))
+    document.querySelectorAll('main > section').forEach((el) => io.observe(el))
+    pick()
+    return () => io.disconnect()
+  }, [catKey, dims])
 
   return (
-    <div className="min-h-screen bg-brand-dark text-brand-white font-sans selection:bg-brand-yellow selection:text-brand-dark pb-24">
+    <div className="min-h-screen bg-brand-dark text-brand-white font-sans selection:bg-brand-yellow selection:text-brand-dark pb-32">
 
       {/* ── NAV ── */}
-      <nav className="fixed top-0 left-0 w-full z-40 bg-brand-dark/95 backdrop-blur-md py-4 shadow-lg border-b border-brand-white/10">
+      <nav ref={navRef} className="fixed top-0 left-0 w-full z-40 bg-brand-dark/95 backdrop-blur-md py-3 sm:py-4 shadow-lg border-b border-brand-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex justify-between items-center gap-3">
-          <a href="#" className="flex items-center gap-3 shrink-0">
-            <img alt="NEXTPredict" className="h-7 sm:h-9 object-contain" src={`${base}logos/nextpredict-logo.png`} />
-            <span className="font-black text-lg sm:text-2xl uppercase tracking-tight text-brand-yellow">2027</span>
+          <a href="#" className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0 h-10">
+            <img alt="NEXTPredict" className="h-6 sm:h-9 w-auto object-contain" src={`${base}logos/nextpredict-logo.png`} />
+            <span className="font-black text-base sm:text-2xl tracking-tight text-brand-yellow">2027</span>
           </a>
-          <div className="flex items-center gap-4 sm:gap-8">
-            <a href="#pricing" className="text-sm font-bold uppercase tracking-widest text-brand-white hover:text-brand-yellow transition-colors hidden md:block">Rate Card</a>
-            <a href="#tickets" className="text-sm font-bold uppercase tracking-widest text-brand-white hover:text-brand-yellow transition-colors hidden md:block">Tickets</a>
-            <a href="mailto:sales@next.io?subject=I'm interested in NEXTPredict 2027 partnerships!"
-              className="bg-brand-yellow text-brand-dark px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm uppercase tracking-widest hover:bg-white transition-colors whitespace-nowrap">
-              Contact Sales
+          <div className="flex items-center gap-3 sm:gap-8">
+            <a href="#pricing" onClick={(e) => onJump(e, 'pricing')}
+              className="inline-flex items-center h-10 text-xs sm:text-sm font-bold uppercase tracking-wider sm:tracking-widest text-brand-white hover:text-brand-yellow transition-colors whitespace-nowrap">Rate Card</a>
+            <a href="#tickets" onClick={(e) => onJump(e, 'tickets')}
+              className="hidden md:inline-flex items-center h-10 text-sm font-bold uppercase tracking-widest text-brand-white hover:text-brand-yellow transition-colors">Tickets</a>
+            {/* under 480px the NEXTPredict lockup and a text pill cannot share one line, so the pill becomes a round mail button */}
+            <a href="mailto:sales@next.io?subject=I'm interested in NEXTPredict 2027 partnerships!" aria-label="Contact Sales"
+              className="bg-brand-yellow text-brand-dark rounded-full font-bold text-xs sm:text-sm uppercase tracking-widest hover:bg-white transition-colors whitespace-nowrap inline-flex items-center justify-center w-10 h-10 shrink-0 min-[480px]:w-auto min-[480px]:px-5 sm:px-6">
+              <Mail className="w-4 h-4 min-[480px]:hidden" aria-hidden />
+              <span className="hidden min-[480px]:inline">Contact Sales</span>
             </a>
           </div>
         </div>
@@ -942,53 +1497,115 @@ export default function App() {
 
       <main>
         {/* ── HERO ── */}
-        <section className="relative min-h-[86vh] flex flex-col items-center justify-center overflow-hidden bg-brand-dark pt-24">
+        <section className="relative flex flex-col items-center justify-center overflow-hidden bg-brand-dark pt-28 sm:pt-36 pb-12 sm:pb-16">
           <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top,rgba(255,207,51,0.14),transparent_55%)]" />
           <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-brand-dark to-transparent z-0" />
-          <div className="z-10 text-center max-w-5xl px-8 w-full">
-            <p className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-brand-yellow/30 bg-brand-yellow/10 text-brand-yellow text-xs font-bold uppercase tracking-[0.2em] mb-8">
-              <TrendingUp className="w-3.5 h-3.5" aria-hidden /> The Prediction Markets Summit
+          <div className="z-10 text-center max-w-5xl px-4 sm:px-8 w-full">
+            <p className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-brand-yellow/30 bg-brand-yellow/10 text-brand-yellow text-[10px] min-[360px]:text-[11px] sm:text-xs font-bold uppercase tracking-[0.14em] sm:tracking-[0.2em] mb-7 sm:mb-8 whitespace-nowrap">
+              <TrendingUp className="w-3.5 h-3.5 shrink-0" aria-hidden /> The Prediction Markets Summit
             </p>
-            <h1 className="text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter text-brand-white mb-6 uppercase leading-none">
+            <h1 className="text-[clamp(2.75rem,14vw,8rem)] font-black tracking-tighter text-brand-white mb-4 sm:mb-6 leading-none">
               NEXT<span className="text-brand-yellow">Predict</span>
             </h1>
             <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold text-brand-yellow mb-6 tracking-wide uppercase">October 2027</h2>
-            <div className="flex flex-col md:flex-row items-center justify-center gap-4 text-brand-white/80 font-medium tracking-wide mb-10 uppercase text-sm md:text-base">
-              <div className="flex items-center gap-2 bg-brand-white/5 py-2 px-4 rounded-full border border-brand-white/10">
-                <MapPin className="w-4 h-4 text-brand-yellow" aria-hidden /> New York City
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-brand-white/80 font-medium tracking-wide mb-9 sm:mb-10 uppercase text-[11px] sm:text-sm">
+              <div className="flex items-center gap-2 bg-brand-white/5 py-2 px-3.5 sm:px-4 rounded-full border border-brand-white/10">
+                <MapPin className="w-4 h-4 text-brand-yellow shrink-0" aria-hidden /> New York City
               </div>
-              <div className="flex items-center gap-2 bg-brand-white/5 py-2 px-4 rounded-full border border-brand-white/10">
-                <CalendarDays className="w-4 h-4 text-brand-yellow" aria-hidden /> Exact dates &amp; venue announced soon
+              <div className="flex items-center gap-2 bg-brand-white/5 py-2 px-3.5 sm:px-4 rounded-full border border-brand-white/10">
+                <CalendarDays className="w-4 h-4 text-brand-yellow shrink-0" aria-hidden /> Exact dates &amp; venue announced soon
               </div>
-              <div className="flex items-center gap-2 bg-brand-white/5 py-2 px-4 rounded-full border border-brand-white/10">
-                <Layers className="w-4 h-4 text-brand-yellow" aria-hidden /> 2 Days · 3 Stages
+              <div className="flex items-center gap-2 bg-brand-white/5 py-2 px-3.5 sm:px-4 rounded-full border border-brand-white/10">
+                <Layers className="w-4 h-4 text-brand-yellow shrink-0" aria-hidden /> 2 Days · 3 Stages
               </div>
             </div>
-            <div className="bg-brand-yellow text-brand-dark py-4 px-6 md:py-6 md:px-12 inline-block rounded-2xl transform -skew-x-6 mb-10 max-w-full">
-              <h3 className="text-2xl sm:text-4xl md:text-6xl font-black uppercase tracking-tighter skew-x-6">Partnership Rate Card</h3>
-            </div>
-            <div className="flex flex-wrap justify-center gap-4 md:gap-6 mt-6">
-              {[['About', '#about'], ['The Room', '#audience'], ['Rate Card', '#pricing'], ['Tickets', '#tickets'], ['Recognition', '#recognition']].map(([s, href]) => (
-                <a key={s} href={href}
-                  className="text-brand-white hover:text-brand-yellow font-bold uppercase tracking-widest text-sm transition-colors border border-brand-white/20 hover:border-brand-yellow px-6 py-3 rounded-full bg-brand-dark/50 backdrop-blur-sm">
-                  {s}
-                </a>
-              ))}
+            <div className="bg-brand-yellow text-brand-dark py-4 px-6 md:py-6 md:px-12 inline-block rounded-2xl transform -skew-x-6 max-w-full">
+              <h3 className="text-[clamp(1.1rem,5.6vw,3.75rem)] font-black uppercase tracking-tighter skew-x-6 leading-none whitespace-nowrap">Partnership Rate Card</h3>
             </div>
           </div>
         </section>
 
+        {/* ── PRODUCT MENU ── */}
+        <ProductMenu onJump={onJump} />
+
+        {/* ── PRICING / RATE CARD ── */}
+        <section id="pricing" className="jump-section relative bg-brand-dark pt-16 md:pt-20 border-t border-brand-white/10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-8">
+            <SectionHead title="Partnership" accent="Rate Card"
+              lede="Published pricing, all-in where stated. Exclusive and shared routes over the same inventory are alternatives - the calculator enforces it. Prices in EUR and exclude VAT.">
+              <button type="button" onClick={downloadRateCardPDF}
+                className="mt-6 inline-flex items-center gap-2 min-h-11 px-6 rounded-full border border-brand-yellow/50 text-brand-yellow font-bold text-xs sm:text-sm uppercase tracking-widest hover:bg-brand-yellow/10 transition-colors">
+                <Download className="w-4 h-4" aria-hidden /> Download Full Rate Card
+              </button>
+            </SectionHead>
+
+            {/* Filters */}
+            <div className="mb-10 space-y-2.5">
+              <FilterRow label="Objective" options={impacts} active={activeImpact} setActive={setActiveImpact} />
+              <FilterRow label="Format" options={types} active={activeType} setActive={setActiveType} />
+              {filtering && (
+                <p className="text-center text-xs text-brand-gray pt-1" aria-live="polite">
+                  Showing {shownCount} of {CARD_COUNT} products ·{' '}
+                  <button type="button" onClick={() => { setActiveImpact(null); setActiveType(null) }} className="min-h-10 font-bold text-brand-yellow underline underline-offset-2">Clear filters</button>
+                </p>
+              )}
+            </div>
+          </div>
+
+          <FamilyBar groups={visibleGroups} active={activeCat} onJump={onJump} barRef={barRef} />
+
+          <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-10 md:pt-12 pb-8">
+            {visibleGroups.map(({ cat, cards }) => {
+              const spans = familySpans(cards)
+              return (
+                <div key={cat} id={catId(cat)} data-cat={cat} className="jump-target mb-16 md:mb-20 last:mb-12">
+                  <FamilyHeading cat={cat} count={cards.length} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-5 sm:gap-6">
+                    {cards.map((card, i) => (
+                      <ProductCard key={card.key} card={card} span={spans[i]} rebooking={rebooking}
+                        cartCounts={cartCounts} conflictedIds={conflictedIds} onAdd={addToCart} />
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+
+        {/* ── RECOGNITION LEVELS ── */}
+        <section id="recognition" className="jump-section py-20 md:py-24 bg-brand-white/[0.03] relative border-y border-brand-white/10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-8">
+            <SectionHead title="Partner" accent="Recognition"
+              lede="Recognition is earned on your combined total spend across all NEXTPredict 2027 products. It carries no extra charge and adds no further products - it is how prominently the event says thank you." />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4" data-anim style={anim}>
+              {[
+                ['Silver', 'Below €30k', 'text-brand-gray', 'Silver position and logo recognition across agreed listings, website and onsite displays.'],
+                ['Gold', '€30k – €79,999', 'text-yellow-400', 'Gold position and logo recognition across agreed listings, website and onsite displays.'],
+                ['Platinum', '€80k – €134,999', 'text-blue-300', 'Platinum position and logo recognition across agreed listings, website and onsite displays.'],
+                ['Diamond', '€135k+', 'text-cyan-100', 'Diamond position and logo recognition across agreed listings, website and onsite displays.'],
+                ['Headline', 'Headline product', 'text-brand-yellow', 'The highest position in the partner hierarchy - reserved for the Headline Partner. Not reachable by spend alone.'],
+              ].map(([name, band, color, desc]) => (
+                <div key={name}
+                  className={`rounded-2xl border p-6 flex flex-col ${name === 'Headline' ? 'sm:col-span-2 lg:col-span-1 border-brand-yellow/60 bg-brand-yellow/8' : 'border-brand-white/10 bg-brand-white/5'}`}>
+                  <p className={`text-xl font-black uppercase mb-1 ${color}`}>{name}</p>
+                  <p className="text-xs text-brand-gray mb-4 tabular-nums">{band}</p>
+                  <p className="text-xs text-brand-gray leading-relaxed">{desc}</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-center text-brand-gray text-xs mt-8 opacity-70" data-anim style={anim}>
+              Levels are based on total NEXTPredict 2027 spend only. NEXT.io media spend and other NEXT.io events do not count towards recognition here.
+            </p>
+          </div>
+        </section>
 
         {/* ── ABOUT ── */}
-        <section id="about" className="py-24 bg-brand-dark relative border-b border-brand-white/10">
-          <div className="max-w-7xl mx-auto px-8">
-            <div data-anim style={anim}>
-              <h2 className="text-4xl md:text-5xl font-bold text-brand-yellow mb-2 uppercase">The Market Is Moving.</h2>
-              <h3 className="text-3xl md:text-4xl font-bold text-brand-white mb-16 uppercase">Own Your Position In The Category-Defining Event</h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-20">
+        <section id="about" className="jump-section py-20 md:py-24 bg-brand-dark relative border-b border-brand-white/10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-8">
+            <SectionHead title="The Market Is Moving." sub="Own Your Position In The Category-Defining Event" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 mb-16 md:mb-20 items-center">
               <div data-anim style={anim}>
-                <p className="text-xl text-brand-gray leading-relaxed">
+                <p className="text-lg md:text-xl text-brand-gray leading-relaxed">
                   Prediction markets moved from the margins to the mainstream - and NEXTPredict is where the
                   category meets. Platforms, exchanges, market makers, sportsbooks, data providers, payments,
                   regulators and the capital behind them, in one room, for two days in New York.
@@ -998,44 +1615,44 @@ export default function App() {
                   partnership sold out</strong>.
                 </p>
               </div>
-              <div className="grid grid-cols-2 gap-4" data-anim style={anim}>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4" data-anim style={anim}>
                 {[
                   ['2', 'Event Days'],
                   ['3', 'Content Stages'],
                   ['12+', 'Exhibition Positions'],
                   ['3', 'NEXTworking Evenings'],
                 ].map(([num, label], i) => (
-                  <div key={i} className="text-center px-3 py-8 rounded-xl bg-brand-white/5 border border-brand-white/10 group hover:border-brand-yellow/40 transition-all duration-300">
-                    <p className="text-5xl font-black text-brand-white group-hover:text-brand-yellow transition-colors duration-300 mb-2 leading-none">{num}</p>
-                    <p className="text-brand-gray text-xs uppercase tracking-widest leading-snug">{label}</p>
+                  <div key={i} className="text-center px-3 py-7 sm:py-8 rounded-xl bg-brand-white/5 border border-brand-white/10 group hover:border-brand-yellow/40 transition-all duration-300">
+                    <p className="text-4xl sm:text-5xl font-black text-brand-white group-hover:text-brand-yellow transition-colors duration-300 mb-2 leading-none tabular-nums">{num}</p>
+                    <p className="text-brand-gray text-[11px] sm:text-xs uppercase tracking-widest leading-snug">{label}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="bg-brand-white/5 border border-brand-white/10 rounded-3xl p-10 md:p-12 relative overflow-hidden" data-anim style={anim}>
+            <div className="bg-brand-white/5 border border-brand-white/10 rounded-3xl p-6 sm:p-10 md:p-12 relative overflow-hidden" data-anim style={anim}>
               <div className="absolute right-0 top-0 w-96 h-96 bg-brand-yellow/5 rounded-full blur-3xl pointer-events-none" />
               <div className="relative z-10 max-w-3xl">
                 <div className="inline-block bg-brand-yellow text-brand-dark font-bold px-4 py-1 rounded-sm mb-6 text-sm">WHY PARTNER</div>
-                <h4 className="text-3xl md:text-4xl font-bold text-brand-white mb-6">First-Mover Positioning. <span className="text-brand-yellow">A Verified Room.</span></h4>
-                <p className="text-lg text-brand-gray leading-relaxed">
+                <h4 className="text-[1.75rem] sm:text-3xl md:text-4xl font-bold text-brand-white mb-6 leading-tight">First-Mover Positioning. <span className="text-brand-yellow">A Verified Room.</span></h4>
+                <p className="text-base sm:text-lg text-brand-gray leading-relaxed">
                   The demand side is curated on purpose: market makers and traders are hosted, and operators and
                   regulators attend on verified preferential rates - so the room your team works is the room you
                   are paying to meet. Partner visibility runs across the venue, the livestream, NEXT's digital
                   reach (a ~40k LinkedIn following and the daily newsletter database) and the official aftermovie.
                 </p>
-                <p className="text-lg text-brand-gray leading-relaxed mt-4">
+                <p className="text-base sm:text-lg text-brand-gray leading-relaxed mt-4">
                   A new event, but not an unproven team - partners score the NEXT Summit editions far above the
                   industry norm:
                 </p>
-                <div className="grid grid-cols-3 gap-4 mt-6 max-w-xl">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-6 max-w-xl">
                   {[
                     ['+69', 'Partner NPS · Valletta 2026', true],
                     ['+62', 'Partner NPS · New York 2026', true],
                     ['+27', 'Industry Benchmark', false],
                   ].map(([num, label, ours], i) => (
-                    <div key={i} className="text-center px-3 py-5 rounded-xl bg-brand-white/5 border border-brand-white/10">
-                      <p className={`text-3xl font-bold mb-1 leading-none ${ours ? 'text-brand-yellow' : 'text-brand-gray'}`}>{num}</p>
+                    <div key={i} className="flex sm:block items-center gap-4 text-left sm:text-center px-4 py-3.5 sm:px-3 sm:py-5 rounded-xl bg-brand-white/5 border border-brand-white/10">
+                      <p className={`w-14 sm:w-auto shrink-0 text-3xl font-bold sm:mb-1 leading-none tabular-nums ${ours ? 'text-brand-yellow' : 'text-brand-gray'}`}>{num}</p>
                       <p className="text-brand-gray text-xs uppercase tracking-widest leading-snug">{label}</p>
                     </div>
                   ))}
@@ -1047,22 +1664,20 @@ export default function App() {
         </section>
 
         {/* ── AUDIENCE ── */}
-        <section id="audience" className="py-24 bg-brand-dark relative border-b border-brand-white/10">
-          <div className="max-w-7xl mx-auto px-8">
-            <div className="text-center mb-14" data-anim style={anim}>
-              <h2 className="text-4xl md:text-5xl font-bold text-brand-white mb-4 uppercase">Who's In <span className="text-brand-yellow">The Room</span></h2>
-              <p className="text-brand-gray text-lg max-w-2xl mx-auto">A summit built on category fit, not badge count - the buyers, builders and rule-makers of prediction markets.</p>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {audience.map(([label, Icon], i) => (
+        <section id="audience" className="jump-section py-20 md:py-24 bg-brand-dark relative border-b border-brand-white/10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-8">
+            <SectionHead title="Who's In" accent="The Room"
+              lede="A summit built on category fit, not badge count - the buyers, builders and rule-makers of prediction markets." />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+              {AUDIENCE.map(([label, Icon], i) => (
                 <div key={label} data-anim style={{ ...anim, transitionDelay: `${i * 50}ms` }}
-                  className="flex flex-col items-center gap-3 bg-brand-white/5 border border-brand-white/10 rounded-2xl px-4 py-8 hover:border-brand-yellow/50 hover:bg-brand-white/8 transition-all duration-300">
+                  className="flex flex-col items-center justify-center gap-3 bg-brand-white/5 border border-brand-white/10 rounded-2xl px-3 sm:px-4 py-6 sm:py-8 hover:border-brand-yellow/50 hover:bg-brand-white/8 transition-all duration-300">
                   <Icon className="w-7 h-7 text-brand-yellow" aria-hidden />
-                  <p className="text-sm font-bold text-brand-white text-center uppercase tracking-wide">{label}</p>
+                  <p className="text-[12px] sm:text-sm font-bold text-brand-white text-center uppercase tracking-wide leading-snug">{label}</p>
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12" data-anim style={anim}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-10 md:mt-12" data-anim style={anim}>
               {[
                 ['The Content', 'Three stages across two days: the Leadership Stage headline programme, plus two hub stages for deeper category conversations - regulation, liquidity, sports, data and the builder economy.'],
                 ['The Network', 'Three NEXTworking evenings, curated introductions, private meeting rooms and hosted hospitality - built for a market that trades on relationships.'],
@@ -1077,117 +1692,28 @@ export default function App() {
           </div>
         </section>
 
-        {/* ── PRICING / RATE CARD ── */}
-        <section id="pricing" className="py-24 bg-brand-dark relative">
-          <div className="max-w-7xl mx-auto px-8">
-            <div className="text-center mb-10" data-anim style={anim}>
-              <h2 className="text-4xl md:text-5xl font-bold text-brand-yellow mb-4 uppercase">Partnership Rate Card</h2>
-              <p className="text-brand-gray max-w-3xl mx-auto">
-                Published pricing, all-in where stated. Exclusive and shared routes over the same inventory are
-                alternatives - the calculator enforces it. Prices in EUR and exclude VAT.
-              </p>
-              <button onClick={downloadRateCardPDF}
-                className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full border border-brand-yellow/50 text-brand-yellow font-bold text-sm uppercase tracking-widest hover:bg-brand-yellow/10 transition-colors">
-                <Download className="w-4 h-4" aria-hidden /> Download Full Rate Card
-              </button>
-            </div>
-
-            {/* Filters */}
-            <div className="mb-14 space-y-3" data-anim style={anim}>
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                <span className="text-[10px] uppercase tracking-widest text-brand-gray font-bold mr-1">Objective:</span>
-                {impacts.map((f) => (
-                  <button key={f} onClick={() => setActiveImpact(activeImpact === f ? null : f)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border transition-all ${activeImpact === f ? 'bg-brand-yellow text-brand-dark border-brand-yellow' : 'border-brand-white/20 text-brand-gray hover:border-brand-yellow/60 hover:text-brand-white'}`}>
-                    {f}
-                  </button>
-                ))}
-              </div>
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                <span className="text-[10px] uppercase tracking-widest text-brand-gray font-bold mr-1">Format:</span>
-                {types.map((f) => (
-                  <button key={f} onClick={() => setActiveType(activeType === f ? null : f)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border transition-all ${activeType === f ? 'bg-brand-yellow text-brand-dark border-brand-yellow' : 'border-brand-white/20 text-brand-gray hover:border-brand-yellow/60 hover:text-brand-white'}`}>
-                    {f}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Product grid by category */}
-            {filteredByCategory.map(({ cat, items }) => (
-              <div key={cat} className="mb-16">
-                <div className="flex items-center gap-4 mb-8" data-anim style={anim}>
-                  <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-brand-white uppercase">{cat.replace(/-/g, '\u2011')}</h3>
-                  <div className="h-px bg-brand-yellow/30 flex-1" />
-                  <span className="text-xs text-brand-gray">{items.length} product{items.length === 1 ? '' : 's'}</span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {items.map((item) =>
-                    item.featured
-                      ? <FeaturedPricingCard key={item.id} item={item} onAdd={addToCart} rebooking={rebooking} cartCount={cartCounts[item.id] || 0} conflicted={conflictedIds.has(item.id)} />
-                      : <PricingCard key={item.id} item={item} onAdd={addToCart} rebooking={rebooking} cartCount={cartCounts[item.id] || 0} conflicted={conflictedIds.has(item.id)} />
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── RECOGNITION LEVELS ── */}
-        <section id="recognition" className="py-24 bg-brand-white/[0.03] relative border-y border-brand-white/10">
-          <div className="max-w-7xl mx-auto px-8">
-            <div className="text-center mb-14" data-anim style={anim}>
-              <h2 className="text-4xl md:text-5xl font-bold text-brand-white mb-4 uppercase">Partner <span className="text-brand-yellow">Recognition</span></h2>
-              <p className="text-brand-gray max-w-3xl mx-auto">
-                Recognition is earned on your combined total spend across all NEXTPredict 2027 products.
-                It carries no extra charge and adds no further products - it is how prominently the event says thank you.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4" data-anim style={anim}>
-              {[
-                ['Silver', 'Below €30k', 'text-brand-gray', 'Silver position and logo recognition across agreed listings, website and onsite displays.'],
-                ['Gold', '€30k – €79,999', 'text-yellow-400', 'Gold position and logo recognition across agreed listings, website and onsite displays.'],
-                ['Platinum', '€80k – €134,999', 'text-blue-300', 'Platinum position and logo recognition across agreed listings, website and onsite displays.'],
-                ['Diamond', '€135k+', 'text-cyan-100', 'Diamond position and logo recognition across agreed listings, website and onsite displays.'],
-                ['Headline', 'Headline product', 'text-brand-yellow', 'The highest position in the partner hierarchy - reserved for the Headline Partner. Not reachable by spend alone.'],
-              ].map(([name, band, color, desc], i) => (
-                <div key={name} data-anim style={{ ...anim, transitionDelay: `${i * 60}ms` }}
-                  className={`rounded-2xl border p-6 flex flex-col ${name === 'Headline' ? 'border-brand-yellow/60 bg-brand-yellow/8' : 'border-brand-white/10 bg-brand-white/5'}`}>
-                  <p className={`text-xl font-black uppercase mb-1 ${color}`}>{name}</p>
-                  <p className="text-xs text-brand-gray mb-4">{band}</p>
-                  <p className="text-xs text-brand-gray leading-relaxed">{desc}</p>
-                </div>
-              ))}
-            </div>
-            <p className="text-center text-brand-gray text-xs mt-8 opacity-70" data-anim style={anim}>
-              Levels are based on total NEXTPredict 2027 spend only. NEXT.io media spend and other NEXT.io events do not count towards recognition here.
-            </p>
-          </div>
-        </section>
-
         {/* ── TICKETS ── */}
-        <TicketsSection anim={anim} />
+        <TicketsSection />
 
         {/* ── REBOOKING / CTA ── */}
-        <section className="py-24 bg-brand-dark relative">
-          <div className="max-w-5xl mx-auto px-8 text-center" data-anim style={anim}>
+        <section className="py-20 md:py-24 bg-brand-dark relative">
+          <div className="max-w-5xl mx-auto px-4 sm:px-8 text-center" data-anim style={anim}>
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-yellow/10 border border-brand-yellow/20 rounded-full text-brand-yellow text-xs font-bold tracking-widest uppercase mb-8">
               <ShieldCheck className="w-3.5 h-3.5" aria-hidden /><span>2026 Partners</span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-black text-brand-white uppercase mb-6">Rebook Early. <span className="text-brand-yellow">Keep 15%.</span></h2>
-            <p className="text-lg text-brand-gray max-w-3xl mx-auto mb-10">
+            <h2 className="text-[2rem] leading-[1.05] sm:text-4xl md:text-5xl font-black text-brand-white uppercase tracking-tight mb-6">Rebook Early. <span className="text-brand-yellow">Keep 15%.</span></h2>
+            <p className="text-base md:text-lg text-brand-gray max-w-3xl mx-auto mb-10 leading-relaxed">
               Partners from NEXTPredict 2026 qualify for a 15% rebooking rate on 2027 packages, with first
               conversation on the exclusive inventory they held. The rebooking rate is not combinable with any
               other offer. Toggle it in the calculator to see your pricing.
             </p>
-            <div className="flex flex-wrap justify-center gap-4">
+            <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
               <a href="mailto:sales@next.io?subject=NEXTPredict 2027 rebooking"
-                className="bg-brand-yellow text-brand-dark px-8 py-4 rounded-full font-black text-sm uppercase tracking-widest hover:bg-white transition-colors inline-flex items-center gap-2">
+                className="bg-brand-yellow text-brand-dark px-7 sm:px-8 py-4 rounded-full font-black text-sm uppercase tracking-widest hover:bg-white transition-colors inline-flex items-center gap-2">
                 <Mail className="w-4 h-4" aria-hidden /> Talk To Partnerships
               </a>
-              <button onClick={downloadRateCardPDF}
-                className="border border-brand-white/20 text-brand-white px-8 py-4 rounded-full font-black text-sm uppercase tracking-widest hover:border-brand-yellow hover:text-brand-yellow transition-colors inline-flex items-center gap-2">
+              <button type="button" onClick={downloadRateCardPDF}
+                className="border border-brand-white/20 text-brand-white px-7 sm:px-8 py-4 rounded-full font-black text-sm uppercase tracking-widest hover:border-brand-yellow hover:text-brand-yellow transition-colors inline-flex items-center gap-2">
                 <Download className="w-4 h-4" aria-hidden /> Full Rate Card PDF
               </button>
             </div>
@@ -1197,15 +1723,15 @@ export default function App() {
 
       {/* ── FOOTER ── */}
       <footer className="border-t border-brand-white/10 py-14 bg-brand-white/[0.03]">
-        <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between gap-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 flex flex-col md:flex-row justify-between gap-8">
           <div>
-            <p className="font-black text-2xl uppercase tracking-tight mb-2">NEXT<span className="text-brand-yellow">Predict</span> 2027</p>
+            <p className="font-black text-2xl tracking-tight mb-2">NEXT<span className="text-brand-yellow">Predict</span> 2027</p>
             <p className="text-brand-gray text-sm">The Prediction Markets Summit · October 2027 · New York City</p>
             <p className="text-brand-gray/60 text-xs mt-1">Exact dates and venue to be announced.</p>
           </div>
-          <div className="text-sm text-brand-gray space-y-2 md:text-right">
-            <p><a href="mailto:sales@next.io" className="hover:text-brand-yellow transition-colors font-semibold">sales@next.io</a></p>
-            <p><a href="https://next.io" target="_blank" rel="noreferrer" className="hover:text-brand-yellow transition-colors">next.io</a></p>
+          <div className="text-sm text-brand-gray space-y-1 md:text-right">
+            <p><a href="mailto:sales@next.io" className="inline-flex items-center min-h-10 hover:text-brand-yellow transition-colors font-semibold">sales@next.io</a></p>
+            <p><a href="https://next.io" target="_blank" rel="noreferrer" className="inline-flex items-center min-h-10 hover:text-brand-yellow transition-colors">next.io</a></p>
             <p className="text-xs text-brand-gray/60 max-w-md md:ml-auto">
               All prices exclude VAT. Availability subject to change without notice. Exclusive and shared routes
               over the same inventory are alternatives, never sold together. Ticket prices in USD; partnership
