@@ -200,7 +200,9 @@ Rules future edits must keep:
   pitch, objection or close. The button is "Present". No em dashes in new copy.
 - The brand is always NEXTPredict: inside an uppercase element use `<Brand />`
   (it resets the case). Prediction markets are never framed as gambling or
-  iGaming in new copy.
+  iGaming in new copy, and the page names iGaming nowhere (Stuart, 26 Sep
+  2026: the about section's "This is not another iGaming expo with a new
+  banner" became "This is not a trade show with a new banner").
 - Slides render no element ids: the page stays mounted under the deck, so a
   shared block used on a slide takes a switch like `TicketLadder anchors`.
 - The gated Start-up ticket rate is never added; the Start-Up Pass box

@@ -2396,7 +2396,7 @@ export default function App() {
                   category meets. Platforms, exchanges, market makers, sportsbooks, data providers, payments,
                   regulators and the capital behind them, in one room, for two days in New York.
                   <br /><br />
-                  This is not another iGaming expo with a new banner. It is a summit built for one category,
+                  This is not a trade show with a new banner. It is a summit built for one category,
                   returning in October 2027 after its 2026 debut - where the <strong className="text-brand-yellow">Leadership Stage
                   partnership sold out</strong>.
                 </p>
