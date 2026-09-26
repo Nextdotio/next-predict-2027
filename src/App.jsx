@@ -378,7 +378,7 @@ const pricing = [
     impact: ['Category Leadership', 'Brand Awareness', 'Thought Leadership'], type: ['Speaking & Content', 'Branding & Visibility'] },
   { id: 11, cat: 'Leadership Stage', title: 'Leadership Stage Presenter', price: 95000, exclusive: true, avail: null,
     quote: '"The single biggest speaking slot of the event: one exclusive C-level presentation on the Leadership Stage, Day 2. One slot. One brand."',
-    bullets: '20-minute C-level presentation, interview or featured session on the Leadership Stage\nFull AV and production support\n"Presented by" session title on agenda, website and screens\n3 Full Event passes + 1 Speaker pass\n📅 Exclusive - one slot, Day 2 only.',
+    bullets: '20-minute C-level presentation, interview or featured session on the Leadership Stage\nFull brand ownership of the content, within event guidelines\nFull AV and production support\n"Presented by" session title on agenda, website and screens\n3 Full Event passes + 1 Speaker pass\n📅 Exclusive - one slot, Day 2 only.',
     impact: ['Thought Leadership', 'Category Leadership'], type: ['Speaking & Content'] },
   { id: 13, cat: 'Leadership Stage', title: 'Leadership Stage Custom Session', price: 60000, exclusive: false, avail: 2,
     quote: '"Your C-level executive alongside a guest C-level of your choosing - a moderated fireside on the main stage, presented by your brand."',
@@ -407,8 +407,8 @@ const pricing = [
     bullets: 'Stage 2 backdrop branding around the two stage screens\nDelegate-chair branding\n1 Custom Panel session included\nFull one-day hub presence\nWebsite, social and aftermovie visibility\n3 Full Event passes + 1 Speaker pass\n📅 One partnership available. Stage 3 runs its panel programme on Day 1; Day 2 is the workshop track.',
     impact: ['Brand Awareness', 'Thought Leadership'], type: ['Speaking & Content', 'Branding & Visibility'] },
   { id: 19, cat: 'Stage 2 Hub', title: 'Stage 2 Presenter', price: 55000, exclusive: false, avail: 2,
-    quote: '"Twenty minutes that belong to your C-level: a keynote on Stage 2 with no panel to share it, and your brand\'s name on the session across the agenda and the website."',
-    bullets: '20-minute C-level keynote\nFull AV and production support\n"Presented by" session title on agenda and website\n2 Full Event passes + 1 Speaker pass\n📅 One slot per day, subject to programme.',
+    quote: '"Twenty minutes of your own content: your C-level\'s keynote on Stage 2, with no panel to share it and your brand\'s name on the session across the agenda and the website."',
+    bullets: '20-minute C-level keynote\nFull brand ownership of the content, within event guidelines\nFull AV and production support\n"Presented by" session title on agenda and website\n2 Full Event passes + 1 Speaker pass\n📅 One slot per day, subject to programme.',
     impact: ['Thought Leadership'], type: ['Speaking & Content'] },
   { id: 20, cat: 'Stage 2 Hub', title: 'Stage 2 Custom Session', price: 40000, exclusive: false, avail: 2,
     quote: '"Share Stage 2 with the guest you want to be seen with: your C-level and a C-level of your choosing, in a moderated fireside presented by your brand."',
@@ -429,8 +429,8 @@ const pricing = [
     bullets: 'Branding on stage returns and content-screen surrounds\nChair branding and branded holding slide\n1 Custom Panel session included\nFull one-day hub presence\nWebsite, social and aftermovie visibility\n2 Full Event passes + 1 Speaker pass\n📅 One partnership available. Stage 3 runs its panel programme on Day 1; Day 2 is the workshop track.',
     impact: ['Brand Awareness', 'Thought Leadership'], type: ['Speaking & Content', 'Branding & Visibility'] },
   { id: 25, cat: 'Stage 3 Hub', title: 'Stage 3 Presenter', price: 30000, exclusive: true, avail: null,
-    quote: '"The only Presenter slot on Stage 3: twenty minutes for your C-level\'s keynote, presented by your brand on the agenda and the website."',
-    bullets: '20-minute C-level keynote\nFull AV and production support\n"Presented by" session title on agenda and website\n1 Full Event pass + 1 Speaker pass\n📅 Exclusive - one slot, Day 1 only.',
+    quote: '"The only Presenter slot on Stage 3: twenty minutes of your own content, delivered by your C-level and presented by your brand on the agenda and the website."',
+    bullets: '20-minute C-level keynote\nFull brand ownership of the content, within event guidelines\nFull AV and production support\n"Presented by" session title on agenda and website\n1 Full Event pass + 1 Speaker pass\n📅 Exclusive - one slot, Day 1 only.',
     impact: ['Thought Leadership'], type: ['Speaking & Content'] },
   { id: 26, cat: 'Stage 3 Hub', title: 'Stage 3 Custom Session', price: 21500, exclusive: false, avail: 1,
     quote: '"The most accessible way to put a guest on stage with you: your C-level and a C-level of your choosing, in a moderated Stage 3 conversation presented by your brand."',
@@ -834,32 +834,21 @@ function TermsList({ terms }) {
   )
 }
 
-// A card laid out wide (its container at @2xl) has the room, so it shows every
-// line and drops the toggle; the collapse is for narrow cards only.
+// Every deliverable shows, always: no toggle, on a card of any width (Stuart,
+// 26 Sep 2026: "Please do include all deliverables. It's important").
 function DeliverablesList({ bullets, featured = false }) {
-  const [expanded, setExpanded] = useState(false)
   const { items, terms } = splitBullets(bullets)
-  // collapse only when it hides at least two lines - "Show 1 more" is a wasted tap
-  const collapsedCount = items.length - (featured ? 10 : 4) >= 2 ? (featured ? 10 : 4) : items.length
-  const hiddenCount = items.length - collapsedCount
   return (
     <>
       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-gray mb-3">What&rsquo;s included</p>
       <ul className={featured ? 'space-y-3' : 'space-y-2'}>
         {items.map((line, i) => (
-          <li key={i} className={`items-start text-sm ${featured ? 'text-brand-white/90' : 'text-brand-white/80'} ${i < collapsedCount || expanded ? 'flex' : 'hidden @2xl:flex'}`}>
+          <li key={i} className={`flex items-start text-sm ${featured ? 'text-brand-white/90' : 'text-brand-white/80'}`}>
             <CircleCheck className="text-brand-yellow mr-3 shrink-0 mt-0.5 w-4 h-4" aria-hidden />
             <span className="leading-relaxed">{line}</span>
           </li>
         ))}
       </ul>
-      {hiddenCount > 0 && (
-        <button type="button" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded}
-          className="@2xl:hidden mt-1.5 -ml-1 inline-flex items-center gap-1.5 min-h-10 px-1 text-xs font-bold uppercase tracking-wider text-brand-yellow hover:text-brand-yellow/80 transition-colors">
-          {expanded ? 'Show less' : `Show ${hiddenCount} more`}
-          <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} aria-hidden />
-        </button>
-      )}
       <TermsList terms={terms} />
     </>
   )
@@ -1633,11 +1622,11 @@ function StatusPill({ item, featured = false }) {
   return <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${tone}`}>{featured && !out ? `✦ ${label || 'Featured'}` : label}</span>
 }
 
-// the first `max` deliverables, then "+ N more on the card" (a way onto it)
-function SlideDeliverables({ items, heading = 'What’s included', max = 6, onMore, small = false, cols = false, className = '' }) {
+// every deliverable, always (never "+ N more"): a long list sets smaller
+function SlideDeliverables({ items, heading = 'What’s included', small = false, cols = false, className = '' }) {
   if (!items.length) return null
-  const shown = items.slice(0, max)
-  const more = items.length - shown.length
+  const shown = items
+  small = small || items.length > 7
   return (
     <div className={className}>
       <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] text-brand-gray mb-3">{heading}</p>
@@ -1649,12 +1638,6 @@ function SlideDeliverables({ items, heading = 'What’s included', max = 6, onMo
           </li>
         ))}
       </ul>
-      {more > 0 && (
-        <button type="button" onClick={onMore}
-          className="mt-2 -ml-1 inline-flex items-center gap-1.5 min-h-11 px-1 text-sm font-bold text-brand-yellow hover:text-brand-yellow/80 transition-colors">
-          + {more} more on the card <ArrowRight className="w-3.5 h-3.5" aria-hidden />
-        </button>
-      )}
     </div>
   )
 }
@@ -1857,7 +1840,7 @@ function ProductSlide({ card, deck, goId }) {
         <AltLinks card={card} deck={deck} goId={goId} />
       </div>
       <div className="lg:col-span-5">
-        <SlideDeliverables items={items} onMore={() => deck.openCard(id)} />
+        <SlideDeliverables items={items} />
         <TermsList terms={terms} />
       </div>
     </div>
@@ -1880,10 +1863,6 @@ function RouteSlide({ card, deck, goId }) {
   const lede = stripQuotes(routes[0].o.quote)
   const sharedLede = routes.every((r) => stripQuotes(r.o.quote) === lede) ? routes[0].o.quote : null
   const openId = deck.focusRoute || productId(card)
-  // each route reads as about six lines, like a product slide: all of its own
-  // lines, then the shared ones up to six (never fewer than two), then "+ N more"
-  const ownMax = Math.max(...routes.map((r) => r.items.filter((l) => !common.includes(l)).length))
-  const commonMax = Math.max(2, 6 - ownMax)
   // Little shared (no shared terms, at most three shared lines): the panels
   // take the full width, price and add button share a row, and the shared
   // lines run in a strip under the panels. Otherwise the shared lines and
@@ -1922,7 +1901,7 @@ function RouteSlide({ card, deck, goId }) {
                   </div>
                 </div>
                 {!sharedLede && <Lede text={o.quote} />}
-                <SlideDeliverables items={items.filter((l) => !common.includes(l))} heading="Only on this route" max={Infinity} small />
+                <SlideDeliverables items={items.filter((l) => !common.includes(l))} heading="Only on this route" small />
                 <TermsList terms={terms.filter((t) => !commonTerms.some((c) => sameTerm(c, t)))} />
               </div>
             )
@@ -1930,12 +1909,12 @@ function RouteSlide({ card, deck, goId }) {
         </div>
         {side && (
           <div className={`${narrowSide ? 'xl:col-span-3' : 'xl:col-span-4'} xl:pt-1`}>
-            <SlideDeliverables items={common} heading="Both routes include" max={commonMax} onMore={() => deck.openCard(openId)} small />
+            <SlideDeliverables items={common} heading="Both routes include" small />
             <TermsList terms={commonTerms} />
           </div>
         )}
       </div>
-      {wide && <SlideDeliverables items={common} heading="Both routes include" max={commonMax} onMore={() => deck.openCard(openId)} small cols className="mt-5" />}
+      {wide && <SlideDeliverables items={common} heading="Both routes include" small cols className="mt-5" />}
       <AltLinks card={card} deck={deck} goId={goId} />
     </div>
   )

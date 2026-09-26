@@ -112,9 +112,13 @@ and "beautify the brochures". The page is now products first.
   pair stays as two cards: their names share no stem.
 - **Terms:** `splitBullets` moves 📅 / ⚠️ lines into the always-visible
   "Availability & terms" block (`TermsList`), word for word, with small icons -
-  never pills, never red. Deliverables collapse after four lines on a narrow
-  card (never to hide a single line) and show in full on a wide one. Both
-  PDFs mirror this; they also write NEXTPredict with no `text-transform`.
+  never pills, never red. Every deliverable shows on every card, with no
+  toggle, whatever the card's width (Stuart, 26 Sep 2026: "Please do include
+  all deliverables. It's important"). Both PDFs mirror this, every line; they
+  also write NEXTPredict with no `text-transform`. The three Presenter cards
+  carry "Full brand ownership of the content, within event guidelines" (the
+  2026 spec's line, restored 26 Sep 2026): it is what separates a keynote from
+  a branded session, so keep it.
 - **Lede:** `quote` renders plain through `Lede` (no quote marks, no italics).
 - **No orphans:** `familySpans` / `spanClass` balance each family's grid (two up
   from md, three up from xl); a card left alone on a row spans it and lays
@@ -162,16 +166,16 @@ plan they built together.
   Focus returns to whatever opened the deck.
 - **Product slide:** family and the card's badge as a pill, name, `PriceBlock`
   (POA, rebooking rate), `Lede`, `TagRow`, `AddButton` through the page's
-  `addToCart` (caps, conflicts, sold, reserved), Open the card, Copy link; the
-  first six deliverables then "+ N more on the card"; `TermsList` word for word.
+  `addToCart` (caps, conflicts, sold, reserved), Open the card, Copy link;
+  every deliverable (`SlideDeliverables` never trims; past seven lines it sets
+  smaller); `TermsList` word for word.
   The Nourish Bars pair, two cards in `CONFLICTS`, links to its alternative.
 - **Two-route slide (`RouteSlide`):** each route keeps a panel with its price,
   add button, copy-link icon, lede, the lines only it carries and its own terms;
   what both routes carry word for word (lines, terms, and the lede when it is
-  identical) is listed once. A route shows about six lines (its own plus shared)
-  before "+ N more on the card". Little shared: full-width panels. At 1280x800
-  the heaviest pairs scroll a little; label, price and add button always sit
-  above the fold.
+  identical) is listed once, every line of it. Little shared: full-width
+  panels. At 1280x800 the heaviest pairs scroll a little; label, price and add
+  button always sit above the fold.
 - **Copy link:** every card (a route card copies the route on screen), every
   product slide, each route panel, the ticket slide. It never carries `present`.
 - **Goal chips** (`GoalChips`, top of the product menu) use the `impact` tags,
