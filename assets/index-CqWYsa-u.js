@@ -494,11 +494,11 @@ Delegate-chair branding
 Full one-day hub presence
 Website, social and aftermovie visibility
 3 Full Event passes + 1 Speaker pass
-📅 One partnership available. Stage 3 runs its panel programme on Day 1; Day 2 is the workshop track.`,impact:["Brand Awareness","Thought Leadership"],type:["Speaking & Content","Branding & Visibility"]},{id:19,cat:"Stage 2 Hub",title:"Stage 2 Presenter",price:55e3,exclusive:!1,avail:2,quote:'"A 20-minute C-level keynote on Stage 2, presented by your brand, with full production support."',bullets:`20-minute C-level keynote
+📅 One partnership available. Stage 3 runs its panel programme on Day 1; Day 2 is the workshop track.`,impact:["Brand Awareness","Thought Leadership"],type:["Speaking & Content","Branding & Visibility"]},{id:19,cat:"Stage 2 Hub",title:"Stage 2 Presenter",price:55e3,exclusive:!1,avail:2,quote:`"Twenty minutes that belong to your C-level: a keynote on Stage 2 with no panel to share it, and your brand's name on the session across the agenda and the website."`,bullets:`20-minute C-level keynote
 Full AV and production support
 "Presented by" session title on agenda and website
 2 Full Event passes + 1 Speaker pass
-📅 One slot per day, subject to programme.`,impact:["Thought Leadership"],type:["Speaking & Content"]},{id:20,cat:"Stage 2 Hub",title:"Stage 2 Custom Session",price:4e4,exclusive:!1,avail:2,quote:'"Your C-level and a guest C-level in a moderated Stage 2 fireside, presented by your brand."',bullets:`Sponsor C-level plus guest C-level participant
+📅 One slot per day, subject to programme.`,impact:["Thought Leadership"],type:["Speaking & Content"]},{id:20,cat:"Stage 2 Hub",title:"Stage 2 Custom Session",price:4e4,exclusive:!1,avail:2,quote:'"Share Stage 2 with the guest you want to be seen with: your C-level and a C-level of your choosing, in a moderated fireside presented by your brand."',bullets:`Sponsor C-level plus guest C-level participant
 25-30 minute moderated discussion or fireside format
 "Presented by" session title on agenda, website and screens
 1 Full Event pass + 2 Speaker passes
@@ -516,11 +516,11 @@ Chair branding and branded holding slide
 Full one-day hub presence
 Website, social and aftermovie visibility
 2 Full Event passes + 1 Speaker pass
-📅 One partnership available. Stage 3 runs its panel programme on Day 1; Day 2 is the workshop track.`,impact:["Brand Awareness","Thought Leadership"],type:["Speaking & Content","Branding & Visibility"]},{id:25,cat:"Stage 3 Hub",title:"Stage 3 Presenter",price:3e4,exclusive:!0,avail:null,quote:'"A 20-minute C-level keynote on Stage 3, presented by your brand."',bullets:`20-minute C-level keynote
+📅 One partnership available. Stage 3 runs its panel programme on Day 1; Day 2 is the workshop track.`,impact:["Brand Awareness","Thought Leadership"],type:["Speaking & Content","Branding & Visibility"]},{id:25,cat:"Stage 3 Hub",title:"Stage 3 Presenter",price:3e4,exclusive:!0,avail:null,quote:`"The only Presenter slot on Stage 3: twenty minutes for your C-level's keynote, presented by your brand on the agenda and the website."`,bullets:`20-minute C-level keynote
 Full AV and production support
 "Presented by" session title on agenda and website
 1 Full Event pass + 1 Speaker pass
-📅 One slot per day.`,impact:["Thought Leadership"],type:["Speaking & Content"]},{id:26,cat:"Stage 3 Hub",title:"Stage 3 Custom Session",price:21500,exclusive:!1,avail:1,quote:'"Your C-level and a guest C-level in a moderated Stage 3 conversation, presented by your brand."',bullets:`Sponsor C-level plus guest C-level participant
+📅 Exclusive - one slot, Day 1 only.`,impact:["Thought Leadership"],type:["Speaking & Content"]},{id:26,cat:"Stage 3 Hub",title:"Stage 3 Custom Session",price:21500,exclusive:!1,avail:1,quote:'"The most accessible way to put a guest on stage with you: your C-level and a C-level of your choosing, in a moderated Stage 3 conversation presented by your brand."',bullets:`Sponsor C-level plus guest C-level participant
 25-30 minute moderated discussion or fireside format
 "Presented by" session title on agenda, website and screens
 2 Speaker passes
@@ -562,7 +562,7 @@ Logo within the event guide
 Mention in the post-event aftermovie
 4 Full Event passes
 📅 One position available.
-⚠️ Either/or route with the space-only option for the same booth - never sold together.`,impact:["Lead Generation","Brand Awareness"],type:["Exhibition"]},{id:33,cat:"Exhibition",title:"Exhibition Stand 6x4, Premium Gallery Position, Turnkey",price:75e3,exclusive:!0,avail:null,quote:'"A top-position 6x4 physical showcase with premium gallery visibility."',bullets:`Premium 6x4 gallery position with top visibility
+⚠️ Either/or route with the space-only option for the same booth - never sold together.`,impact:["Lead Generation","Brand Awareness"],type:["Exhibition"]},{id:33,cat:"Exhibition",title:"Exhibition Stand 6x4, Premium Gallery Position, Turnkey",price:75e3,exclusive:!0,avail:null,quote:'"Gallery visibility without the landmark footprint: a 6x4 stand in a top gallery position, with the same four Full Event passes and pre-event welcome post as the showcase stands."',bullets:`Premium 6x4 gallery position with top visibility
 Turnkey route: NEXT.io designs, builds, breaks down and cleans the stand, with furniture and power included
 Website and floorplan listing
 Agreed signage package
@@ -602,7 +602,7 @@ Summit-wide general branding
 TV screen and directional signage
 Branded merchandise option
 Summit-wide general branding
-2 Full Event passes`,impact:["Deal Flow"],type:["Networking & Hospitality"]},{id:39,cat:"Private Meeting Rooms",title:"Private Meeting Room, 6 Person",price:31e3,exclusive:!0,avail:null,quote:'"A private branded 6-person room for focused meetings away from the floor."',bullets:`Private branded meeting room for both event days
+2 Full Event passes`,impact:["Deal Flow"],type:["Networking & Hospitality"]},{id:39,cat:"Private Meeting Rooms",title:"Private Meeting Room, 6 Person",price:31e3,exclusive:!0,avail:null,quote:'"Both teams at one table: a private branded room for six, yours for both event days, away from the floor."',bullets:`Private branded meeting room for both event days
 Freestanding banner, table and 6 chairs
 TV screen and directional signage
 Branded merchandise option
@@ -718,7 +718,7 @@ Logo within the event guide
 Mention in the post-event aftermovie
 4 Full Event passes
 📅 One position available.
-⚠️ Either/or route with the turnkey option for the same booth - never sold together.`,impact:["Lead Generation","Brand Awareness"],type:["Exhibition"]},{id:60,cat:"Exhibition",title:"Exhibition Stand 6x4, Premium Gallery Position, Space Only",price:66e3,exclusive:!0,avail:null,quote:'"A top-position 6x4 physical showcase with premium gallery visibility."',bullets:`Premium 6x4 gallery position with top visibility
+⚠️ Either/or route with the turnkey option for the same booth - never sold together.`,impact:["Lead Generation","Brand Awareness"],type:["Exhibition"]},{id:60,cat:"Exhibition",title:"Exhibition Stand 6x4, Premium Gallery Position, Space Only",price:66e3,exclusive:!0,avail:null,quote:'"Gallery visibility without the landmark footprint: a 6x4 stand in a top gallery position, with the same four Full Event passes and pre-event welcome post as the showcase stands."',bullets:`Premium 6x4 gallery position with top visibility
 Space-only route: the partner designs and builds the stand at their own cost
 Website and floorplan listing
 Agreed signage package
