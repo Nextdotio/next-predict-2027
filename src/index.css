@@ -19,6 +19,12 @@
     color: #ffffff;
     font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   }
+  /* keyboard focus is always visible, in the brand yellow (zero specificity:
+     any element's own outline utility still wins) */
+  :where(a, button, input, [role="radio"], [tabindex]):focus-visible {
+    outline: 2px solid var(--color-brand-yellow);
+    outline-offset: 2px;
+  }
 }
 
 @layer utilities {
@@ -113,3 +119,9 @@
   html { scroll-behavior: auto; }
   [data-anim] { opacity: 1 !important; transform: none !important; transition: none !important; }
 }
+
+/* ── Present mode ──
+   Each slide slides in from the side it came from; PresentMode skips the
+   animation entirely under reduced motion. */
+@keyframes pm-in-fwd { from { opacity: 0; transform: translateX(24px) } to { opacity: 1; transform: none } }
+@keyframes pm-in-back { from { opacity: 0; transform: translateX(-24px) } to { opacity: 1; transform: none } }

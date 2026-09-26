@@ -1,13 +1,26 @@
-import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
 import {
   Mail, Calculator, Download, X, TrendingUp, CalendarDays, MapPin,
   CircleCheck, ChevronDown, ShieldCheck, Ticket, Layers, Users,
   LineChart, Landmark, Scale, Cpu, Newspaper, Banknote, Trophy, Sparkles,
   Info, ArrowRight, ArrowUp, Crown, Martini, Mic, Presentation, MonitorPlay,
-  Handshake, Store, DoorClosed, Coffee, Video, Flag
+  Handshake, Store, DoorClosed, Coffee, Video, Flag, Projector, ChevronRight,
+  Award, ListChecks
 } from 'lucide-react'
+import { PresentMode, usePresent, CopyLinkButton } from './PresentMode.jsx'
 
 const base = import.meta.env.BASE_URL
+
+// The brand is always written NEXTPredict. This brochure had no helper for it:
+// the rule was to keep the name out of uppercase elements. <Brand> resets the
+// case, so it is safe inside one, and carries the two-tone wordmark.
+function Brand() {
+  return <span className="normal-case">NEXT<span className="text-brand-yellow">Predict</span></span>
+}
+
+// The venue line, as every printed and on-page date line says it. Change it the
+// moment Event Ops confirms dates and venue.
+const VENUE_LINE = 'October 2027 · New York City · exact dates and venue to be announced'
 
 const fmtPrice = (n) => `€${n.toLocaleString('en-US')}`
 const fmtUsd = (n) => `$${n.toLocaleString('en-US')}`
@@ -29,6 +42,35 @@ const hasHeadline = (cart) => Array.isArray(cart) && cart.some((i) => HEADLINE_P
 const spendTierIdx = (total) => TIERS.reduce((best, t, i) => (total >= t.min ? i : best), 0)
 const resolveTier = (total, cart) => (hasHeadline(cart) ? HEADLINE_TIER : TIERS[spendTierIdx(total)])
 const nextSpendTier = (total, cart) => (hasHeadline(cart) ? null : TIERS[spendTierIdx(total) + 1] || null)
+
+// ─── Shareable plan link ────────────────────────────────────────────────────
+// ?plan=<id>,<id>,... - product ids from the pricing array, one per unit, so a
+// product taken twice appears twice (Lanyard Sponsor x2 = 53,53). The query is
+// written by hand so the commas stay commas (URLSearchParams writes %2C). On
+// load App feeds each id through the page's own add handler, so caps,
+// conflicts and sold or reserved states still apply; unknown or refused
+// entries are skipped, then the parameter leaves the address bar. The 2026
+// rebooking rate is not carried: whether it applies is the buyer's to confirm.
+const planTotal = (cart, rebooking) => cart.reduce((s, i) => s + (i.poa ? 0 : (rebooking ? Math.round(i.price * 0.85) : i.price)), 0)
+function planLink(cart) {
+  const url = new URL(window.location.href)
+  url.searchParams.delete('present')
+  url.searchParams.delete('plan')
+  url.hash = ''
+  const rest = url.searchParams.toString()
+  url.search = `${rest ? `${rest}&` : ''}plan=${cart.map((i) => i.id).join(',')}`
+  return url.href
+}
+function takePlanParam() {
+  try {
+    const url = new URL(window.location.href)
+    if (!url.searchParams.has('plan')) return null
+    const raw = url.searchParams.get('plan') || ''
+    url.searchParams.delete('plan')
+    window.history.replaceState(window.history.state, '', url)
+    return raw
+  } catch { return null }
+}
 
 // ─── Contact Sales mailto builder ──────────────────────────────────────────
 function buildMailto(cart, rebooking) {
@@ -561,6 +603,8 @@ const impacts = [...new Set(pricing.flatMap((p) => p.impact))]
 const types = [...new Set(pricing.flatMap((p) => p.type))]
 
 // ─── Ticket ladder (public rates, USD) ──────────────────────────────────────
+// The gated Start-up rate is deliberately not on the card (see CLAUDE.md):
+// the Start-Up Pass box below describes it without a price.
 const ticketLadder = [
   { type: 'VIP', eb: 2199, std: 2999, late: 3399, note: 'Premium all-event access with first-priority networking.' },
   { type: 'Full Event', eb: 1299, std: 1799, late: 2099, note: 'The core pass: full programme plus the main networking events.' },
@@ -568,6 +612,52 @@ const ticketLadder = [
   { type: 'Day Pass', eb: 779, std: 1079, late: 1259, note: 'One event day of your choice, including that evening’s event.' },
   { type: 'Operator & Regulator', eb: 650, std: 900, late: 1050, note: 'Verified operators and regulators. Verification required at checkout.' },
 ]
+const TICKET_FOOTNOTE = 'Ticket prices in USD. Conference Only excludes the evening networking programme. VIP includes first-priority access to speed networking.'
+const TICKET_OFFERS = [
+  { title: 'Team of Three', icon: Users,
+    body: <>Bring your team: three Full Event passes at <strong className="text-brand-yellow">15% off</strong> the prevailing Full Event stage price. Available in every stage. Not combinable with any other offer.</> },
+  { title: 'Start-Up Pass', icon: Sparkles,
+    body: <>A gated flat rate for qualifying start-ups - application-based, capped for the event and limited to one per company. Apply via <a className="text-brand-yellow font-semibold" href="mailto:sales@next.io?subject=NEXTPredict 2027 Start-Up Pass">sales@next.io</a>.</> },
+  { title: 'Operators & Regulators', icon: Scale,
+    body: <>Verified operators and regulators attend at the preferential rate above - roughly half the Full Event price at every stage. Verification is confirmed before the ticket is issued.</> },
+]
+
+// ─── Page proof and recognition (shared by the page and Present mode) ───────
+// One copy of each line, so a slide can never drift from the page.
+const EVENT_STATS = [
+  ['2', 'Event Days'],
+  ['3', 'Content Stages'],
+  ['12+', 'Exhibition Positions'],
+  ['3', 'NEXTworking Evenings'],
+]
+const WHY_PARTNER = {
+  title: 'First-Mover Positioning.',
+  accent: 'A Verified Room.',
+  body: "The demand side is curated on purpose: market makers and traders are hosted, and operators and regulators attend on verified preferential rates - so the room your team works is the room you are paying to meet. Partner visibility runs across the venue, the livestream, NEXT's digital reach (a ~40k LinkedIn following and the daily newsletter database) and the official aftermovie.",
+  npsIntro: 'A new event, but not an unproven team - partners score the NEXT Summit editions far above the industry norm:',
+}
+const NPS_PROOF = [
+  ['+69', 'Partner NPS · Valletta 2026', true],
+  ['+62', 'Partner NPS · New York 2026', true],
+  ['+27', 'Industry Benchmark', false],
+]
+const NPS_SOURCE = 'Partner Net Promoter Scores from the NEXT Summit 2026 post-event surveys; industry benchmark as reported by the survey platform.'
+const ROOM_LEDE = 'A summit built on category fit, not badge count - the buyers, builders and rule-makers of prediction markets.'
+const ROOM_PILLARS = [
+  ['The Content', 'Three stages across two days: the Leadership Stage headline programme, plus two hub stages for deeper category conversations - regulation, liquidity, sports, data and the builder economy.'],
+  ['The Network', 'Three NEXTworking evenings, curated introductions, private meeting rooms and hosted hospitality - built for a market that trades on relationships.'],
+  ['The Reach', "Livestream, filmed sessions, official photography and the aftermovie extend your visibility well beyond the room, across NEXT's channels and your own."],
+]
+const RECOGNITION = [
+  ['Silver', 'Below €30k', 'text-brand-gray', 'Silver position and logo recognition across agreed listings, website and onsite displays.'],
+  ['Gold', '€30k – €79,999', 'text-yellow-400', 'Gold position and logo recognition across agreed listings, website and onsite displays.'],
+  ['Platinum', '€80k – €134,999', 'text-blue-300', 'Platinum position and logo recognition across agreed listings, website and onsite displays.'],
+  ['Diamond', '€135k+', 'text-cyan-100', 'Diamond position and logo recognition across agreed listings, website and onsite displays.'],
+  ['Headline', 'Headline product', 'text-brand-yellow', 'The highest position in the partner hierarchy - reserved for the Headline Partner. Not reachable by spend alone.'],
+]
+const RECOGNITION_LEDE = 'Recognition is earned on your combined total spend across all NEXTPredict 2027 products. It carries no extra charge and adds no further products - it is how prominently the event says thank you.'
+const RECOGNITION_NOTE = 'Levels are based on total NEXTPredict 2027 spend only. NEXT.io media spend and other NEXT.io events do not count towards recognition here.'
+const REBOOKING_COPY = 'Partners from NEXTPredict 2026 qualify for a 15% rebooking rate on 2027 packages, with first conversation on the exclusive inventory they held. The rebooking rate is not combinable with any other offer.'
 
 // ─── Cards: one card per decision ───────────────────────────────────────────
 // Exclusive and shared routes over the same inventory are one decision, so each
@@ -622,7 +712,8 @@ const FAMILY_META = {
   'Category Ownership': { short: 'Category Ownership', icon: Crown },
   'NEXTworking Evening Events': { short: 'NEXTworking', icon: Martini },
   'Leadership Stage': { short: 'Leadership Stage', icon: Mic },
-  'Stage 2 Hub': { short: 'Stage 2', icon: Presentation },
+  // Projector, not Presentation: the Presentation icon is the Present action
+  'Stage 2 Hub': { short: 'Stage 2', icon: Projector },
   'Stage 3 Hub': { short: 'Stage 3', icon: MonitorPlay },
   'Workshops & Curated Networking': { short: 'Workshops', icon: Handshake },
   'Exhibition': { short: 'Exhibition', icon: Store },
@@ -818,12 +909,16 @@ function OptionTiles({ card, sel, setSel, rebooking }) {
   )
 }
 
-function PriceBlock({ item, rebooking, featured }) {
-  const size = featured ? 'text-4xl md:text-5xl' : 'text-[1.75rem] leading-none'
+// `scale` sizes the same block for Present mode: 'slide' (a product slide) or
+// 'route' (one of two route panels).
+const PRICE_SCALE = { slide: 'text-5xl sm:text-6xl', route: 'text-4xl' }
+function PriceBlock({ item, rebooking, featured, scale }) {
+  const size = PRICE_SCALE[scale] || (featured ? 'text-4xl md:text-5xl' : 'text-[1.75rem] leading-none')
+  const big = featured || Boolean(scale)
   if (item.poa) return <p className={`${size} font-black text-brand-yellow mb-5 leading-none`}>POA</p>
   if (rebooking) return (
     <div className="mb-5">
-      <p className={`${featured ? 'text-xl' : 'text-sm'} text-brand-gray/50 line-through tabular-nums`}>{fmtPrice(item.price)}</p>
+      <p className={`${big ? 'text-xl' : 'text-sm'} text-brand-gray/50 line-through tabular-nums`}>{fmtPrice(item.price)}</p>
       <p className={`${size} font-black text-brand-yellow leading-none tabular-nums`}>{fmtPrice(Math.round(item.price * 0.85))}</p>
       <p className="text-[11px] text-brand-yellow/70 font-semibold mt-1.5 uppercase tracking-wide">15% rebooking rate applied</p>
     </div>
@@ -835,9 +930,10 @@ function PriceBlock({ item, rebooking, featured }) {
 // colour, with the yellow rule as its only accent: in quote marks and italics
 // it read like a testimonial nobody gave.
 const stripQuotes = (s) => s.replace(/^["“]\s*/, '').replace(/\s*["”]$/, '')
-function Lede({ text, featured }) {
+function Lede({ text, featured, scale }) {
+  const size = scale === 'slide' ? 'text-lg sm:text-xl mb-6' : featured ? 'text-[15px] mb-6' : 'text-[13.5px] mb-5'
   return (
-    <p className={`border-l-2 border-brand-yellow/60 pl-4 leading-relaxed text-brand-white/75 ${featured ? 'text-[15px] mb-6' : 'text-[13.5px] mb-5'}`}>
+    <p className={`border-l-2 border-brand-yellow/60 pl-4 leading-relaxed text-brand-white/75 ${size}`}>
       {stripQuotes(text)}
     </p>
   )
@@ -894,7 +990,7 @@ function AddButton({ item, count, conflicted, onAdd, featured }) {
 // regular card that ends up alone on its row (see `spanClass`) keeps the regular
 // look but, being wide, switches to the same two-column layout by container
 // query (`@2xl`), so it never reads as a stretched narrow card.
-function ProductCard({ card, span = '', rebooking, cartCounts, conflictedIds, onAdd }) {
+function ProductCard({ card, span = '', rebooking, cartCounts, conflictedIds, onAdd, onPresent }) {
   const featured = card.featured
   const multi = card.options.length > 1
   // opens on the first route still open; a deep link to a route overrides it
@@ -945,12 +1041,24 @@ function ProductCard({ card, span = '', rebooking, cartCounts, conflictedIds, on
           <TagRow item={item} featured={featured} className="@2xl:hidden mt-5" />
           <div className="mt-5 pt-5 border-t border-brand-white/10">
             <AddButton item={item} count={count} conflicted={conflicted} onAdd={onAdd} featured={featured} />
+            {/* quiet, under the button: Present opens the deck on this product,
+                Copy link copies this card's address (a route card: the route
+                on screen, which reopens the card on it) */}
+            <div className="mt-2 -mb-2 flex flex-wrap items-center justify-end gap-x-1">
+              <button type="button" onClick={() => onPresent(productId(item))} title="Present this product full screen"
+                className={`${CARD_QUIET} ${CARD_QUIET_TONE}`}>
+                <Presentation className="w-3.5 h-3.5 shrink-0" aria-hidden /> Present
+              </button>
+              <CopyLinkButton id={productId(item)} look={CARD_QUIET} className={CARD_QUIET_TONE} />
+            </div>
           </div>
         </div>
       </div>
     </article>
   )
 }
+const CARD_QUIET = 'inline-flex items-center gap-1.5 min-h-10 sm:min-h-9 rounded-full px-3 text-xs font-bold'
+const CARD_QUIET_TONE = 'text-brand-gray hover:text-brand-yellow hover:bg-brand-white/[0.06] transition-colors'
 
 // ─── Section heading ────────────────────────────────────────────────────────
 // Every section opens the same way: a centred uppercase heading, white with a
@@ -962,7 +1070,7 @@ function SectionHead({ title, accent, sub, lede, children }) {
         {title}{accent && <> <span className="text-brand-yellow whitespace-nowrap">{accent}</span></>}
       </h2>
       {sub && <h3 className="text-lg sm:text-2xl md:text-3xl font-bold text-brand-yellow uppercase mt-3 leading-tight">{sub}</h3>}
-      {lede && <p className="text-brand-gray text-base md:text-lg max-w-3xl mx-auto mt-5 leading-relaxed">{lede}</p>}
+      {lede && <p className="text-brand-gray text-base md:text-lg max-w-3xl mx-auto mt-5 leading-relaxed text-pretty">{lede}</p>}
       {children}
     </div>
   )
@@ -974,12 +1082,14 @@ function SectionHead({ title, accent, sub, lede, children }) {
 // price, each line a link to its card; among the cards a slim bar keeps every
 // family one tap away. Clicks go through `onJump`, which brings back a card an
 // objective or format filter has hidden before it scrolls.
-function MenuLine({ href, onClick, title, price }) {
+// `goal`: undefined while no goal chip is on, then 'on' (the line matches the
+// goal: highlighted) or 'off' (dimmed - still listed, still a link).
+function MenuLine({ href, onClick, title, price, goal }) {
   return (
-    <li>
+    <li className={`transition-opacity duration-200 ${goal === 'off' ? 'opacity-35' : ''}`}>
       <a href={href} onClick={onClick}
         className="group/row flex items-end gap-2 pl-10 pr-3 md:px-0 min-h-11 md:min-h-0 py-2.5 md:py-[6px] text-[13.5px] leading-snug">
-        <span className="text-brand-white/85 group-hover/row:text-brand-yellow transition-colors">{title}</span>
+        <span className={`${goal === 'on' ? 'text-brand-yellow font-semibold' : 'text-brand-white/85'} group-hover/row:text-brand-yellow transition-colors`}>{title}</span>
         <span className="flex-1 min-w-4 mb-[5px] border-b border-dotted border-brand-white/20 group-hover/row:border-brand-yellow/50 transition-colors" aria-hidden />
         <span className={`shrink-0 whitespace-nowrap tabular-nums ${price.out ? 'text-[12px] font-bold uppercase tracking-wider text-brand-gray' : 'font-bold text-brand-white'}`}>
           {price.from && <span className="mr-1 text-[11px] font-medium text-brand-gray">from</span>}{price.text}
@@ -989,19 +1099,27 @@ function MenuLine({ href, onClick, title, price }) {
   )
 }
 
-function MenuBlock({ id, icon: Icon, label, from, open, onToggle, href, onJump, allLabel, className = '', children }) {
+// `hits`: with a goal chip on, how many of the family's products match it (the
+// phone row shows the count; a family with none is dimmed).
+function MenuBlock({ id, icon: Icon, label, from, open, onToggle, href, onJump, allLabel, hits = null, goal = null, dimmed = false, className = '', children }) {
+  const dim = dimmed || hits === 0
   return (
     <div className={`break-inside-avoid border-b border-brand-white/8 last:border-b-0 md:border-b-0 md:mb-7 ${className}`}>
       {/* phone: the family is a row that opens its list */}
       <button type="button" onClick={onToggle} aria-expanded={open} aria-controls={id}
-        className="md:hidden w-full flex items-center gap-3 px-3 min-h-[3.25rem] py-2 text-left">
+        className={`md:hidden w-full flex items-center gap-3 px-3 min-h-[3.25rem] py-2 text-left transition-opacity duration-200 ${dim ? 'opacity-35' : ''}`}>
         <Icon className="w-4 h-4 text-brand-yellow shrink-0" aria-hidden />
         <span className="flex-1 min-w-0 text-[14px] font-bold text-brand-white leading-snug">{label}</span>
+        {hits !== null && (
+          <span className={`shrink-0 inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full text-[11px] font-black tabular-nums ${hits ? 'bg-brand-yellow text-brand-dark' : 'bg-brand-white/10 text-brand-gray'}`}>
+            {hits}<span className="sr-only"> {hits === 1 ? 'product' : 'products'} for {goal}</span>
+          </span>
+        )}
         <span className="text-[12px] text-brand-gray tabular-nums whitespace-nowrap">{from || 'POA'}</span>
         <ChevronDown className={`w-4 h-4 text-brand-gray shrink-0 transition-transform duration-300 ${open ? 'rotate-180' : ''}`} aria-hidden />
       </button>
       {/* desktop: the family heading links to its group */}
-      <a href={href} onClick={(e) => onJump(e, href.slice(1))} className="group/fam hidden md:flex items-center gap-2.5 mb-2">
+      <a href={href} onClick={(e) => onJump(e, href.slice(1))} className={`group/fam hidden md:flex items-center gap-2.5 mb-2 transition-opacity duration-200 ${dim ? 'opacity-35' : ''}`}>
         <span className="w-7 h-7 rounded-full bg-brand-yellow/15 text-brand-yellow flex items-center justify-center shrink-0"><Icon className="w-3.5 h-3.5" aria-hidden /></span>
         <span className="text-[13.5px] font-black text-brand-white leading-tight group-hover/fam:text-brand-yellow transition-colors">{label}</span>
         <ArrowRight className="w-3 h-3 text-brand-gray/60 group-hover/fam:text-brand-yellow transition-colors ml-auto shrink-0" aria-hidden />
@@ -1019,12 +1137,60 @@ function MenuBlock({ id, icon: Icon, label, from, open, onToggle, href, onJump, 
   )
 }
 
-function ProductMenu({ onJump }) {
+// ─── Goal chips ─────────────────────────────────────────────────────────────
+// The rate card's own objective tags (`impact`, the same list as the Objective
+// filter above the cards, whose behaviour is untouched): one chip at a time
+// highlights the products for that goal and dims the rest - the menu still lists
+// every product - and "Present these" opens a deck of just those products.
+const cardHasGoal = (card, goal) => card.options.some((o) => o.impact.includes(goal))
+const goalCount = (goal) => CARDS.reduce((n, g) => n + g.cards.filter((c) => cardHasGoal(c, goal)).length, 0)
+
+function GoalChips({ goal, setGoal, onPresent }) {
+  const n = goal ? goalCount(goal) : 0
+  return (
+    <div className="px-5 sm:px-8 py-4 border-b border-brand-white/10 bg-brand-white/[0.02]">
+      <div role="group" aria-label="Show products for a goal" className="flex flex-wrap items-center gap-2">
+        <span className="mr-1 text-[11px] font-black uppercase tracking-[0.16em] text-brand-gray">Show products for</span>
+        {impacts.map((t) => {
+          const on = goal === t
+          return (
+            <button key={t} type="button" onClick={() => setGoal(on ? null : t)} aria-pressed={on}
+              className={`inline-flex items-center min-h-10 sm:min-h-9 px-3.5 rounded-full border text-[12.5px] font-bold transition-colors ${on
+                ? 'bg-brand-yellow border-brand-yellow text-brand-dark'
+                : 'border-brand-white/20 text-brand-white/85 hover:border-brand-yellow/60 hover:text-brand-yellow'}`}>
+              {t}
+            </button>
+          )
+        })}
+      </div>
+      <div aria-live="polite">
+        {goal && (
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+            <p className="text-sm text-brand-white"><strong className="font-black text-brand-yellow tabular-nums">{n}</strong> product{n === 1 ? '' : 's'} for {goal}</p>
+            <button type="button" onClick={() => onPresent('', goal)}
+              className="inline-flex items-center gap-2 min-h-10 sm:min-h-9 px-4 rounded-full bg-brand-yellow text-brand-dark text-[12.5px] font-black hover:brightness-110 transition">
+              <Presentation className="w-4 h-4" aria-hidden /> Present these
+            </button>
+            <button type="button" onClick={() => setGoal(null)}
+              className="inline-flex items-center min-h-10 sm:min-h-9 text-[12.5px] font-bold text-brand-gray underline underline-offset-2 hover:text-brand-white">
+              Show all
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ProductMenu({ onJump, onPresent }) {
   const [open, setOpen] = useState(null)
+  const [goal, setGoal] = useState(null)
   const toggle = (k) => setOpen((v) => (v === k ? null : k))
+  const lineGoal = (c) => (goal ? (cardHasGoal(c, goal) ? 'on' : 'off') : undefined)
+  const ticketGoal = goal ? 'off' : undefined // tickets carry no goal tags
   const ticketFrom = `from ${fmtUsd(Math.min(...ticketLadder.map((t) => t.eb)))}`
   const ticketLines = ticketLadder.map((t) => (
-    <MenuLine key={t.type} href={`#${ticketId(t)}`} onClick={(e) => onJump(e, ticketId(t))} title={t.type} price={{ from: true, text: fmtUsd(t.eb) }} />
+    <MenuLine key={t.type} href={`#${ticketId(t)}`} onClick={(e) => onJump(e, ticketId(t))} title={t.type} price={{ from: true, text: fmtUsd(t.eb) }} goal={ticketGoal} />
   ))
   return (
     <section id="menu" aria-label="Rate card at a glance" className="jump-near relative bg-brand-dark pb-16 sm:pb-20">
@@ -1034,31 +1200,40 @@ function ProductMenu({ onJump }) {
             <div className="min-w-0 max-w-2xl">
               <p className="text-[11px] font-black uppercase tracking-[0.22em] text-brand-yellow mb-2">Rate card at a glance</p>
               <p className="text-brand-white text-lg sm:text-2xl font-bold leading-snug">{CARD_COUNT} partnership products in {CARDS.length} families, plus delegate tickets</p>
-              <p className="text-brand-gray text-[12.5px] sm:text-sm mt-1.5">Partnership prices in EUR and exclude VAT · ticket prices in USD · pick any line to open it</p>
+              <p className="text-brand-gray text-[12.5px] sm:text-sm mt-1.5">Partnership prices in EUR, excluding VAT · ticket prices in USD · pick any line to open it</p>
             </div>
-            <button type="button" onClick={downloadRateCardPDF}
-              className="inline-flex items-center gap-2 min-h-10 px-5 rounded-full border border-brand-yellow/50 text-brand-yellow font-bold text-[11px] sm:text-xs uppercase tracking-widest hover:bg-brand-yellow/10 transition-colors whitespace-nowrap">
-              <Download className="w-4 h-4" aria-hidden /> Download Full Rate Card
-            </button>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <button type="button" onClick={() => onPresent('')}
+                className="inline-flex items-center gap-2 min-h-10 px-5 rounded-full border border-brand-white/25 text-brand-white font-bold text-[11px] sm:text-xs uppercase tracking-widest hover:border-brand-yellow hover:text-brand-yellow transition-colors whitespace-nowrap">
+                <Presentation className="w-4 h-4" aria-hidden /> Present the rate card
+              </button>
+              <button type="button" onClick={downloadRateCardPDF}
+                className="inline-flex items-center gap-2 min-h-10 px-5 rounded-full border border-brand-yellow/50 text-brand-yellow font-bold text-[11px] sm:text-xs uppercase tracking-widest hover:bg-brand-yellow/10 transition-colors whitespace-nowrap">
+                <Download className="w-4 h-4" aria-hidden /> Download Full Rate Card
+              </button>
+            </div>
           </div>
+          <GoalChips goal={goal} setGoal={setGoal} onPresent={onPresent} />
           <div className="px-2 sm:px-5 md:px-8 py-2 md:pt-7 md:pb-0 md:columns-2 lg:columns-3 md:gap-8 xl:gap-12">
             {CARDS.map(({ cat, cards }) => (
               <MenuBlock key={cat} id={`menu-${catId(cat)}`} icon={FAMILY_META[cat]?.icon || Layers} label={cat}
                 from={familyFrom(cards)} open={open === cat} onToggle={() => toggle(cat)}
+                hits={goal ? cards.filter((c) => cardHasGoal(c, goal)).length : null} goal={goal}
                 href={`#${catId(cat)}`} onJump={onJump} allLabel={`Go to ${FAMILY_META[cat]?.short || cat}`}>
                 {cards.map((c) => (
-                  <MenuLine key={c.key} href={`#${productId(c)}`} onClick={(e) => onJump(e, productId(c))} title={c.title} price={menuPrice(c)} />
+                  <MenuLine key={c.key} href={`#${productId(c)}`} onClick={(e) => onJump(e, productId(c))} title={c.title} price={menuPrice(c)} goal={lineGoal(c)} />
                 ))}
               </MenuBlock>
             ))}
             {/* phone: tickets are one more row of the list */}
             <MenuBlock id="menu-tickets" icon={Ticket} label="Delegate Tickets" from={ticketFrom} className="md:hidden"
+              dimmed={Boolean(goal)}
               open={open === 'tickets'} onToggle={() => toggle('tickets')} href="#tickets" onJump={onJump} allLabel="Go to Tickets">
               {ticketLines}
             </MenuBlock>
           </div>
           {/* wider screens: tickets run as one row under the families, so the columns above stay even */}
-          <div className="hidden md:block px-8 pt-5 pb-5 border-t border-brand-white/10">
+          <div className={`hidden md:block px-8 pt-5 pb-5 border-t border-brand-white/10 transition-opacity duration-200 ${goal ? 'opacity-35' : ''}`}>
             <a href="#tickets" onClick={(e) => onJump(e, 'tickets')} className="group/fam inline-flex items-center gap-2.5 mb-2.5">
               <span className="w-7 h-7 rounded-full bg-brand-yellow/15 text-brand-yellow flex items-center justify-center shrink-0"><Ticket className="w-3.5 h-3.5" aria-hidden /></span>
               <span className="text-[13.5px] font-black text-brand-white group-hover/fam:text-brand-yellow transition-colors">Delegate Tickets</span>
@@ -1077,7 +1252,7 @@ function ProductMenu({ onJump }) {
             </ul>
           </div>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-1 px-5 sm:px-8 py-3 sm:py-4 border-t border-brand-white/10 text-[11px] font-black uppercase tracking-[0.14em]">
-            <span className="text-brand-gray/70">Also on this page</span>
+            <span className="basis-full sm:basis-auto text-brand-gray/70">Also on this page</span>
             {[['Recognition', 'recognition'], ['About', 'about'], ['The Room', 'audience']].map(([t, id]) => (
               <a key={id} href={`#${id}`} onClick={(e) => onJump(e, id)} className="inline-flex items-center gap-1.5 min-h-10 text-brand-white hover:text-brand-yellow transition-colors">
                 {t} <ArrowRight className="w-3 h-3" aria-hidden />
@@ -1153,89 +1328,133 @@ function FilterRow({ label, options, active, setActive }) {
   )
 }
 
-// ─── Tickets section ────────────────────────────────────────────────────────
+// ─── Tickets, recognition and proof blocks ─────────────────────────────────
+// Each is one component shared by the page and Present mode, so a slide shows
+// the page's own figures and never a retyped copy.
+function TicketStages({ className = '' }) {
+  return (
+    <p className={className}>
+      Three published price stages: <strong className="text-brand-white">Early Bird</strong>, <strong className="text-brand-white">Standard</strong> and <strong className="text-brand-white">Late</strong>.
+      Early Bird pricing goes live on <strong className="text-brand-white">16 November 2026</strong>. Each stage closes on its published date or when its allocation
+      sells out, whichever comes first - and prices never come back down.
+    </p>
+  )
+}
+
 // One table: a ruled ladder from md, and on a phone each ticket becomes its own
 // block with its three stage prices side by side (the old table scrolled
-// sideways there, hiding Standard, Late and the access notes).
+// sideways there, hiding Standard, Late and the access notes). On the page each
+// row is a deep-link target (t-<slug>); a slide renders it without ids - the
+// page stays mounted under the deck and ids must stay unique - and can light
+// the row a link asked for.
+function TicketLadder({ anchors = true, highlight = null, className = '' }) {
+  return (
+    <div className={`clip-box rounded-2xl border border-brand-white/10 bg-brand-white/[0.02] ${className}`}>
+      <table className="w-full text-left">
+        <caption className="sr-only">Delegate ticket prices in USD, by stage</caption>
+        <thead className="hidden md:table-header-group">
+          <tr className="text-[11px] uppercase tracking-widest text-brand-gray border-b border-brand-white/10">
+            <th scope="col" className="px-6 py-4 font-bold">Ticket</th>
+            <th scope="col" className="px-6 py-4 font-bold text-brand-yellow">Early Bird</th>
+            <th scope="col" className="px-6 py-4 font-bold">Standard</th>
+            <th scope="col" className="px-6 py-4 font-bold">Late</th>
+            <th scope="col" className="px-6 py-4 font-bold">Access</th>
+          </tr>
+        </thead>
+        <tbody className="block md:table-row-group">
+          {ticketLadder.map((t) => (
+            <tr key={t.type} id={anchors ? ticketId(t) : undefined}
+              className={`${anchors ? 'jump-near ' : ''}grid grid-cols-3 gap-x-2 gap-y-2.5 px-4 sm:px-5 py-5 border-t first:border-t-0 border-brand-white/8 md:table-row md:p-0 transition-colors ${highlight === ticketId(t) ? 'bg-brand-yellow/[0.08]' : 'md:hover:bg-brand-white/[0.03]'}`}>
+              <th scope="row" className="col-span-3 md:px-6 md:py-4 font-bold text-brand-white text-base whitespace-nowrap">{t.type}</th>
+              {[['Early Bird', t.eb, true], ['Standard', t.std, false], ['Late', t.late, false]].map(([stage, v, eb]) => (
+                <td key={stage} className={`rounded-lg px-3 py-2.5 md:rounded-none md:bg-transparent md:px-6 md:py-4 whitespace-nowrap ${eb ? 'bg-brand-yellow/[0.1]' : 'bg-brand-white/[0.04]'}`}>
+                  <span className={`block md:hidden text-[9.5px] font-black uppercase tracking-[0.14em] mb-1 ${eb ? 'text-brand-yellow' : 'text-brand-gray'}`}>{stage}</span>
+                  <span className={`tabular-nums ${eb ? 'font-semibold text-brand-yellow' : 'text-brand-white/90'}`}>{fmtUsd(v)}</span>
+                </td>
+              ))}
+              <td className="col-span-3 md:px-6 md:py-4 text-xs text-brand-gray leading-relaxed">{t.note}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function TicketOffers({ className = '' }) {
+  return (
+    <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 ${className}`}>
+      {TICKET_OFFERS.map(({ title, icon: Icon, body }) => (
+        <div key={title} className="bg-brand-white/5 border border-brand-white/10 rounded-2xl p-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Icon className="w-5 h-5 text-brand-yellow" aria-hidden />
+            <h4 className="font-black text-brand-white uppercase text-sm tracking-wide">{title}</h4>
+          </div>
+          <p className="text-sm text-brand-gray leading-relaxed">{body}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// `reached` names the level a plan reaches; Present mode marks that tile.
+function RecognitionLevels({ reached = null, className = '' }) {
+  return (
+    <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 ${className}`}>
+      {RECOGNITION.map(([name, band, color, desc]) => (
+        <div key={name}
+          className={`relative rounded-2xl border p-6 flex flex-col ${name === 'Headline' ? 'sm:col-span-2 lg:col-span-1 border-brand-yellow/60 bg-brand-yellow/8' : 'border-brand-white/10 bg-brand-white/5'} ${reached === name ? 'ring-2 ring-brand-yellow ring-offset-2 ring-offset-brand-dark' : ''}`}>
+          {reached === name && <span className="absolute -top-2.5 left-5 rounded-full bg-brand-yellow px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-brand-dark">Your selection</span>}
+          <p className={`text-xl font-black uppercase mb-1 ${color}`}>{name}</p>
+          <p className="text-xs text-brand-gray mb-4 tabular-nums">{band}</p>
+          <p className="text-xs text-brand-gray leading-relaxed">{desc}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// `side`: three across on a tablet, stacked rows in a side column from lg.
+// `big`: the Present-mode size.
+function NpsTiles({ side = false, big = false, className = '' }) {
+  const grid = side ? 'grid-cols-1 sm:grid-cols-3 lg:grid-cols-1' : 'grid-cols-1 sm:grid-cols-3'
+  const tile = side
+    ? 'flex sm:block lg:flex items-center gap-4 text-left sm:text-center lg:text-left px-4 py-3.5 sm:px-3 sm:py-5 lg:px-5 lg:py-4'
+    : `flex sm:block items-center gap-4 text-left sm:text-center px-4 py-3.5 ${big ? 'sm:px-4 sm:py-6' : 'sm:px-3 sm:py-5'}`
+  const num = [
+    big ? 'w-20 text-4xl sm:text-5xl' : 'w-14 text-3xl',
+    'sm:w-auto sm:mb-1',
+    side ? (big ? 'lg:w-32 lg:mb-0' : 'lg:w-16 lg:mb-0') : '',
+  ].join(' ')
+  return (
+    <div className={`grid ${grid} gap-3 sm:gap-4 ${className}`}>
+      {NPS_PROOF.map(([n, label, ours]) => (
+        <div key={label} className={`${tile} rounded-xl bg-brand-white/5 border border-brand-white/10`}>
+          <p className={`${num} shrink-0 font-bold leading-none tabular-nums ${ours ? 'text-brand-yellow' : 'text-brand-gray'}`}>{n}</p>
+          <p className="text-brand-gray text-xs uppercase tracking-widest leading-snug">{label}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Tickets section ────────────────────────────────────────────────────────
 function TicketsSection() {
   return (
     <section id="tickets" className="jump-section py-20 md:py-24 bg-brand-dark relative border-b border-brand-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-8">
         <SectionHead title="Delegate" accent="Tickets">
-          <p className="text-brand-gray max-w-3xl mx-auto mt-5 leading-relaxed">
-            Three published price stages: <strong className="text-brand-white">Early Bird</strong>, <strong className="text-brand-white">Standard</strong> and <strong className="text-brand-white">Late</strong>.
-            Early Bird pricing goes live on <strong className="text-brand-white">16 November 2026</strong>. Each stage closes on its published date or when its allocation
-            sells out, whichever comes first - and prices never come back down.
-          </p>
+          <TicketStages className="text-brand-gray max-w-3xl mx-auto mt-5 leading-relaxed" />
         </SectionHead>
 
         {/* the ladder stays at rest (no reveal): its rows are deep-link targets */}
-        <div className="clip-box rounded-2xl border border-brand-white/10 mb-8 bg-brand-white/[0.02]">
-          <table className="w-full text-left">
-            <caption className="sr-only">Delegate ticket prices in USD, by stage</caption>
-            <thead className="hidden md:table-header-group">
-              <tr className="text-[11px] uppercase tracking-widest text-brand-gray border-b border-brand-white/10">
-                <th scope="col" className="px-6 py-4 font-bold">Ticket</th>
-                <th scope="col" className="px-6 py-4 font-bold text-brand-yellow">Early Bird</th>
-                <th scope="col" className="px-6 py-4 font-bold">Standard</th>
-                <th scope="col" className="px-6 py-4 font-bold">Late</th>
-                <th scope="col" className="px-6 py-4 font-bold">Access</th>
-              </tr>
-            </thead>
-            <tbody className="block md:table-row-group">
-              {ticketLadder.map((t) => (
-                <tr key={t.type} id={ticketId(t)}
-                  className="jump-near grid grid-cols-3 gap-x-2 gap-y-2.5 px-4 sm:px-5 py-5 border-t first:border-t-0 border-brand-white/8 md:table-row md:p-0 md:hover:bg-brand-white/[0.03] transition-colors">
-                  <th scope="row" className="col-span-3 md:px-6 md:py-4 font-bold text-brand-white text-base whitespace-nowrap">{t.type}</th>
-                  {[['Early Bird', t.eb, true], ['Standard', t.std, false], ['Late', t.late, false]].map(([stage, v, eb]) => (
-                    <td key={stage} className={`rounded-lg px-3 py-2.5 md:rounded-none md:bg-transparent md:px-6 md:py-4 whitespace-nowrap ${eb ? 'bg-brand-yellow/[0.1]' : 'bg-brand-white/[0.04]'}`}>
-                      <span className={`block md:hidden text-[9.5px] font-black uppercase tracking-[0.14em] mb-1 ${eb ? 'text-brand-yellow' : 'text-brand-gray'}`}>{stage}</span>
-                      <span className={`tabular-nums ${eb ? 'font-semibold text-brand-yellow' : 'text-brand-white/90'}`}>{fmtUsd(v)}</span>
-                    </td>
-                  ))}
-                  <td className="col-span-3 md:px-6 md:py-4 text-xs text-brand-gray leading-relaxed">{t.note}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <TicketLadder className="mb-8" />
+
+        <div data-anim style={anim}>
+          <TicketOffers />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6" data-anim style={anim}>
-          <div className="bg-brand-white/5 border border-brand-white/10 rounded-2xl p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <Users className="w-5 h-5 text-brand-yellow" aria-hidden />
-              <h4 className="font-black text-brand-white uppercase text-sm tracking-wide">Team of Three</h4>
-            </div>
-            <p className="text-sm text-brand-gray leading-relaxed">
-              Bring your team: three Full Event passes at <strong className="text-brand-yellow">15% off</strong> the prevailing Full Event stage price.
-              Available in every stage. Not combinable with any other offer.
-            </p>
-          </div>
-          <div className="bg-brand-white/5 border border-brand-white/10 rounded-2xl p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="w-5 h-5 text-brand-yellow" aria-hidden />
-              <h4 className="font-black text-brand-white uppercase text-sm tracking-wide">Start-Up Pass</h4>
-            </div>
-            <p className="text-sm text-brand-gray leading-relaxed">
-              A gated flat rate for qualifying start-ups - application-based, capped for the event and limited to one per company.
-              Apply via <a className="text-brand-yellow font-semibold" href="mailto:sales@next.io?subject=NEXTPredict 2027 Start-Up Pass">sales@next.io</a>.
-            </p>
-          </div>
-          <div className="bg-brand-white/5 border border-brand-white/10 rounded-2xl p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <Scale className="w-5 h-5 text-brand-yellow" aria-hidden />
-              <h4 className="font-black text-brand-white uppercase text-sm tracking-wide">Operators & Regulators</h4>
-            </div>
-            <p className="text-sm text-brand-gray leading-relaxed">
-              Verified operators and regulators attend at the preferential rate above - roughly half the Full Event price at every stage.
-              Verification is confirmed before the ticket is issued.
-            </p>
-          </div>
-        </div>
-
-        <p className="text-center text-brand-gray text-xs mt-8 opacity-70" data-anim style={anim}>
-          Ticket prices in USD. Conference Only excludes the evening networking programme. VIP includes first-priority access to speed networking.
-        </p>
+        <p className="text-center text-brand-gray text-xs mt-8 opacity-70" data-anim style={anim}>{TICKET_FOOTNOTE}</p>
       </div>
     </section>
   )
@@ -1331,12 +1550,545 @@ function CalculatorPanel({ cart, onRemove, rebooking, setRebooking, open, setOpe
                 className={`w-full py-3.5 rounded-xl border font-black uppercase tracking-widest text-sm flex items-center justify-center gap-2 transition-all ${cart.length ? 'border-brand-yellow/50 text-brand-yellow hover:bg-brand-yellow/10' : 'border-brand-white/10 text-brand-gray cursor-not-allowed'}`}>
                 <Download className="w-4 h-4" aria-hidden /> Download Proposal PDF
               </button>
+              <CopyLinkButton text={() => planLink(cart)} disabled={!cart.length}
+                label="Copy plan link" done="Plan link copied" title="Copy a link that opens this selection"
+                look="w-full py-3.5 rounded-xl border font-black uppercase tracking-widest text-sm flex items-center justify-center gap-2"
+                className={cart.length ? 'border-brand-white/20 text-brand-white hover:border-brand-yellow hover:text-brand-yellow' : 'border-brand-white/10 text-brand-gray'} />
+              {cart.length > 0 && <p className="text-center text-xs text-brand-gray">The link opens this page with the same selection.</p>}
             </div>
           </div>
         </div>
       )}
     </>
   )
+}
+
+// ─── Present mode: the deck ─────────────────────────────────────────────────
+// Built from the page's own data every time it opens, so a product added to
+// `pricing` (or a family, a route pair, a status) appears here with no edit:
+//   cover → why partner → who's in the room → for each family in CARDS order,
+//   a family slide then one slide per card → delegate tickets → ticket offers →
+//   recognition → your selection (only while the calculator has items) → next
+//   steps.
+// A goal deck ("Present these" on a goal chip) is the cover, the families with
+// a matching product, those products and next steps.
+// Slide ids are the page's own anchors, so a card link and its slide agree:
+// cards p-<slug>, families the family slug, and about / audience / tickets /
+// recognition. `?present=` also accepts a route's own anchor (the two-route
+// slide, with that route marked) and a ticket row's t-<slug> (the ladder slide,
+// with that row lit).
+const CARD_OF = Object.fromEntries(CARDS.flatMap(({ cards }) => cards.flatMap((c) => c.options.map((o) => [o.id, c]))))
+const ROUTE_ANCHOR = Object.fromEntries(CARDS.flatMap(({ cards }) => cards.filter((c) => c.options.length > 1)
+  .flatMap((c) => c.options.map((o) => [productId(o), c]))))
+
+function buildDeck({ goal = null, hasPlan = false }) {
+  const groups = CARDS
+    .map(({ cat, cards }) => ({ cat, cards: goal ? cards.filter((c) => cardHasGoal(c, goal)) : cards }))
+    .filter((g) => g.cards.length)
+  const slides = [{ id: 'cover', kind: 'cover', label: 'Cover', group: 'Start', groups }]
+  if (!goal) {
+    slides.push({ id: 'about', kind: 'about', label: 'Why partner', group: 'Start' })
+    slides.push({ id: 'audience', kind: 'audience', label: "Who's in the room", group: 'Start' })
+  }
+  groups.forEach(({ cat, cards }) => {
+    slides.push({ id: catId(cat), kind: 'family', label: cat, group: cat, cat, cards })
+    cards.forEach((card) => slides.push({ id: productId(card), kind: card.options.length > 1 ? 'routes' : 'product', label: card.title, group: cat, cat, card }))
+  })
+  if (!goal) {
+    slides.push({ id: 'tickets', kind: 'tickets', label: 'Delegate tickets', group: 'Tickets' })
+    slides.push({ id: 'ticket-offers', kind: 'ticket-offers', label: 'Ticket offers', group: 'Tickets' })
+    slides.push({ id: 'recognition', kind: 'recognition', label: 'Recognition levels', group: 'Recognition' })
+    if (hasPlan) slides.push({ id: 'plan', kind: 'plan', label: 'Your selection', group: 'Your selection' })
+  }
+  slides.push({ id: 'next-steps', kind: 'next', label: 'Next steps', group: 'Next steps' })
+  return slides
+}
+
+// what a ?present= value opens: the slide, plus a route or ticket row to mark
+function deckStart(requested, slides) {
+  if (requested && slides.some((s) => s.id === requested)) return { id: requested }
+  if (requested && ROUTE_ANCHOR[requested]) return { id: productId(ROUTE_ANCHOR[requested]), route: requested }
+  if (requested && ticketLadder.some((t) => ticketId(t) === requested)) return { id: 'tickets', ticket: requested }
+  return { id: slides[0]?.id }
+}
+
+const DECK_BTN = 'inline-flex items-center justify-center gap-2 min-h-11 rounded-full border border-brand-white/15 px-4 sm:px-5 text-sm font-bold text-brand-white hover:border-brand-yellow/60 hover:text-brand-yellow transition-colors'
+const DECK_BTN_PRIMARY = 'inline-flex items-center justify-center gap-2 min-h-11 rounded-full bg-brand-yellow px-5 text-sm font-black text-brand-dark hover:brightness-110 transition'
+const DECK_QUIET = 'inline-flex items-center gap-1.5 min-h-11 rounded-full px-3 text-sm font-bold'
+const DECK_QUIET_TONE = 'text-brand-gray hover:text-brand-yellow hover:bg-brand-white/[0.06] transition-colors'
+
+function SlideEyebrow({ children, className = '' }) {
+  return <p className={`text-[11px] sm:text-xs font-black uppercase tracking-[0.2em] text-brand-yellow ${className}`}>{children}</p>
+}
+
+// the card's corner badge, as a pill: featured, exclusive, N available, or the
+// status once sold or reserved
+function StatusPill({ item, featured = false }) {
+  const label = availLabel(item)
+  const out = isOut(item)
+  if (!label && !featured) return null
+  const tone = item.status === 'sold' ? 'bg-brand-white/15 text-brand-white'
+    : item.status === 'reserved' ? 'bg-brand-yellow/15 text-brand-yellow'
+      : featured ? 'bg-brand-yellow text-brand-dark' : 'bg-brand-white/10 text-brand-gray'
+  return <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${tone}`}>{featured && !out ? `✦ ${label || 'Featured'}` : label}</span>
+}
+
+// the first `max` deliverables, then "+ N more on the card" (a way onto it)
+function SlideDeliverables({ items, heading = 'What’s included', max = 6, onMore, small = false, cols = false, className = '' }) {
+  if (!items.length) return null
+  const shown = items.slice(0, max)
+  const more = items.length - shown.length
+  return (
+    <div className={className}>
+      <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] text-brand-gray mb-3">{heading}</p>
+      <ul className={cols ? 'grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2' : small ? 'space-y-2' : 'space-y-2.5'}>
+        {shown.map((line, i) => (
+          <li key={i} className={`flex items-start gap-3 leading-relaxed ${small ? 'text-sm text-brand-white/80' : 'text-[15px] text-brand-white/85'}`}>
+            <CircleCheck className={`w-4 h-4 shrink-0 text-brand-yellow ${small ? 'mt-0.5' : 'mt-1'}`} aria-hidden />
+            <span>{line}</span>
+          </li>
+        ))}
+      </ul>
+      {more > 0 && (
+        <button type="button" onClick={onMore}
+          className="mt-2 -ml-1 inline-flex items-center gap-1.5 min-h-11 px-1 text-sm font-bold text-brand-yellow hover:text-brand-yellow/80 transition-colors">
+          + {more} more on the card <ArrowRight className="w-3.5 h-3.5" aria-hidden />
+        </button>
+      )}
+    </div>
+  )
+}
+
+// The hero, then the whole deck as a table of contents: each family (by the
+// short name its family-bar chip uses) with its product count, each a jump.
+function CoverSlide({ slide, deck, goId }) {
+  const { goal, cart } = deck
+  const n = slide.groups.reduce((s, g) => s + g.cards.length, 0)
+  const plural = (k, one) => `${k} ${one}${k === 1 ? '' : 's'}`
+  const items = [
+    ...(goal ? [] : [{ id: 'about', label: 'Why partner', icon: Users }]),
+    ...slide.groups.map(({ cat, cards }) => ({ id: catId(cat), label: FAMILY_META[cat]?.short || cat, icon: FAMILY_META[cat]?.icon || Layers, count: plural(cards.length, 'product') })),
+    ...(goal ? [] : [
+      { id: 'tickets', label: 'Tickets', icon: Ticket, count: plural(ticketLadder.length, 'ticket') },
+      { id: 'recognition', label: 'Recognition', icon: Award, count: plural(RECOGNITION.length, 'level') },
+      ...(cart.length ? [{ id: 'plan', label: 'Your selection', icon: Calculator, count: plural(cart.length, 'item') }] : []),
+    ]),
+    { id: 'next-steps', label: 'Next steps', icon: ArrowRight },
+  ]
+  return (
+    <div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 lg:gap-12 items-end">
+        <div className="lg:col-span-8">
+          <p className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-brand-yellow/30 bg-brand-yellow/10 text-brand-yellow text-[11px] sm:text-xs font-bold uppercase tracking-[0.18em]">
+            <TrendingUp className="w-3.5 h-3.5 shrink-0" aria-hidden /> The Prediction Markets Summit
+          </p>
+          <h2 className="mt-5 text-[clamp(3rem,12vw,5.75rem)] font-black tracking-tighter leading-none"><Brand /></h2>
+          <div className="mt-4 inline-block max-w-full rounded-xl bg-brand-yellow px-5 py-2.5 -skew-x-6">
+            <p className="skew-x-6 text-[clamp(1.1rem,4.4vw,2rem)] font-black uppercase tracking-tighter leading-none text-brand-dark whitespace-nowrap">Partnership Rate Card</p>
+          </div>
+          {goal && <p className="mt-5 text-2xl sm:text-3xl font-black leading-tight">{plural(n, 'product')} for <span className="text-brand-yellow">{goal}</span></p>}
+          <p className="mt-5 flex items-start gap-2 text-base sm:text-lg text-brand-white/85">
+            <MapPin className="w-5 h-5 mt-0.5 shrink-0 text-brand-yellow" aria-hidden />{VENUE_LINE}
+          </p>
+        </div>
+        {!goal && (
+          <dl className="lg:col-span-4 grid grid-cols-2 gap-2.5 sm:gap-3">
+            {EVENT_STATS.map(([num, label]) => (
+              <div key={label} className="flex flex-col-reverse rounded-xl border border-brand-white/10 bg-brand-white/5 px-4 py-3">
+                <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-brand-gray leading-snug">{label}</dt>
+                <dd className="text-3xl font-black leading-none tabular-nums">{num}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </div>
+      <nav aria-label="In this presentation" className="mt-7 lg:mt-9 border-t border-brand-white/10 pt-5">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 mb-2">
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-brand-gray">In this presentation</p>
+          <p className="text-xs sm:text-sm text-brand-gray">Use the arrow keys, or swipe</p>
+        </div>
+        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6">
+          {items.map(({ id, label, icon: Icon, count }) => (
+            <li key={id}>
+              <button type="button" onClick={() => goId(id)}
+                className="group/i -mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-lg px-2 min-h-10 py-1 text-left hover:bg-brand-white/[0.06] transition-colors">
+                <Icon className="w-4 h-4 shrink-0 text-brand-yellow" aria-hidden />
+                <span className="min-w-0 flex-1 truncate text-sm font-bold text-brand-white/90 group-hover/i:text-brand-yellow transition-colors">{label}</span>
+                {count && <span className="shrink-0 text-xs tabular-nums text-brand-gray">{count}</span>}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </div>
+  )
+}
+
+function AboutSlide() {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
+      <div className="lg:col-span-7">
+        <SlideEyebrow>Why partner</SlideEyebrow>
+        <h2 className="mt-4 text-4xl sm:text-5xl xl:text-6xl font-black leading-[1.04] tracking-tight text-balance">{WHY_PARTNER.title} <span className="text-brand-yellow">{WHY_PARTNER.accent}</span></h2>
+        <p className="mt-6 text-lg sm:text-xl leading-relaxed text-brand-white/80">{WHY_PARTNER.body}</p>
+      </div>
+      <div className="lg:col-span-5">
+        <p className="text-base sm:text-lg leading-relaxed text-brand-gray">{WHY_PARTNER.npsIntro}</p>
+        <NpsTiles side big className="mt-5" />
+        <p className="mt-4 text-xs leading-relaxed text-brand-gray/80">{NPS_SOURCE}</p>
+      </div>
+    </div>
+  )
+}
+
+function AudienceSlide() {
+  return (
+    <div>
+      <SlideEyebrow>The room</SlideEyebrow>
+      <h2 className="mt-3 text-4xl sm:text-5xl font-black uppercase tracking-tight leading-[1.05]">Who&rsquo;s In <span className="text-brand-yellow">The Room</span></h2>
+      <p className="mt-4 max-w-3xl text-lg sm:text-xl leading-relaxed text-brand-white/80">{ROOM_LEDE}</p>
+      <ul className="mt-7 grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+        {AUDIENCE.map(([label, Icon]) => (
+          <li key={label} className="flex items-center gap-3 rounded-xl border border-brand-white/10 bg-brand-white/5 px-3.5 py-3 sm:px-4 sm:py-4">
+            <Icon className="w-5 h-5 sm:w-6 sm:h-6 shrink-0 text-brand-yellow" aria-hidden />
+            <span className="text-[11.5px] sm:text-sm font-bold uppercase tracking-wide leading-snug">{label}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+        {ROOM_PILLARS.map(([title, body]) => (
+          <div key={title} className="rounded-xl border border-brand-white/10 bg-brand-white/[0.03] p-5">
+            <p className="text-sm font-black uppercase text-brand-yellow">{title}</p>
+            <p className="mt-2 text-sm leading-relaxed text-brand-gray">{body}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function FamilySlide({ slide, goId, deck }) {
+  const Icon = FAMILY_META[slide.cat]?.icon || Layers
+  const n = slide.cards.length
+  const from = familyFrom(slide.cards)
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
+      <div className="lg:col-span-5">
+        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-yellow/15 text-brand-yellow"><Icon className="w-7 h-7" aria-hidden /></span>
+        <SlideEyebrow className="mt-6">{deck.goal ? `For ${deck.goal}` : 'Product family'}</SlideEyebrow>
+        <h2 className="mt-3 text-4xl sm:text-5xl xl:text-6xl font-black uppercase leading-[1.02] tracking-tight text-balance">{slide.cat.replace(/-/g, '‑')}</h2>
+        <p className="mt-5 text-lg sm:text-xl text-brand-gray">
+          <strong className="font-black text-brand-white">{n} product{n === 1 ? '' : 's'}</strong>
+          {from && <> · <span className="text-brand-white">{from}</span></>}
+        </p>
+      </div>
+      <ul className="lg:col-span-7 divide-y divide-brand-white/10 rounded-2xl border border-brand-white/10 bg-brand-white/[0.03] px-2 sm:px-4">
+        {slide.cards.map((card) => {
+          const price = menuPrice(card)
+          return (
+            <li key={card.key}>
+              <button type="button" onClick={() => goId(productId(card))}
+                className="group/p flex w-full items-center gap-3 min-h-14 px-2 py-3 text-left">
+                <span className="min-w-0 flex-1 text-base sm:text-lg font-bold leading-snug text-brand-white group-hover/p:text-brand-yellow transition-colors">
+                  {card.title}
+                  {card.options.length > 1 && <span className="ml-2 align-middle text-[10px] font-black uppercase tracking-widest text-brand-gray">{card.options.length} routes</span>}
+                </span>
+                <span className={`shrink-0 whitespace-nowrap tabular-nums ${price.out ? 'text-xs font-bold uppercase tracking-wider text-brand-gray' : 'text-base sm:text-lg font-black text-brand-yellow'}`}>
+                  {price.from && <span className="mr-1 text-xs font-medium text-brand-gray">from</span>}{price.text}
+                </span>
+                <ChevronRight className="w-5 h-5 shrink-0 text-brand-gray group-hover/p:text-brand-yellow transition-colors" aria-hidden />
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
+// either/or partners that sit on another card (the Nourish Bars pair): a slide
+// links to the alternative
+function alternativesOf(card) {
+  const own = new Set(card.options.map((o) => o.id))
+  const seen = new Set()
+  return card.options.flatMap((o) => CONFLICTS[o.id] || [])
+    .filter((id) => !own.has(id) && CARD_OF[id])
+    .map((id) => CARD_OF[id])
+    .filter((c) => (seen.has(c.key) ? false : seen.add(c.key)))
+}
+function AltLinks({ card, deck, goId }) {
+  const alts = alternativesOf(card).filter((c) => deck.hasSlide(productId(c)))
+  if (!alts.length) return null
+  return (
+    <p className="mt-5 flex flex-wrap items-center gap-x-2 text-sm text-brand-gray">
+      Either/or with
+      {alts.map((c) => (
+        <button key={c.key} type="button" onClick={() => goId(productId(c))}
+          className="inline-flex items-center gap-1 min-h-11 font-bold text-brand-white underline decoration-brand-yellow/60 underline-offset-4 hover:text-brand-yellow transition-colors">
+          {c.title} <ArrowRight className="w-3.5 h-3.5" aria-hidden />
+        </button>
+      ))}
+    </p>
+  )
+}
+
+function ProductSlide({ card, deck, goId }) {
+  const item = card.options[0]
+  const { items, terms } = splitBullets(item.bullets)
+  const id = productId(card)
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
+      <div className="lg:col-span-7">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <SlideEyebrow>{card.cat}</SlideEyebrow>
+          <StatusPill item={item} featured={card.featured} />
+        </div>
+        <h2 className={`mt-3 sm:mt-4 font-black leading-[1.03] tracking-tight text-balance ${card.title.length > 30 ? 'text-4xl sm:text-[2.75rem]' : 'text-4xl sm:text-5xl xl:text-[3.5rem]'}`}>{card.title}</h2>
+        <div className="mt-5 sm:mt-6"><PriceBlock item={item} rebooking={deck.rebooking} scale="slide" /></div>
+        <Lede text={item.quote} scale="slide" />
+        <TagRow item={item} featured />
+        <div className="mt-7 flex flex-wrap items-center gap-2 sm:gap-3">
+          <div className="w-full sm:w-auto sm:min-w-[17rem]">
+            <AddButton item={item} count={deck.cartCounts[item.id] || 0} conflicted={deck.conflictedIds.has(item.id)} onAdd={deck.onAdd} featured />
+          </div>
+          <button type="button" onClick={() => deck.openCard(id)} className={DECK_BTN}>Open the card <ArrowRight className="w-4 h-4" aria-hidden /></button>
+          <CopyLinkButton id={id} look={DECK_QUIET} className={DECK_QUIET_TONE} />
+        </div>
+        <AltLinks card={card} deck={deck} goId={goId} />
+      </div>
+      <div className="lg:col-span-5">
+        <SlideDeliverables items={items} onMore={() => deck.openCard(id)} />
+        <TermsList terms={terms} />
+      </div>
+    </div>
+  )
+}
+
+// A two-route card (exclusive or shared, turnkey or space only) is one slide.
+// Each route keeps its own panel: price, add button, lede, the lines only that
+// route carries, and its own terms. What both routes carry word for word -
+// deliverables, terms, and the lede when it is the same - is listed once, so
+// the difference between the routes is what the panels show. Every line is the
+// card's own.
+const sameTerm = (a, b) => a.kind === b.kind && a.text === b.text
+// the copy-link icon a route panel carries beside its add button
+const ROUTE_COPY = 'inline-flex shrink-0 items-center justify-center w-12 h-12 rounded-xl border border-brand-white/15 [&>span]:sr-only'
+function RouteSlide({ card, deck, goId }) {
+  const routes = card.options.map((o) => ({ o, ...splitBullets(o.bullets) }))
+  const common = routes[0].items.filter((l) => routes.every((r) => r.items.includes(l)))
+  const commonTerms = routes[0].terms.filter((t) => routes.every((r) => r.terms.some((u) => sameTerm(t, u))))
+  const lede = stripQuotes(routes[0].o.quote)
+  const sharedLede = routes.every((r) => stripQuotes(r.o.quote) === lede) ? routes[0].o.quote : null
+  const openId = deck.focusRoute || productId(card)
+  // each route reads as about six lines, like a product slide: all of its own
+  // lines, then the shared ones up to six (never fewer than two), then "+ N more"
+  const ownMax = Math.max(...routes.map((r) => r.items.filter((l) => !common.includes(l)).length))
+  const commonMax = Math.max(2, 6 - ownMax)
+  // Little shared (no shared terms, at most three shared lines): the panels
+  // take the full width, price and add button share a row, and the shared
+  // lines run in a strip under the panels. Otherwise the shared lines and
+  // terms get their own column beside the panels.
+  const wide = commonTerms.length === 0 && common.length <= 3
+  const side = !wide && (common.length > 0 || commonTerms.length > 0)
+  // a side column of shared lines only (no terms) is short: it takes a quarter
+  const narrowSide = side && commonTerms.length === 0
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <SlideEyebrow>{card.cat}</SlideEyebrow>
+        <span className="inline-flex items-center rounded-full bg-brand-white/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-brand-gray whitespace-nowrap">{routes.length} routes · choose one</span>
+        <button type="button" onClick={() => deck.openCard(openId)} className={`${DECK_QUIET} ${DECK_QUIET_TONE} sm:ml-auto -my-2`}>Open the card <ArrowRight className="w-4 h-4" aria-hidden /></button>
+      </div>
+      <h2 className="mt-3 text-3xl sm:text-4xl font-black leading-[1.05] tracking-tight text-balance">{card.title}</h2>
+      {sharedLede && <div className="mt-4 max-w-4xl [&>p]:mb-0"><Lede text={sharedLede} featured /></div>}
+      <div className="mt-5 grid grid-cols-1 xl:grid-cols-12 gap-5 xl:gap-8 items-start">
+        <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${side ? (narrowSide ? 'xl:col-span-9' : 'xl:col-span-8') : 'xl:col-span-12'}`}>
+          {routes.map(({ o, items, terms }) => {
+            const label = routeLabel(card, o)
+            const marked = deck.focusRoute === productId(o)
+            return (
+              <div key={o.id} className={`flex flex-col rounded-2xl border p-4 sm:p-5 ${marked ? 'border-brand-yellow bg-brand-yellow/[0.08] shadow-[inset_0_0_0_1px_#ffcf33]' : 'border-brand-white/12 bg-brand-white/[0.04]'}`}>
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                  <p className="text-[11px] font-black uppercase tracking-[0.14em] text-brand-yellow">{label}</p>
+                  <StatusPill item={o} />
+                </div>
+                <div className={wide ? 'mb-5 flex flex-wrap items-center justify-between gap-x-4 [&>:first-child]:mb-0' : ''}>
+                  <PriceBlock item={o} rebooking={deck.rebooking} scale="route" />
+                  <div className={`flex items-center gap-2 ${wide ? 'mt-2 flex-1 min-w-[15rem] xl:max-w-[18rem]' : '-mt-1 mb-5'}`}>
+                    <div className="min-w-0 flex-1">
+                      <AddButton item={o} count={deck.cartCounts[o.id] || 0} conflicted={deck.conflictedIds.has(o.id)} onAdd={deck.onAdd} featured />
+                    </div>
+                    <CopyLinkButton id={productId(o)} title={`Copy a link to the ${label} route`} look={ROUTE_COPY} className="text-brand-gray hover:text-brand-yellow hover:border-brand-yellow/60" />
+                  </div>
+                </div>
+                {!sharedLede && <Lede text={o.quote} />}
+                <SlideDeliverables items={items.filter((l) => !common.includes(l))} heading="Only on this route" max={Infinity} small />
+                <TermsList terms={terms.filter((t) => !commonTerms.some((c) => sameTerm(c, t)))} />
+              </div>
+            )
+          })}
+        </div>
+        {side && (
+          <div className={`${narrowSide ? 'xl:col-span-3' : 'xl:col-span-4'} xl:pt-1`}>
+            <SlideDeliverables items={common} heading="Both routes include" max={commonMax} onMore={() => deck.openCard(openId)} small />
+            <TermsList terms={commonTerms} />
+          </div>
+        )}
+      </div>
+      {wide && <SlideDeliverables items={common} heading="Both routes include" max={commonMax} onMore={() => deck.openCard(openId)} small cols className="mt-5" />}
+      <AltLinks card={card} deck={deck} goId={goId} />
+    </div>
+  )
+}
+
+function TicketsSlide({ deck }) {
+  return (
+    <div>
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+        <div>
+          <SlideEyebrow>Delegate tickets · USD</SlideEyebrow>
+          <h2 className="mt-3 text-4xl sm:text-5xl font-black uppercase tracking-tight leading-[1.05]">Delegate <span className="text-brand-yellow">Tickets</span></h2>
+        </div>
+        <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+          <button type="button" onClick={() => deck.openCard('tickets')} className={DECK_BTN}>Open the tickets <ArrowRight className="w-4 h-4" aria-hidden /></button>
+          <CopyLinkButton id="tickets" title="Copy a link to the ticket prices" look={DECK_QUIET} className={DECK_QUIET_TONE} />
+        </div>
+      </div>
+      <TicketStages className="mt-4 max-w-5xl text-base leading-relaxed text-brand-gray" />
+      <TicketLadder anchors={false} highlight={deck.focusTicket} className="mt-6" />
+      <p className="mt-4 text-xs leading-relaxed text-brand-gray">{TICKET_FOOTNOTE}</p>
+    </div>
+  )
+}
+
+function TicketOffersSlide() {
+  return (
+    <div>
+      <SlideEyebrow>Delegate tickets</SlideEyebrow>
+      <h2 className="mt-3 text-4xl sm:text-5xl font-black uppercase tracking-tight leading-[1.05]">Ticket <span className="text-brand-yellow">Offers</span></h2>
+      <TicketOffers className="mt-8" />
+    </div>
+  )
+}
+
+function RecognitionSlide({ deck }) {
+  const total = planTotal(deck.cart, deck.rebooking)
+  const reached = deck.cart.length ? resolveTier(total, deck.cart).name : null
+  return (
+    <div>
+      <SlideEyebrow>Recognition</SlideEyebrow>
+      <h2 className="mt-3 text-4xl sm:text-5xl font-black uppercase tracking-tight leading-[1.05]">Partner <span className="text-brand-yellow">Recognition</span></h2>
+      <p className="mt-4 max-w-3xl text-lg sm:text-xl leading-relaxed text-brand-white/80">{RECOGNITION_LEDE}</p>
+      <RecognitionLevels reached={reached} className="mt-8" />
+      <p className="mt-6 text-xs leading-relaxed text-brand-gray">{RECOGNITION_NOTE}</p>
+    </div>
+  )
+}
+
+function PlanSlide({ deck }) {
+  const { cart, rebooking } = deck
+  const total = planTotal(cart, rebooking)
+  const tier = resolveTier(total, cart)
+  const next = nextSpendTier(total, cart)
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
+      <div className="lg:col-span-5">
+        <SlideEyebrow>Your selection · {cart.length} item{cart.length === 1 ? '' : 's'}</SlideEyebrow>
+        <h2 className="mt-3 text-5xl sm:text-6xl font-black tabular-nums leading-none text-brand-yellow">{fmtPrice(total)}</h2>
+        <p className="mt-4 text-lg">
+          <span className={`font-black uppercase ${tier.color}`}>{tier.name} Partner</span>
+          {next && <span className="text-brand-gray"> · {fmtPrice(next.min - total)} to {next.name}</span>}
+        </p>
+        <div className="mt-4 rounded-xl border border-brand-white/10 bg-brand-white/[0.03] py-2"><TierProgress total={total} cart={cart} /></div>
+        <p className="mt-3 text-xs text-brand-gray">
+          {rebooking ? <span className="font-semibold uppercase tracking-wide text-brand-yellow/80">15% rebooking rate applied · </span> : null}
+          Prices in EUR, excluding VAT
+        </p>
+        <div className="mt-6 flex flex-wrap items-center gap-2 sm:gap-3">
+          <a href={buildMailto(cart, rebooking)} className={DECK_BTN_PRIMARY}><Mail className="w-4 h-4" aria-hidden /> Email this selection</a>
+          <button type="button" onClick={() => downloadProposalPDF(cart, rebooking)} className={DECK_BTN}><Download className="w-4 h-4" aria-hidden /> Proposal PDF</button>
+          <CopyLinkButton text={() => planLink(cart)} label="Copy plan link" done="Plan link copied" title="Copy a link that opens this selection" look={DECK_QUIET} className={DECK_QUIET_TONE} />
+        </div>
+      </div>
+      <ul className="lg:col-span-7 divide-y divide-brand-white/10 rounded-2xl border border-brand-white/10 bg-brand-white/[0.03]">
+        {cart.map((item, idx) => (
+          <li key={idx} className="flex items-start justify-between gap-4 px-4 sm:px-5 py-3">
+            <div className="min-w-0">
+              <p className="font-bold leading-snug">{item.title}</p>
+              <p className="mt-0.5 text-xs text-brand-gray">{item.cat}</p>
+            </div>
+            <div className="shrink-0 text-right">
+              <p className="font-black tabular-nums text-brand-yellow">{item.poa ? 'POA' : fmtPrice(rebooking ? Math.round(item.price * 0.85) : item.price)}</p>
+              <button type="button" onClick={() => deck.onRemove(idx)} className="-my-1 min-h-11 text-[11px] font-bold uppercase tracking-widest text-brand-gray hover:text-brand-white">Remove</button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function NextStepsSlide({ deck, goId }) {
+  const { cart, rebooking } = deck
+  const has = cart.length > 0
+  const steps = [
+    { icon: Calculator, title: 'Build your selection',
+      body: 'Add products as we go with Add to Calculator. The calculator totals them and shows the recognition level they reach.',
+      actions: has && <button type="button" onClick={() => (deck.hasSlide('plan') ? goId('plan') : deck.openCalculator())} className={DECK_BTN}><ListChecks className="w-4 h-4" aria-hidden /> Review your selection ({cart.length})</button> },
+    { icon: Download, title: 'Take the rate card with you',
+      body: has ? 'The full rate card as a PDF, and a proposal PDF of your selection with its total and recognition level.' : 'The full rate card as a PDF: every product, its price and its terms.',
+      actions: <>
+        <button type="button" onClick={downloadRateCardPDF} className={DECK_BTN}><Download className="w-4 h-4" aria-hidden /> Full rate card PDF</button>
+        {has && <button type="button" onClick={() => downloadProposalPDF(cart, rebooking)} className={DECK_BTN}><Download className="w-4 h-4" aria-hidden /> Proposal PDF</button>}
+      </> },
+    { icon: Mail, title: 'Talk to partnerships',
+      body: has ? 'Email sales@next.io: your selection, its total and its recognition level go in the email.' : 'Email sales@next.io with the products you are interested in.',
+      actions: <>
+        <a href={buildMailto(cart, rebooking)} className={DECK_BTN_PRIMARY}><Mail className="w-4 h-4" aria-hidden /> Email sales@next.io</a>
+        {has && <CopyLinkButton text={() => planLink(cart)} label="Copy plan link" done="Plan link copied" title="Copy a link that opens this selection" look={DECK_QUIET} className={DECK_QUIET_TONE} />}
+      </> },
+  ]
+  return (
+    <div>
+      <SlideEyebrow>Next steps</SlideEyebrow>
+      <h2 className="mt-3 text-4xl sm:text-5xl xl:text-6xl font-black tracking-tight leading-[1.03]">How to <span className="text-brand-yellow">book</span></h2>
+      <ol className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+        {steps.map(({ icon: Icon, title, body, actions }, n) => (
+          <li key={title} className="flex flex-col rounded-2xl border border-brand-white/10 bg-brand-white/[0.04] p-5 sm:p-6">
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-yellow text-sm font-black text-brand-dark">{n + 1}</span>
+              <Icon className="w-5 h-5 text-brand-yellow" aria-hidden />
+            </div>
+            <p className="mt-4 text-lg font-black leading-snug">{title}</p>
+            <p className="mt-2 text-sm leading-relaxed text-brand-gray">{body}</p>
+            {actions && <div className="mt-auto pt-5 flex flex-wrap items-center gap-2">{actions}</div>}
+          </li>
+        ))}
+      </ol>
+      <div className="mt-5 flex items-start gap-3 rounded-2xl border border-brand-yellow/25 bg-brand-yellow/[0.06] px-5 py-4">
+        <ShieldCheck className="w-5 h-5 mt-0.5 shrink-0 text-brand-yellow" aria-hidden />
+        <p className="text-sm leading-relaxed text-brand-white/85"><strong className="font-black text-brand-yellow">2026 partners: rebook early, keep 15%. </strong>{REBOOKING_COPY}</p>
+      </div>
+      <p className="mt-5 text-xs sm:text-sm text-brand-gray">{VENUE_LINE} · All prices exclude VAT. Availability subject to change without notice.</p>
+    </div>
+  )
+}
+
+function renderDeckSlide(slide, deck, { goId }) {
+  switch (slide.kind) {
+    case 'cover': return <CoverSlide slide={slide} deck={deck} goId={goId} />
+    case 'about': return <AboutSlide />
+    case 'audience': return <AudienceSlide />
+    case 'family': return <FamilySlide slide={slide} deck={deck} goId={goId} />
+    case 'product': return <ProductSlide card={slide.card} deck={deck} goId={goId} />
+    case 'routes': return <RouteSlide card={slide.card} deck={deck} goId={goId} />
+    case 'tickets': return <TicketsSlide deck={deck} />
+    case 'ticket-offers': return <TicketOffersSlide />
+    case 'recognition': return <RecognitionSlide deck={deck} />
+    case 'plan': return <PlanSlide deck={deck} />
+    case 'next': return <NextStepsSlide deck={deck} goId={goId} />
+    default: return null
+  }
 }
 
 // ─── App ────────────────────────────────────────────────────────────────────
@@ -1374,6 +2126,25 @@ export default function App() {
     })
   }, [])
   const removeFromCart = useCallback((idx) => setCart((prev) => prev.filter((_, i) => i !== idx)), [])
+
+  // A plan link (?plan=31,48,48) rebuilds the selection through addToCart, in
+  // link order, so every cap, conflict and sold or reserved state applies;
+  // unknown or refused ids drop out silently. The parameter leaves the address
+  // bar straight away (so a reload or StrictMode's second run adds nothing),
+  // and the calculator opens on the rebuilt selection.
+  const [planRestored, setPlanRestored] = useState(false)
+  useEffect(() => {
+    const raw = takePlanParam()
+    if (raw === null) return
+    const ids = raw.split(',').map((s) => Number(s.trim())).filter((n) => Number.isInteger(n) && byId[n])
+    ids.forEach((id) => addToCart(byId[id]))
+    if (ids.length) setPlanRestored(true)
+  }, [addToCart])
+  useEffect(() => {
+    if (!planRestored) return
+    setPlanRestored(false)
+    if (cart.length) setCalcOpen(true)
+  }, [planRestored, cart.length])
 
   const cartCounts = cart.reduce((acc, i) => { acc[i.id] = (acc[i.id] || 0) + 1; return acc }, {})
   const conflictedIds = new Set(cart.flatMap((i) => CONFLICTS[i.id] || []))
@@ -1444,9 +2215,32 @@ export default function App() {
       if (!el) return
       el.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' })
       if (window.location.hash !== `#${jumpReq.id}`) window.history.pushState(null, '', `#${jumpReq.id}`)
+      // pushState fires no hashchange, and a two-route card listens for one to
+      // open on the route a link names ("Open on the card" in Present mode)
+      window.dispatchEvent(new HashChangeEvent('hashchange'))
     })
     return () => cancelAnimationFrame(raf)
   }, [jumpReq])
+
+  // ── Present mode ──
+  // `present` is the ?present= value the deck was opened with (null = closed);
+  // a goal deck keeps its goal here. The page stays mounted under the deck.
+  const { present, open: openPresent, close: closePresent } = usePresent()
+  const [deckGoal, setDeckGoal] = useState(null)
+  const openDeck = useCallback((id = '', goal = null) => { setDeckGoal(goal); openPresent(id) }, [openPresent])
+  const closeDeck = useCallback(() => { closePresent(); setDeckGoal(null) }, [closePresent])
+  const hasPlan = cart.length > 0
+  const slides = useMemo(() => buildDeck({ goal: deckGoal, hasPlan }), [deckGoal, hasPlan])
+  const start = present === null ? null : deckStart(present, slides)
+  const deck = {
+    goal: deckGoal, cart, rebooking, cartCounts, conflictedIds,
+    focusRoute: start?.route || null, focusTicket: start?.ticket || null,
+    onAdd: addToCart, onRemove: removeFromCart,
+    hasSlide: (id) => slides.some((s) => s.id === id),
+    // leave the deck and land on the card (or section) on the page
+    openCard: (id) => { closeDeck(); onJump(null, id) },
+    openCalculator: () => { closeDeck(); setCalcOpen(true) },
+  }
 
   // Scroll-spy: the family whose heading has passed under the bar is the one in
   // view. The observer watches a one-pixel reading line just below the bar and
@@ -1473,23 +2267,31 @@ export default function App() {
   return (
     <div className="min-h-screen bg-brand-dark text-brand-white font-sans selection:bg-brand-yellow selection:text-brand-dark pb-32">
 
-      {/* ── NAV ── */}
+      {/* ── NAV ──
+          The bar fits one line at every width: below 380px the year steps
+          aside; Present is an icon button below md and labelled from md; the
+          Contact Sales pill is a round mail button below 500px; Tickets joins
+          at lg (below it, the menu and the ticket section carry tickets). */}
       <nav ref={navRef} className="fixed top-0 left-0 w-full z-40 bg-brand-dark/95 backdrop-blur-md py-3 sm:py-4 shadow-lg border-b border-brand-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex justify-between items-center gap-3">
           <a href="#" className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0 h-10">
-            <img alt="NEXTPredict" className="h-6 sm:h-9 w-auto object-contain" src={`${base}logos/nextpredict-logo.png`} />
-            <span className="font-black text-base sm:text-2xl tracking-tight text-brand-yellow">2027</span>
+            <img alt="NEXTPredict" className="h-6 sm:h-8 lg:h-9 w-auto object-contain" src={`${base}logos/nextpredict-logo.png`} />
+            <span className="hidden min-[380px]:inline font-black text-base sm:text-xl lg:text-2xl tracking-tight text-brand-yellow">2027</span>
           </a>
-          <div className="flex items-center gap-3 sm:gap-8">
+          <div className="flex items-center gap-2 min-[400px]:gap-3 sm:gap-4 md:gap-5 lg:gap-8">
             <a href="#pricing" onClick={(e) => onJump(e, 'pricing')}
               className="inline-flex items-center h-10 text-xs sm:text-sm font-bold uppercase tracking-wider sm:tracking-widest text-brand-white hover:text-brand-yellow transition-colors whitespace-nowrap">Rate Card</a>
             <a href="#tickets" onClick={(e) => onJump(e, 'tickets')}
-              className="hidden md:inline-flex items-center h-10 text-sm font-bold uppercase tracking-widest text-brand-white hover:text-brand-yellow transition-colors">Tickets</a>
-            {/* under 480px the NEXTPredict lockup and a text pill cannot share one line, so the pill becomes a round mail button */}
+              className="hidden lg:inline-flex items-center h-10 text-sm font-bold uppercase tracking-widest text-brand-white hover:text-brand-yellow transition-colors">Tickets</a>
+            <button type="button" onClick={() => openDeck('')} aria-label="Present" title="Present the rate card full screen"
+              className="inline-flex items-center justify-center gap-2 w-10 h-10 md:w-auto shrink-0 rounded-full md:rounded-none border border-brand-white/20 md:border-0 text-brand-white hover:text-brand-yellow hover:border-brand-yellow/60 transition-colors">
+              <Presentation className="w-[18px] h-[18px] md:w-4 md:h-4" aria-hidden />
+              <span className="hidden md:inline text-sm font-bold uppercase tracking-widest">Present</span>
+            </button>
             <a href="mailto:sales@next.io?subject=I'm interested in NEXTPredict 2027 partnerships!" aria-label="Contact Sales"
-              className="bg-brand-yellow text-brand-dark rounded-full font-bold text-xs sm:text-sm uppercase tracking-widest hover:bg-white transition-colors whitespace-nowrap inline-flex items-center justify-center w-10 h-10 shrink-0 min-[480px]:w-auto min-[480px]:px-5 sm:px-6">
-              <Mail className="w-4 h-4 min-[480px]:hidden" aria-hidden />
-              <span className="hidden min-[480px]:inline">Contact Sales</span>
+              className="bg-brand-yellow text-brand-dark rounded-full font-bold text-xs lg:text-sm uppercase tracking-widest hover:bg-white transition-colors whitespace-nowrap inline-flex items-center justify-center w-10 h-10 shrink-0 min-[500px]:w-auto min-[500px]:px-5 lg:px-6">
+              <Mail className="w-4 h-4 min-[500px]:hidden" aria-hidden />
+              <span className="hidden min-[500px]:inline">Contact Sales</span>
             </a>
           </div>
         </div>
@@ -1513,7 +2315,7 @@ export default function App() {
                 <MapPin className="w-4 h-4 text-brand-yellow shrink-0" aria-hidden /> New York City
               </div>
               <div className="flex items-center gap-2 bg-brand-white/5 py-2 px-3.5 sm:px-4 rounded-full border border-brand-white/10">
-                <CalendarDays className="w-4 h-4 text-brand-yellow shrink-0" aria-hidden /> Exact dates &amp; venue announced soon
+                <CalendarDays className="w-4 h-4 text-brand-yellow shrink-0" aria-hidden /> Exact dates &amp; venue to be announced
               </div>
               <div className="flex items-center gap-2 bg-brand-white/5 py-2 px-3.5 sm:px-4 rounded-full border border-brand-white/10">
                 <Layers className="w-4 h-4 text-brand-yellow shrink-0" aria-hidden /> 2 Days · 3 Stages
@@ -1526,13 +2328,13 @@ export default function App() {
         </section>
 
         {/* ── PRODUCT MENU ── */}
-        <ProductMenu onJump={onJump} />
+        <ProductMenu onJump={onJump} onPresent={openDeck} />
 
         {/* ── PRICING / RATE CARD ── */}
         <section id="pricing" className="jump-section relative bg-brand-dark pt-16 md:pt-20 border-t border-brand-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-8">
             <SectionHead title="Partnership" accent="Rate Card"
-              lede="Published pricing, all-in where stated. Exclusive and shared routes over the same inventory are alternatives - the calculator enforces it. Prices in EUR and exclude VAT.">
+              lede="Published prices in EUR, excluding VAT, all-in where stated. Where the same space is offered two ways, such as exclusive or shared, both routes sit on one card and you book one or the other.">
               <button type="button" onClick={downloadRateCardPDF}
                 className="mt-6 inline-flex items-center gap-2 min-h-11 px-6 rounded-full border border-brand-yellow/50 text-brand-yellow font-bold text-xs sm:text-sm uppercase tracking-widest hover:bg-brand-yellow/10 transition-colors">
                 <Download className="w-4 h-4" aria-hidden /> Download Full Rate Card
@@ -1563,7 +2365,7 @@ export default function App() {
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-5 sm:gap-6">
                     {cards.map((card, i) => (
                       <ProductCard key={card.key} card={card} span={spans[i]} rebooking={rebooking}
-                        cartCounts={cartCounts} conflictedIds={conflictedIds} onAdd={addToCart} />
+                        cartCounts={cartCounts} conflictedIds={conflictedIds} onAdd={addToCart} onPresent={openDeck} />
                     ))}
                   </div>
                 </div>
@@ -1575,27 +2377,11 @@ export default function App() {
         {/* ── RECOGNITION LEVELS ── */}
         <section id="recognition" className="jump-section py-20 md:py-24 bg-brand-white/[0.03] relative border-y border-brand-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-8">
-            <SectionHead title="Partner" accent="Recognition"
-              lede="Recognition is earned on your combined total spend across all NEXTPredict 2027 products. It carries no extra charge and adds no further products - it is how prominently the event says thank you." />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4" data-anim style={anim}>
-              {[
-                ['Silver', 'Below €30k', 'text-brand-gray', 'Silver position and logo recognition across agreed listings, website and onsite displays.'],
-                ['Gold', '€30k – €79,999', 'text-yellow-400', 'Gold position and logo recognition across agreed listings, website and onsite displays.'],
-                ['Platinum', '€80k – €134,999', 'text-blue-300', 'Platinum position and logo recognition across agreed listings, website and onsite displays.'],
-                ['Diamond', '€135k+', 'text-cyan-100', 'Diamond position and logo recognition across agreed listings, website and onsite displays.'],
-                ['Headline', 'Headline product', 'text-brand-yellow', 'The highest position in the partner hierarchy - reserved for the Headline Partner. Not reachable by spend alone.'],
-              ].map(([name, band, color, desc]) => (
-                <div key={name}
-                  className={`rounded-2xl border p-6 flex flex-col ${name === 'Headline' ? 'sm:col-span-2 lg:col-span-1 border-brand-yellow/60 bg-brand-yellow/8' : 'border-brand-white/10 bg-brand-white/5'}`}>
-                  <p className={`text-xl font-black uppercase mb-1 ${color}`}>{name}</p>
-                  <p className="text-xs text-brand-gray mb-4 tabular-nums">{band}</p>
-                  <p className="text-xs text-brand-gray leading-relaxed">{desc}</p>
-                </div>
-              ))}
+            <SectionHead title="Partner" accent="Recognition" lede={RECOGNITION_LEDE} />
+            <div data-anim style={anim}>
+              <RecognitionLevels />
             </div>
-            <p className="text-center text-brand-gray text-xs mt-8 opacity-70" data-anim style={anim}>
-              Levels are based on total NEXTPredict 2027 spend only. NEXT.io media spend and other NEXT.io events do not count towards recognition here.
-            </p>
+            <p className="text-center text-brand-gray text-xs mt-8 opacity-70" data-anim style={anim}>{RECOGNITION_NOTE}</p>
           </div>
         </section>
 
@@ -1616,12 +2402,7 @@ export default function App() {
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-3 sm:gap-4" data-anim style={anim}>
-                {[
-                  ['2', 'Event Days'],
-                  ['3', 'Content Stages'],
-                  ['12+', 'Exhibition Positions'],
-                  ['3', 'NEXTworking Evenings'],
-                ].map(([num, label], i) => (
+                {EVENT_STATS.map(([num, label], i) => (
                   <div key={i} className="text-center px-3 py-7 sm:py-8 rounded-xl bg-brand-white/5 border border-brand-white/10 group hover:border-brand-yellow/40 transition-all duration-300">
                     <p className="text-4xl sm:text-5xl font-black text-brand-white group-hover:text-brand-yellow transition-colors duration-300 mb-2 leading-none tabular-nums">{num}</p>
                     <p className="text-brand-gray text-[11px] sm:text-xs uppercase tracking-widest leading-snug">{label}</p>
@@ -1630,34 +2411,21 @@ export default function App() {
               </div>
             </div>
 
+            {/* from lg the proof sits beside the argument instead of under it,
+                so the box no longer ends in an empty right half */}
             <div className="bg-brand-white/5 border border-brand-white/10 rounded-3xl p-6 sm:p-10 md:p-12 relative overflow-hidden" data-anim style={anim}>
               <div className="absolute right-0 top-0 w-96 h-96 bg-brand-yellow/5 rounded-full blur-3xl pointer-events-none" />
-              <div className="relative z-10 max-w-3xl">
-                <div className="inline-block bg-brand-yellow text-brand-dark font-bold px-4 py-1 rounded-sm mb-6 text-sm">WHY PARTNER</div>
-                <h4 className="text-[1.75rem] sm:text-3xl md:text-4xl font-bold text-brand-white mb-6 leading-tight">First-Mover Positioning. <span className="text-brand-yellow">A Verified Room.</span></h4>
-                <p className="text-base sm:text-lg text-brand-gray leading-relaxed">
-                  The demand side is curated on purpose: market makers and traders are hosted, and operators and
-                  regulators attend on verified preferential rates - so the room your team works is the room you
-                  are paying to meet. Partner visibility runs across the venue, the livestream, NEXT's digital
-                  reach (a ~40k LinkedIn following and the daily newsletter database) and the official aftermovie.
-                </p>
-                <p className="text-base sm:text-lg text-brand-gray leading-relaxed mt-4">
-                  A new event, but not an unproven team - partners score the NEXT Summit editions far above the
-                  industry norm:
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-6 max-w-xl">
-                  {[
-                    ['+69', 'Partner NPS · Valletta 2026', true],
-                    ['+62', 'Partner NPS · New York 2026', true],
-                    ['+27', 'Industry Benchmark', false],
-                  ].map(([num, label, ours], i) => (
-                    <div key={i} className="flex sm:block items-center gap-4 text-left sm:text-center px-4 py-3.5 sm:px-3 sm:py-5 rounded-xl bg-brand-white/5 border border-brand-white/10">
-                      <p className={`w-14 sm:w-auto shrink-0 text-3xl font-bold sm:mb-1 leading-none tabular-nums ${ours ? 'text-brand-yellow' : 'text-brand-gray'}`}>{num}</p>
-                      <p className="text-brand-gray text-xs uppercase tracking-widest leading-snug">{label}</p>
-                    </div>
-                  ))}
+              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 lg:items-center">
+                <div className="lg:col-span-7 max-w-3xl">
+                  <div className="inline-block bg-brand-yellow text-brand-dark font-bold px-4 py-1 rounded-sm mb-6 text-sm">WHY PARTNER</div>
+                  <h4 className="text-[1.75rem] sm:text-3xl md:text-4xl font-bold text-brand-white mb-6 leading-tight">{WHY_PARTNER.title} <span className="text-brand-yellow">{WHY_PARTNER.accent}</span></h4>
+                  <p className="text-base sm:text-lg text-brand-gray leading-relaxed">{WHY_PARTNER.body}</p>
                 </div>
-                <p className="text-xs text-brand-gray mt-4 opacity-60">Partner Net Promoter Scores from the NEXT Summit 2026 post-event surveys; industry benchmark as reported by the survey platform.</p>
+                <div className="lg:col-span-5">
+                  <p className="text-base sm:text-lg text-brand-gray leading-relaxed">{WHY_PARTNER.npsIntro}</p>
+                  <NpsTiles side className="mt-6 max-w-xl" />
+                  <p className="text-xs text-brand-gray mt-4 opacity-60">{NPS_SOURCE}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -1666,8 +2434,7 @@ export default function App() {
         {/* ── AUDIENCE ── */}
         <section id="audience" className="jump-section py-20 md:py-24 bg-brand-dark relative border-b border-brand-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-8">
-            <SectionHead title="Who's In" accent="The Room"
-              lede="A summit built on category fit, not badge count - the buyers, builders and rule-makers of prediction markets." />
+            <SectionHead title="Who's In" accent="The Room" lede={ROOM_LEDE} />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
               {AUDIENCE.map(([label, Icon], i) => (
                 <div key={label} data-anim style={{ ...anim, transitionDelay: `${i * 50}ms` }}
@@ -1678,11 +2445,7 @@ export default function App() {
               ))}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-10 md:mt-12" data-anim style={anim}>
-              {[
-                ['The Content', 'Three stages across two days: the Leadership Stage headline programme, plus two hub stages for deeper category conversations - regulation, liquidity, sports, data and the builder economy.'],
-                ['The Network', 'Three NEXTworking evenings, curated introductions, private meeting rooms and hosted hospitality - built for a market that trades on relationships.'],
-                ['The Reach', "Livestream, filmed sessions, official photography and the aftermovie extend your visibility well beyond the room, across NEXT's channels and your own."],
-              ].map(([title, body]) => (
+              {ROOM_PILLARS.map(([title, body]) => (
                 <div key={title} className="bg-brand-white/5 p-6 rounded-xl border border-brand-white/10 hover:border-brand-yellow transition-colors duration-300">
                   <h4 className="text-brand-yellow font-bold mb-3 uppercase">{title}</h4>
                   <p className="text-sm text-brand-gray leading-relaxed">{body}</p>
@@ -1703,9 +2466,7 @@ export default function App() {
             </div>
             <h2 className="text-[2rem] leading-[1.05] sm:text-4xl md:text-5xl font-black text-brand-white uppercase tracking-tight mb-6">Rebook Early. <span className="text-brand-yellow">Keep 15%.</span></h2>
             <p className="text-base md:text-lg text-brand-gray max-w-3xl mx-auto mb-10 leading-relaxed">
-              Partners from NEXTPredict 2026 qualify for a 15% rebooking rate on 2027 packages, with first
-              conversation on the exclusive inventory they held. The rebooking rate is not combinable with any
-              other offer. Toggle it in the calculator to see your pricing.
+              {REBOOKING_COPY} Toggle it in the calculator to see your pricing.
             </p>
             <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
               <a href="mailto:sales@next.io?subject=NEXTPredict 2027 rebooking"
@@ -1742,6 +2503,14 @@ export default function App() {
       </footer>
 
       <CalculatorPanel cart={cart} onRemove={removeFromCart} rebooking={rebooking} setRebooking={setRebooking} open={calcOpen} setOpen={setCalcOpen} />
+
+      {start && (
+        <PresentMode slides={slides} startId={start.id} onClose={closeDeck}
+          title={deckGoal ? `2027 · ${deckGoal}` : '2027 · Partnership Rate Card'}
+          label={`NEXTPredict 2027 ${deckGoal ? `${deckGoal} products` : 'partnership rate card'}`}
+          logo={<img alt="NEXTPredict" src={`${base}logos/nextpredict-logo.png`} className="h-5 sm:h-6 w-auto shrink-0" />}
+          renderSlide={(s, ctx) => renderDeckSlide(s, deck, ctx)} />
+      )}
     </div>
   )
 }
