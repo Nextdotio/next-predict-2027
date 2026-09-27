@@ -8,6 +8,7 @@ import {
   Award, ListChecks
 } from 'lucide-react'
 import { PresentMode, usePresent, CopyLinkButton } from './PresentMode.jsx'
+import { wallStreetSVG, FIDI_VIEWBOX, probabilityLine } from './skyline.js'
 
 const base = import.meta.env.BASE_URL
 
@@ -1468,12 +1469,81 @@ function ProofRow({ className = '' }) {
   )
 }
 
+// ─── The hero: a market night in Lower Manhattan ───────────────────────────
+// Three pieces, all decoration over the page's own facts: a ticker tape under
+// the nav (TICKER reads EVENT_STATS, NPS_PROOF and the date line, nothing
+// else, and the same facts are on the page, so it is hidden from screen
+// readers), a probability line that climbs across the sky, and the
+// Financial District drawn along the foot of the hero (skyline.js). The line
+// draws in once and the ticker runs; both hold still under reduced motion.
+const TICKER = [
+  ['New York City', 'October 2027'],
+  ...EVENT_STATS.map(([v, l]) => [l, v]),
+  ...NPS_PROOF.map(([v, l]) => [l, v]),
+]
+function MarketTicker() {
+  const row = (copy) => TICKER.map(([label, value]) => (
+    <span key={`${copy}-${label}`} className="inline-flex items-center gap-2.5 pl-6">
+      <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.18em] text-brand-white/60">{label}</span>
+      <span className="text-xs sm:text-[13px] font-black tabular-nums text-brand-yellow">{value}</span>
+      <span className="ml-4 h-1 w-1 rotate-45 bg-brand-yellow/60" />
+    </span>
+  ))
+  return (
+    <div aria-hidden="true" className="absolute inset-x-0 z-20 overflow-hidden border-b border-brand-white/10 bg-[#19191b]/90 backdrop-blur-sm"
+      style={{ top: 'var(--nav-h, 72px)' }}>
+      <div className="ticker-track flex w-max whitespace-nowrap py-2">{row('a')}{row('b')}</div>
+    </div>
+  )
+}
+
+const HERO_LINE = probabilityLine()
+const FIDI_HTML = wallStreetSVG('ws-hero')
+function MarketBackdrop() {
+  const [ex, ey] = HERO_LINE.end
+  return (
+    <div aria-hidden="true" className="absolute inset-0 z-0 pointer-events-none">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,207,51,0.1),transparent_55%)]" />
+      <div className="terminal-grid absolute inset-0" />
+      <div className="line-draw absolute inset-x-0 top-[104px] h-[250px] sm:top-[112px] sm:h-[290px]">
+        <svg viewBox="0 0 1000 400" preserveAspectRatio="none" className="absolute inset-0 w-full h-full">
+          <defs>
+            <linearGradient id="np-line-area" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#ffcf33" stopOpacity="0.09" /><stop offset="1" stopColor="#ffcf33" stopOpacity="0" />
+            </linearGradient>
+            <linearGradient id="np-line-fade" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stopColor="#fff" /><stop offset="0.8" stopColor="#fff" /><stop offset="0.94" stopColor="#fff" stopOpacity="0" />
+            </linearGradient>
+            <mask id="np-line-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="400"><rect width="1000" height="400" fill="url(#np-line-fade)" /></mask>
+          </defs>
+          <path d={HERO_LINE.area} fill="url(#np-line-area)" mask="url(#np-line-mask)" />
+          <polyline points={HERO_LINE.line} fill="none" stroke="#ffcf33" strokeOpacity="0.55" strokeWidth="1.75" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+        </svg>
+        <span className="line-dot absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${ex * 100}%`, top: `${ey * 100}%` }}>
+          <span className="absolute inset-0 rounded-full bg-brand-yellow/60 animate-ping motion-reduce:animate-none" />
+          <span className="relative block h-2.5 w-2.5 rounded-full bg-brand-yellow shadow-[0_0_14px_rgba(255,207,51,0.9)]" />
+        </span>
+      </div>
+    </div>
+  )
+}
+// Lower Manhattan as a band under the chips, edge to edge; the proof that
+// follows carries .on-river and sits on the lower half of the towers.
+function FidiBand() {
+  return (
+    <div aria-hidden="true" className="fidi-band">
+      <svg viewBox={FIDI_VIEWBOX} preserveAspectRatio="xMidYMax slice" focusable="false"
+        dangerouslySetInnerHTML={{ __html: FIDI_HTML }} />
+    </div>
+  )
+}
+
 // The same proof on the first screen, before a single price, with the line
 // that frames it.
 function HeroProof() {
   return (
     <div className="mb-9 sm:mb-10 max-w-3xl mx-auto">
-      <p className="mb-3 text-sm sm:text-base leading-relaxed text-brand-white/80 text-pretty">{WHY_PARTNER.npsIntro}</p>
+      <p className="mb-3 lg:-mx-16 text-sm sm:text-base lg:text-sm 2xl:text-base leading-relaxed text-brand-white/80 text-pretty">{WHY_PARTNER.npsIntro}</p>
       <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
         {NPS_PROOF.map(([n, label, ours]) => (
           <div key={label} className="rounded-2xl border border-brand-white/15 bg-brand-dark/60 backdrop-blur-sm px-2.5 sm:px-4 py-3.5 sm:py-4 text-center">
@@ -2340,18 +2410,18 @@ export default function App() {
 
       <main>
         {/* ── HERO ── */}
-        <section className="relative flex flex-col items-center justify-center overflow-hidden bg-brand-dark pt-28 sm:pt-36 pb-12 sm:pb-16">
-          <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top,rgba(255,207,51,0.14),transparent_55%)]" />
-          <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-brand-dark to-transparent z-0" />
+        <section className="relative flex flex-col items-center justify-center overflow-hidden bg-brand-dark pt-32 pb-12 sm:pb-16">
+          <MarketTicker />
+          <MarketBackdrop />
           <div className="z-10 text-center max-w-5xl px-4 sm:px-8 w-full">
-            <p className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-brand-yellow/30 bg-brand-yellow/10 text-brand-yellow text-[10px] min-[360px]:text-[11px] sm:text-xs font-bold uppercase tracking-[0.14em] sm:tracking-[0.2em] mb-7 sm:mb-8 whitespace-nowrap">
+            <p className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-brand-yellow/30 bg-brand-yellow/10 text-brand-yellow text-[10px] min-[360px]:text-[11px] sm:text-xs font-bold uppercase tracking-[0.14em] sm:tracking-[0.2em] mb-7 sm:mb-6 whitespace-nowrap">
               <TrendingUp className="w-3.5 h-3.5 shrink-0" aria-hidden /> The Prediction Markets Summit
             </p>
-            <h1 className="text-[clamp(2.75rem,14vw,8rem)] font-black tracking-tighter text-brand-white mb-4 sm:mb-6 leading-none">
+            <h1 className="text-[clamp(2.75rem,14vw,8rem)] font-black tracking-tighter text-brand-white mb-4 sm:mb-5 leading-none">
               NEXT<span className="text-brand-yellow">Predict</span>
             </h1>
-            <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold text-brand-yellow mb-6 tracking-wide uppercase">October 2027</h2>
-            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-brand-white/80 font-medium tracking-wide mb-9 sm:mb-10 uppercase text-[11px] sm:text-sm">
+            <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold text-brand-yellow mb-5 tracking-wide uppercase">October 2027</h2>
+            <div className="relative z-10 flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-brand-white/80 font-medium tracking-wide mb-2 uppercase text-[11px] sm:text-sm">
               <div className="flex items-center gap-2 bg-brand-white/5 py-2 px-3.5 sm:px-4 rounded-full border border-brand-white/10">
                 <MapPin className="w-4 h-4 text-brand-yellow shrink-0" aria-hidden /> New York City
               </div>
@@ -2362,7 +2432,8 @@ export default function App() {
                 <Layers className="w-4 h-4 text-brand-yellow shrink-0" aria-hidden /> 2 Days · 3 Stages
               </div>
             </div>
-            <HeroProof />
+            <FidiBand />
+            <div className="on-river relative"><HeroProof /></div>
             <div className="bg-brand-yellow text-brand-dark py-4 px-6 md:py-6 md:px-12 inline-block rounded-2xl transform -skew-x-6 max-w-full">
               <h3 className="text-[clamp(1.1rem,5.6vw,3.75rem)] font-black uppercase tracking-tighter skew-x-6 leading-none whitespace-nowrap">Partnership Rate Card</h3>
             </div>

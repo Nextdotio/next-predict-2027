@@ -265,3 +265,33 @@ this one.
   Day 2 partnership available" and its either/or term); the 16 Sep
   reconcile had pasted the Stage 3 line onto it.
 
+
+## The hero: a market night in Lower Manhattan (27 Sep 2026)
+
+Stuart: "Make the hero designs more beautiful as well ... NeXTPredict should
+have a New York/wall street/prediction market vibe". Still Inter, charcoal and
+yellow only (the design rule above): the feel comes from a trading screen and
+the Financial District, not from a new palette or face.
+
+- **The ticker** (`MarketTicker`, under the nav at `--nav-h`) runs `TICKER`:
+  the date line, `EVENT_STATS` and `NPS_PROOF`, nothing else. It is
+  `aria-hidden` because every one of those facts is on the page already.
+  Never put a figure on it that the page does not carry, never an invented
+  market, price or probability.
+- **The probability line** (`MarketBackdrop`, `probabilityLine()` in
+  `src/skyline.js`) is a seeded random walk that climbs across the sky behind
+  the wordmark over a faint chart grid, draws in once and lands on a dot. It
+  has no axis and no numbers: it is decoration, not data.
+- **Lower Manhattan** (`FidiBand`, `wallStreetSVG()` in `src/skyline.js`) is
+  drawn, not photographed, and says New York without naming a venue (the
+  venue is still to be announced): One World Trade at the middle of a
+  2880-wide board, 3 and 4 WTC, 70 Pine, 40 Wall Street, 8 Spruce, the
+  Woolworth Building and a tower of the Brooklyn Bridge, office windows lit on
+  their floor grids, the river below. It runs edge to edge under the chips;
+  the proof block after it carries `.on-river` and sits on the lower half of
+  the towers. `--fidi-h` (index.css, on `:root` because the sibling reads it)
+  is 200px on a phone and 240px from sm, growing with the screen from 1440
+  (100vw / 6). Those sizes keep the proof tiles above the fixed plan bar on
+  1024x800, 1280x800 and 1366x768 screens, where they sat before the
+  redesign: re-measure there before making the band taller.
+- The ticker, the line and the river shimmer hold still under reduced motion.

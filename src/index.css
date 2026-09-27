@@ -125,3 +125,37 @@
    animation entirely under reduced motion. */
 @keyframes pm-in-fwd { from { opacity: 0; transform: translateX(24px) } to { opacity: 1; transform: none } }
 @keyframes pm-in-back { from { opacity: 0; transform: translateX(-24px) } to { opacity: 1; transform: none } }
+
+/* ── Hero: a market night in Lower Manhattan (MarketTicker, MarketBackdrop) ──
+   The ticker runs its two copies of the row end to end; the chart grid fades
+   out from the middle; the probability line draws in left to right once and
+   its dot lands at the end; the skyline sits on the hero's foot, sized so One
+   World Trade always stands clear. Reduced motion shows all of it at rest. */
+@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.ticker-track { animation: ticker 60s linear infinite; }
+.terminal-grid {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 72px 72px;
+  -webkit-mask-image: radial-gradient(ellipse 75% 55% at 50% 32%, #000 25%, transparent 78%);
+  mask-image: radial-gradient(ellipse 75% 55% at 50% 32%, #000 25%, transparent 78%);
+}
+@keyframes line-draw { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+.line-draw { animation: line-draw 2.4s cubic-bezier(0.3, 0.6, 0.3, 1) both; filter: drop-shadow(0 0 6px rgba(255, 207, 51, 0.35)); }
+@keyframes line-dot { from { opacity: 0; transform: translate(-50%, -50%) scale(0.4); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+.line-dot { width: 10px; height: 10px; animation: line-dot 0.4s ease-out 2.3s both; }
+/* the band: the board is 2880 x 480, so from 1440px wide the band grows
+   with the screen (100vw / 6) to keep it edge to edge; --fidi-h sits on the
+   root because the .on-river sibling reads it too */
+:root { --fidi-h: 200px; }
+@media (min-width: 640px) { :root { --fidi-h: 240px; } }
+@media (min-width: 1440px) { :root { --fidi-h: calc(100vw / 6); } }
+.fidi-band { position: relative; height: var(--fidi-h); margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); pointer-events: none; }
+.fidi-band svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.fidi-band + .on-river { margin-top: calc(var(--fidi-h) * -0.54); }
+@media (min-width: 1024px) { .fidi-band + .on-river { margin-top: calc(var(--fidi-h) * -0.6); } }
+.on-river p { text-shadow: 0 1px 12px rgba(20, 20, 21, 0.9); }
+@keyframes ws-shimmer { from { opacity: 0.7; transform: translateX(-4px); } to { opacity: 1; transform: translateX(4px); } }
+.ws-shimmer { animation: ws-shimmer 5s ease-in-out infinite alternate; }
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track, .line-draw, .line-dot, .ws-shimmer { animation: none; }
+}
