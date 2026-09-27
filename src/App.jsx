@@ -132,6 +132,9 @@ const openPrintWindow = (html) => {
 }
 
 // ─── PDF proposal generator ─────────────────────────────────────────────────
+// The NPS proof as printed: the same three tiles, the same source line.
+const proofHtml = () => `<div class="proof">${NPS_PROOF.map(([n, l, ours]) => `<div><b style="color:${ours ? '#1a1a1a' : '#888'}">${escHtml(n)}</b><span>${escHtml(l)}</span></div>`).join('')}</div>`
+
 function downloadProposalPDF(cart, rebooking) {
   const total = cart.reduce((s, i) => s + (i.poa ? 0 : (rebooking ? Math.round(i.price * 0.85) : i.price)), 0)
   const tier = resolveTier(total, cart)
@@ -178,6 +181,11 @@ function downloadProposalPDF(cart, rebooking) {
     .total td:last-child{text-align:right;color:#ffcf33;font-size:20px}
     .footer{padding:32px 48px;border-top:3px solid #ffcf33;margin-top:40px}
     .footer p{font-size:13px;color:#666;line-height:1.7}
+    .proof{display:flex;gap:12px;margin-bottom:8px}
+    .proof div{flex:1;border:1px solid #e5e5e5;border-radius:8px;padding:12px 14px}
+    .proof b{display:block;font-size:22px;font-weight:900;line-height:1}
+    .proof span{display:block;margin-top:6px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:#666;line-height:1.35}
+    .psrc{font-size:10.5px;color:#888;line-height:1.5}
     .footer strong{color:#1a1a1a}
     @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}tr{page-break-inside:avoid}}
   </style></head><body>
@@ -187,6 +195,9 @@ function downloadProposalPDF(cart, rebooking) {
   </div>
   <div class="body">
     ${rebooking ? '<div class="discount">&#10003; 15% rebooking rate applied to all packages below (2026 partners only).</div>' : ''}
+    <div class="label">Partner NPS, NEXT Summits 2026</div>
+    ${proofHtml()}
+    <p class="psrc" style="margin-bottom:28px">${escHtml(NPS_SOURCE)}</p>
     <div class="label">Partner Recognition Level</div>
     <div class="tier-box">
       <div>
@@ -292,6 +303,11 @@ function downloadRateCardPDF() {
     .rhead h4{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#444}
     .rprice{font-size:14px;font-weight:900;white-space:nowrap}
     ${PRINT_TERMS_CSS}
+    .proof{display:flex;gap:12px;margin-bottom:8px}
+    .proof div{flex:1;border:1px solid #e5e5e5;border-radius:8px;padding:12px 14px}
+    .proof b{display:block;font-size:22px;font-weight:900;line-height:1}
+    .proof span{display:block;margin-top:6px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:#666;line-height:1.35}
+    .psrc{font-size:10.5px;color:#888;line-height:1.5}
     .foot{padding:24px 48px 40px;border-top:3px solid #ffcf33;margin-top:24px;color:#666;font-size:11px;line-height:1.7}
     @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
   </style></head><body>
@@ -299,6 +315,7 @@ function downloadRateCardPDF() {
     <h1>NEXT<span>Predict</span> 2027</h1>
     <p>Full Partnership Rate Card &nbsp;&middot;&nbsp; October 2027 &nbsp;&middot;&nbsp; New York City &nbsp;&middot;&nbsp; Exact dates and venue to be announced &nbsp;&middot;&nbsp; Generated ${date}</p>
   </div>
+  <section><h2>Partner NPS, NEXT Summits 2026</h2>${proofHtml()}<p class="psrc">${escHtml(NPS_SOURCE)}</p></section>
   ${body}
   <div class="foot">All prices exclude VAT. Availability subject to change without notice. Prices are all-in where stated.<br>
   Exclusive and shared routes over the same physical inventory are alternatives, never sold together.<br>
@@ -1021,6 +1038,7 @@ function ProductCard({ card, span = '', rebooking, cartCounts, conflictedIds, on
           {multi && <OptionTiles card={card} sel={item.id} setSel={setSel} rebooking={rebooking} />}
           <PriceBlock item={item} rebooking={rebooking} featured={featured} />
           <Lede text={item.quote} featured={featured} />
+          <ProofRow className="mb-5" />
           <TagRow item={item} featured={featured} className="hidden @2xl:flex" />
         </div>
         <div className="@2xl:w-7/12 flex-1 flex flex-col">
@@ -1423,6 +1441,48 @@ function NpsTiles({ side = false, big = false, className = '' }) {
           <p className="text-brand-gray text-xs uppercase tracking-widest leading-snug">{label}</p>
         </div>
       ))}
+    </div>
+  )
+}
+
+// ─── Proof on every card and product slide ───────────────────────────────────
+// Stuart, 27 Sep 2026: "I need the layout and proof points to be visible on
+// all brochures." NEXTPredict has no survey of its own yet, so the proof is the
+// team's: NPS_PROOF (partner NPS at the two NEXT Summits against the industry
+// benchmark), read from the one copy and set under NPS_SOURCE. The venue is to
+// be announced, so there is no floorplan to show until Event Ops confirm it.
+function ProofRow({ className = '' }) {
+  return (
+    <figure className={`rounded-xl border border-brand-white/10 bg-brand-white/[0.03] px-4 py-3.5 ${className}`}>
+      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-brand-gray">Partner NPS, NEXT Summits 2026</p>
+      <div className="mt-2.5 grid grid-cols-3 gap-3">
+        {NPS_PROOF.map(([n, label, ours]) => (
+          <p key={label} className="min-w-0">
+            <span className={`block text-xl sm:text-2xl font-black leading-none tabular-nums ${ours ? 'text-brand-yellow' : 'text-brand-gray'}`}>{n}</span>
+            <span className="mt-1.5 block text-[10.5px] sm:text-[11px] leading-snug text-brand-white/75">{label}</span>
+          </p>
+        ))}
+      </div>
+      <figcaption className="mt-3 text-[10.5px] leading-snug text-brand-gray">{NPS_SOURCE}</figcaption>
+    </figure>
+  )
+}
+
+// The same proof on the first screen, before a single price, with the line
+// that frames it.
+function HeroProof() {
+  return (
+    <div className="mb-9 sm:mb-10 max-w-3xl mx-auto">
+      <p className="mb-3 text-sm sm:text-base leading-relaxed text-brand-white/80 text-pretty">{WHY_PARTNER.npsIntro}</p>
+      <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+        {NPS_PROOF.map(([n, label, ours]) => (
+          <div key={label} className="rounded-2xl border border-brand-white/15 bg-brand-dark/60 backdrop-blur-sm px-2.5 sm:px-4 py-3.5 sm:py-4 text-center">
+            <p className={`text-[1.65rem] sm:text-4xl font-black leading-none tabular-nums ${ours ? 'text-brand-yellow' : 'text-brand-gray'}`}>{n}</p>
+            <p className="mt-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.1em] leading-snug text-brand-white/80">{label}</p>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-[11px] sm:text-xs leading-relaxed text-brand-gray">{NPS_SOURCE}</p>
     </div>
   )
 }
@@ -1840,6 +1900,7 @@ function ProductSlide({ card, deck, goId }) {
         <AltLinks card={card} deck={deck} goId={goId} />
       </div>
       <div className="lg:col-span-5">
+        <ProofRow className="mb-5" />
         <SlideDeliverables items={items} />
         <TermsList terms={terms} />
       </div>
@@ -1915,6 +1976,7 @@ function RouteSlide({ card, deck, goId }) {
         )}
       </div>
       {wide && <SlideDeliverables items={common} heading="Both routes include" small cols className="mt-5" />}
+      <ProofRow className="mt-5" />
       <AltLinks card={card} deck={deck} goId={goId} />
     </div>
   )
@@ -2300,6 +2362,7 @@ export default function App() {
                 <Layers className="w-4 h-4 text-brand-yellow shrink-0" aria-hidden /> 2 Days · 3 Stages
               </div>
             </div>
+            <HeroProof />
             <div className="bg-brand-yellow text-brand-dark py-4 px-6 md:py-6 md:px-12 inline-block rounded-2xl transform -skew-x-6 max-w-full">
               <h3 className="text-[clamp(1.1rem,5.6vw,3.75rem)] font-black uppercase tracking-tighter skew-x-6 leading-none whitespace-nowrap">Partnership Rate Card</h3>
             </div>

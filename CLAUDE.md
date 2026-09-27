@@ -228,3 +228,22 @@ Rules future edits must keep:
   (€20,000, down from €35,000 the same day). A one-day focus track never
   charges more than the flagship's main stage. Stage 2 (€16,000) and Stage 3
   (€10,000) non-branded panels are unchanged.
+
+## Proof on every card (27 Sep 2026)
+
+Stuart: "I need the layout and proof points to be visible on all brochures.
+This needs to be hugely convincing to the buyer and hugely helpful for our
+sales people."
+
+- **The proof is the team's**, because NEXTPredict has no survey of its own
+  on file: `NPS_PROOF` (partner NPS at Valletta and New York 2026 against the
+  industry benchmark) under `NPS_SOURCE`. The first screen carries it with
+  `WHY_PARTNER.npsIntro` (`HeroProof`, before the rate card banner); every
+  card carries `ProofRow` under its lede; every product slide opens its case
+  column with it and a two-route slide sets it under the panels, so label,
+  price and add button stay above the fold. Both PDFs open with the same
+  tiles and source. It reads the one copy of each figure: never retype one.
+- **No layout yet.** The venue is to be announced, so there is no floorplan
+  or zone to show. When Event Ops confirm the venue, add one the way New York
+  (floorplan spots) or Valletta (venue zones) do.
+
