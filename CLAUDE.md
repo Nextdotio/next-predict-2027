@@ -295,3 +295,26 @@ the Financial District, not from a new palette or face.
   1024x800, 1280x800 and 1366x768 screens, where they sat before the
   redesign: re-measure there before making the band taller.
 - The ticker, the line and the river shimmer hold still under reduced motion.
+
+## Decisions after the product-list audit (Stuart, 27 Sep 2026)
+
+- **The hubs carry the presentation, not a panel** ("the hubs should probably
+  have the presentation rather than the panel", the New York decision, which
+  Olivia's per-day structure mirrors here). Both Stage 2 partner routes and
+  the Stage 3 Partner (Day 1) now include the day's 20-minute presentation by
+  the partner's C-level speaker, in place of "1 Custom Panel session
+  included"; the Custom Sessions are the only custom panels. One
+  presentation per stage per day, so in `CONFLICTS` the Stage 2 Presenter is
+  either/or with both Stage 2 partner routes (19 with 17 and 18) and the
+  Stage 3 Presenter with the Stage 3 Partner (24/25); each presenter's terms
+  say so. The hub prices did not move (€65,000 per day, €115,000 both days,
+  €33,000 Stage 3), though each now includes a presentation that sells
+  alone at €55,000 or €30,000: a pricing question for Stuart, and whether the
+  stand-alone presenters stay at all is open with Olivia and Rory.
+- **Speaking content is shaped with the team.** Presenters, hub presentations
+  and custom sessions carry "You shape the title, topic and format, in
+  collaboration with the NEXT.io production and conference content team".
+  The presenters keep "Full brand ownership of the content, within event
+  guidelines" (the 26 Sep rule) above it.
+- **Passes: the card is right**, not Olivia's list (lanyards stay at 2 Full
+  Event passes a unit); Stuart updates the list.
