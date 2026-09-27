@@ -477,7 +477,7 @@ Website, social and aftermovie visibility
 1 C-level sponsor speaker
 Session branding on agenda, website and screens
 1 Full Event pass + 1 Speaker pass
-📅 Two slots on Day 1 and two on Day 2, subject to programme.`,impact:["Thought Leadership"],type:["Speaking & Content"]},{id:16,cat:"Leadership Stage",title:"Leadership Stage Non-Branded Panel",price:19e3,exclusive:!1,avail:4,quote:'"A seat on a curated main-stage panel aligned to your expertise - editorial participation with your leadership in the conversation."',bullets:`Curated panel participation aligned to your expertise
+📅 Two slots on Day 1 and two on Day 2, subject to programme.`,impact:["Thought Leadership"],type:["Speaking & Content"]},{id:16,cat:"Leadership Stage",title:"Leadership Stage Non-Branded Panel",price:22e3,exclusive:!1,avail:4,quote:'"A seat on a curated main-stage panel aligned to your expertise - editorial participation with your leadership in the conversation."',bullets:`Curated panel participation aligned to your expertise
 25-30 minute session with C-level participation
 No brand attribution on the session - editorial format
 Partner logo on the website
