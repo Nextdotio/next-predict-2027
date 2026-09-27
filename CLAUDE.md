@@ -218,3 +218,9 @@ Rules future edits must keep:
   320px up when a nav item changes (the nav is fixed, so an overflow check of
   the page does not see it clip).
 - Keyboard focus shows a yellow ring (`:focus-visible` in `index.css`).
+- DECIDED (Stuart, 27 Sep 2026): Leadership Stage Non-Branded Panel €22,000
+  (was €19,000). The October main stage now sits above the non-branded panel
+  on NEXTPredict Focus, the 15 April prediction markets day on the New York card
+  (€20,000, down from €35,000 the same day). A one-day focus track never
+  charges more than the flagship's main stage. Stage 2 (€16,000) and Stage 3
+  (€10,000) non-branded panels are unchanged.

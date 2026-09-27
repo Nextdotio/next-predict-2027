@@ -392,7 +392,7 @@ const pricing = [
     quote: '"A \'Powered by\' session on the main stage: 25-30 minutes of your expertise, with your C-level speaker, in front of the whole event."',
     bullets: '"Powered by" session, 25-30 minutes\n1 C-level sponsor speaker\nSession branding on agenda, website and screens\n1 Full Event pass + 1 Speaker pass\n📅 Two slots on Day 1 and two on Day 2, subject to programme.',
     impact: ['Thought Leadership'], type: ['Speaking & Content'] },
-  { id: 16, cat: 'Leadership Stage', title: 'Leadership Stage Non-Branded Panel', price: 19000, exclusive: false, avail: 4,
+  { id: 16, cat: 'Leadership Stage', title: 'Leadership Stage Non-Branded Panel', price: 22000, exclusive: false, avail: 4,
     quote: '"A seat on a curated main-stage panel aligned to your expertise - editorial participation with your leadership in the conversation."',
     bullets: 'Curated panel participation aligned to your expertise\n25-30 minute session with C-level participation\nNo brand attribution on the session - editorial format\nPartner logo on the website\n1 Speaker pass\n📅 Programme-controlled inventory.',
     impact: ['Thought Leadership'], type: ['Speaking & Content'] },
