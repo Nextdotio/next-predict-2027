@@ -247,3 +247,21 @@ sales people."
   or zone to show. When Event Ops confirm the venue, add one the way New York
   (floorplan spots) or Valletta (venue zones) do.
 
+## Delivery corrections from Ops (27 Sep 2026)
+
+Found by the 27 Sep audit against Olivia's master. Stuart told Olivia on
+16 Sep that these were applied; they had reached the New York card, not
+this one.
+
+- **No freestanding banners and no projection wall** (Olivia, 14 Sep): off
+  the four private meeting rooms, the dining and meeting area and the
+  speakers' lounge; the projector wall is off the Nourish exclusive (bullet
+  and lede). The lounge's new location in her sheet is not on the card: the
+  2027 venue is to be announced, so no room name goes on until it is.
+- **Availability lines follow the 16 Sep quantities**: the Leadership Stage
+  Branded Session (6) and Stage 2 Branded Session (4) now say "Six slots" /
+  "Four slots across the two days" (their old lines described 4 and 2), and
+  the Stage 2 Partner (Per Day) has its own line back ("One Day 1 and one
+  Day 2 partnership available" and its either/or term); the 16 Sep
+  reconcile had pasted the Stage 3 line onto it.
+
