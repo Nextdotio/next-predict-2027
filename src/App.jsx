@@ -396,11 +396,11 @@ const pricing = [
     impact: ['Category Leadership', 'Brand Awareness', 'Thought Leadership'], type: ['Speaking & Content', 'Branding & Visibility'] },
   { id: 11, cat: 'Leadership Stage', title: 'Leadership Stage Presenter', price: 95000, exclusive: true, avail: null,
     quote: '"The single biggest speaking slot of the event: one exclusive C-level presentation on the Leadership Stage, Day 2. One slot. One brand."',
-    bullets: '20-minute C-level presentation, interview or featured session on the Leadership Stage\nFull brand ownership of the content, within event guidelines\nFull AV and production support\n"Presented by" session title on agenda, website and screens\n3 Full Event passes + 1 Speaker pass\n📅 Exclusive - one slot, Day 2 only.',
+    bullets: '20-minute C-level presentation, interview or featured session on the Leadership Stage\nFull brand ownership of the content, within event guidelines\nYou shape the title, topic and format, in collaboration with the NEXT.io production and conference content team\nFull AV and production support\n"Presented by" session title on agenda, website and screens\n3 Full Event passes + 1 Speaker pass\n📅 Exclusive - one slot, Day 2 only.',
     impact: ['Thought Leadership', 'Category Leadership'], type: ['Speaking & Content'] },
   { id: 13, cat: 'Leadership Stage', title: 'Leadership Stage Custom Session', price: 60000, exclusive: false, avail: 2,
     quote: '"Your C-level executive alongside a guest C-level of your choosing - a moderated fireside on the main stage, presented by your brand."',
-    bullets: 'Sponsor C-level plus guest C-level participant\n25-30 minute moderated discussion or fireside format\n"Presented by" session title on agenda, website and screens\n1 Full Event pass + 2 Speaker passes\n📅 One slot per day, subject to content approval.',
+    bullets: 'Sponsor C-level plus guest C-level participant\n25-30 minute moderated discussion or fireside format\nYou shape the topic and format, in collaboration with the NEXT.io production and conference content team\n"Presented by" session title on agenda, website and screens\n1 Full Event pass + 2 Speaker passes\n📅 One slot per day, subject to content approval.',
     impact: ['Thought Leadership'], type: ['Speaking & Content'] },
   { id: 14, cat: 'Leadership Stage', title: 'Leadership Stage Chair Partner', price: 45000, exclusive: true, avail: null,
     quote: '"Every seat in the main conference room, both days. Chair branding puts your logo in every audience shot of the headline programme."',
@@ -418,19 +418,19 @@ const pricing = [
   // Stage 2 Hub
   { id: 17, cat: 'Stage 2 Hub', title: 'Stage 2 Partner (Both-Days Exclusive)', price: 115000, exclusive: true, avail: null,
     quote: '"The second stage as your event-long hub: backdrop, chairs, a custom panel and a two-day branded presence the market walks through all event."',
-    bullets: 'Event-long exclusive Stage 2 hub across both days\nBackdrop branding around the two stage screens\nDelegate-chair branding\n1 Custom Panel session included\nFull two-day hub presence\nWebsite, social and aftermovie visibility\n3 Full Event passes + 1 Speaker pass\n⚠️ Either/or route with the two per-day Stage 2 partnerships - never sold together.',
+    bullets: 'Event-long exclusive Stage 2 hub across both days\nBackdrop branding around the two stage screens\nDelegate-chair branding\nA 20-minute presentation on Stage 2 each day, delivered by your C-level speaker\nYou shape the presentations\' content, in collaboration with the NEXT.io production and conference content team\nFull two-day hub presence\nWebsite, social and aftermovie visibility\n3 Full Event passes + 1 Speaker pass\n⚠️ Either/or route with the two per-day Stage 2 partnerships - never sold together.',
     impact: ['Brand Awareness', 'Thought Leadership'], type: ['Speaking & Content', 'Branding & Visibility'] },
   { id: 18, cat: 'Stage 2 Hub', title: 'Stage 2 Partner (Per Day)', price: 65000, exclusive: false, avail: 2,
     quote: '"Own the second stage for a full day: backdrop, chair branding, a custom panel and a one-day hub presence built around your brand."',
-    bullets: 'Stage 2 backdrop branding around the two stage screens\nDelegate-chair branding\n1 Custom Panel session included\nFull one-day hub presence\nWebsite, social and aftermovie visibility\n3 Full Event passes + 1 Speaker pass\n📅 One Day 1 and one Day 2 partnership available.\n⚠️ Either/or route with the both-days exclusive - never sold together.',
+    bullets: 'Stage 2 backdrop branding around the two stage screens\nDelegate-chair branding\nA 20-minute presentation on Stage 2 on your day, delivered by your C-level speaker\nYou shape the presentation\'s content, in collaboration with the NEXT.io production and conference content team\nFull one-day hub presence\nWebsite, social and aftermovie visibility\n3 Full Event passes + 1 Speaker pass\n📅 One Day 1 and one Day 2 partnership available.\n⚠️ Either/or route with the both-days exclusive - never sold together.',
     impact: ['Brand Awareness', 'Thought Leadership'], type: ['Speaking & Content', 'Branding & Visibility'] },
   { id: 19, cat: 'Stage 2 Hub', title: 'Stage 2 Presenter', price: 55000, exclusive: false, avail: 2,
     quote: '"Twenty minutes of your own content: your C-level\'s keynote on Stage 2, with no panel to share it and your brand\'s name on the session across the agenda and the website."',
-    bullets: '20-minute C-level keynote\nFull brand ownership of the content, within event guidelines\nFull AV and production support\n"Presented by" session title on agenda and website\n2 Full Event passes + 1 Speaker pass\n📅 One slot per day, subject to programme.',
+    bullets: '20-minute C-level keynote\nFull brand ownership of the content, within event guidelines\nYou shape the title, topic and format, in collaboration with the NEXT.io production and conference content team\nFull AV and production support\n"Presented by" session title on agenda and website\n2 Full Event passes + 1 Speaker pass\n📅 One slot per day, subject to programme.\n⚠️ Sold for a day without a Stage 2 partner: every Stage 2 partnership includes that day\'s presentation.',
     impact: ['Thought Leadership'], type: ['Speaking & Content'] },
   { id: 20, cat: 'Stage 2 Hub', title: 'Stage 2 Custom Session', price: 40000, exclusive: false, avail: 2,
     quote: '"Share Stage 2 with the guest you want to be seen with: your C-level and a C-level of your choosing, in a moderated fireside presented by your brand."',
-    bullets: 'Sponsor C-level plus guest C-level participant\n25-30 minute moderated discussion or fireside format\n"Presented by" session title on agenda, website and screens\n1 Full Event pass + 2 Speaker passes\n📅 One slot per day, subject to content approval.',
+    bullets: 'Sponsor C-level plus guest C-level participant\n25-30 minute moderated discussion or fireside format\nYou shape the topic and format, in collaboration with the NEXT.io production and conference content team\n"Presented by" session title on agenda, website and screens\n1 Full Event pass + 2 Speaker passes\n📅 One slot per day, subject to content approval.',
     impact: ['Thought Leadership'], type: ['Speaking & Content'] },
   { id: 21, cat: 'Stage 2 Hub', title: 'Stage 2 Branded Session', price: 25000, exclusive: false, avail: 4,
     quote: '"A \'Powered by\' Stage 2 session: 25-30 minutes with your C-level speaker and your brand on the room."',
@@ -444,15 +444,15 @@ const pricing = [
   // Stage 3 Hub
   { id: 24, cat: 'Stage 3 Hub', title: 'Stage 3 Partner (Day 1)', price: 33000, exclusive: true, avail: null,
     quote: '"A full day of Stage 3 ownership: stage branding, chair branding, a holding slide, a custom panel and a one-day hub presence."',
-    bullets: 'Branding on stage returns and content-screen surrounds\nChair branding and branded holding slide\n1 Custom Panel session included\nFull one-day hub presence\nWebsite, social and aftermovie visibility\n2 Full Event passes + 1 Speaker pass\n📅 One partnership available. Stage 3 runs its panel programme on Day 1; Day 2 is the workshop track.',
+    bullets: 'Branding on stage returns and content-screen surrounds\nChair branding and branded holding slide\nA 20-minute presentation on Stage 3 on Day 1, delivered by your C-level speaker\nYou shape the presentation\'s content, in collaboration with the NEXT.io production and conference content team\nFull one-day hub presence\nWebsite, social and aftermovie visibility\n2 Full Event passes + 1 Speaker pass\n📅 One partnership available. Stage 3 runs its panel programme on Day 1; Day 2 is the workshop track.',
     impact: ['Brand Awareness', 'Thought Leadership'], type: ['Speaking & Content', 'Branding & Visibility'] },
   { id: 25, cat: 'Stage 3 Hub', title: 'Stage 3 Presenter', price: 30000, exclusive: true, avail: null,
     quote: '"The only Presenter slot on Stage 3: twenty minutes of your own content, delivered by your C-level and presented by your brand on the agenda and the website."',
-    bullets: '20-minute C-level keynote\nFull brand ownership of the content, within event guidelines\nFull AV and production support\n"Presented by" session title on agenda and website\n1 Full Event pass + 1 Speaker pass\n📅 Exclusive - one slot, Day 1 only.',
+    bullets: '20-minute C-level keynote\nFull brand ownership of the content, within event guidelines\nYou shape the title, topic and format, in collaboration with the NEXT.io production and conference content team\nFull AV and production support\n"Presented by" session title on agenda and website\n1 Full Event pass + 1 Speaker pass\n📅 Exclusive - one slot, Day 1 only.\n⚠️ Either/or route with the Stage 3 Partner, whose partnership includes the Day 1 presentation - never sold together.',
     impact: ['Thought Leadership'], type: ['Speaking & Content'] },
   { id: 26, cat: 'Stage 3 Hub', title: 'Stage 3 Custom Session', price: 21500, exclusive: false, avail: 1,
     quote: '"The most accessible way to put a guest on stage with you: your C-level and a C-level of your choosing, in a moderated Stage 3 conversation presented by your brand."',
-    bullets: 'Sponsor C-level plus guest C-level participant\n25-30 minute moderated discussion or fireside format\n"Presented by" session title on agenda, website and screens\n2 Speaker passes\n📅 Current availability is exclusive to Day 1.',
+    bullets: 'Sponsor C-level plus guest C-level participant\n25-30 minute moderated discussion or fireside format\nYou shape the topic and format, in collaboration with the NEXT.io production and conference content team\n"Presented by" session title on agenda, website and screens\n2 Speaker passes\n📅 Current availability is exclusive to Day 1.',
     impact: ['Thought Leadership'], type: ['Speaking & Content'] },
   { id: 27, cat: 'Stage 3 Hub', title: 'Stage 3 Branded Session', price: 13500, exclusive: false, avail: 2,
     quote: '"The entry point to branded stage time: a \'Powered by\' Stage 3 session with your C-level speaker."',
@@ -609,7 +609,11 @@ const CONFLICTS = {
   2: [5], 5: [2],    // Day 1 NEXTworking: exclusive vs non-exclusive
   3: [6], 6: [3],    // Day 2 NEXTworking: exclusive vs non-exclusive
   4: [7], 7: [4],    // Pre-Registration Event: exclusive vs non-exclusive
-  17: [18], 18: [17], // Stage 2: both-days exclusive vs per-day
+  17: [18, 19], 18: [17, 19], // Stage 2: both-days exclusive vs per-day
+  // One presentation per stage per day, and the stage's partner has it, so a
+  // stand-alone presenter never sits beside it in a plan (Stuart, 27 Sep 2026).
+  19: [17, 18], // Stage 2 Presenter vs both Stage 2 partner routes
+  24: [25], 25: [24], // Stage 3 Partner (Day 1) vs Stage 3 Presenter (Day 1)
   42: [43], 43: [42], // Nourish Bars: all-three exclusive vs individual
   31: [58], 58: [31], // Exhibition booth: turnkey vs space-only
   32: [59], 59: [32], // Exhibition booth: turnkey vs space-only
