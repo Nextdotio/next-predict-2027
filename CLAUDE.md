@@ -77,3 +77,150 @@ Single-page React (Vite + Tailwind) app. Main content lives in `src/App.jsx`
   master priced both routes identically, which gave the build away free.
 - A small set of held items and unvalidated concepts is intentionally NOT in
   the brochure; the list lives in the commercial master, not in this repo.
+
+## Navigation and card anatomy (23 Sep 2026)
+
+Stuart: "it's hard to find products when i have to scroll right down for them",
+and "beautify the brochures". The page is now products first.
+
+- **Section order:** hero → `ProductMenu` (#menu) → rate card (#pricing) →
+  recognition → about → the room (#audience) → tickets → rebooking. About and
+  The Room used to sit above the rate card and put the first product seven
+  phone screens down. The nav "Rate Card" link shows at every width.
+- **`ProductMenu`** lists every card with its entry price (`menuPrice`: "from"
+  the lowest open route, POA, or Sold / Reserved from `PRODUCT_STATUS`), every
+  family heading links to its group, and tickets link to their ladder rows
+  (`t-<slug>`). On phones each family is a row that opens its list.
+- **`FamilyBar`** is `position: sticky` inside #pricing, so it leaves with the
+  section; IntersectionObserver scroll-spy lights the family in view and a
+  phone keeps that chip scrolled into view.
+- **Anchors:** every card is `p-<slug of its title>` (`productId`), every family
+  the slug of its name (`catId`). A route card also carries `p-<slug>` of each
+  route's full product title, which opens the card on that route, so older
+  links keep working. `.jump-target` / `.jump-section` / `.jump-near`
+  (index.css) offset landings by `--nav-h` and `--bar-h`, which App measures
+  with a ResizeObserver - never hardcode them. First-load deep links are landed
+  after render. Jumps go through `onJump`, which clears a filter that hides the
+  target. Anchor ancestors use `.clip-box` (overflow: clip), not
+  `overflow-hidden`: a hidden ancestor is a scroll container and cut the scroll
+  margin (the first ticket row landed under the nav).
+- **Route cards (`ROUTE_CARDS`):** an exclusive/shared or turnkey/space-only pair
+  over the same inventory is one card with option tiles. The card title is the
+  part of the two product names they share; each tile is the rest of its name,
+  verbatim. Each route keeps its own price, deliverables, terms, status and
+  calculator line. Every pair must also be in `CONFLICTS`. The Nourish Bars
+  pair stays as two cards: their names share no stem.
+- **Terms:** `splitBullets` moves 📅 / ⚠️ lines into the always-visible
+  "Availability & terms" block (`TermsList`), word for word, with small icons -
+  never pills, never red. Every deliverable shows on every card, with no
+  toggle, whatever the card's width (Stuart, 26 Sep 2026: "Please do include
+  all deliverables. It's important"). Both PDFs mirror this, every line; they
+  also write NEXTPredict with no `text-transform`. The three Presenter cards
+  carry "Full brand ownership of the content, within event guidelines" (the
+  2026 spec's line, restored 26 Sep 2026): it is what separates a keynote from
+  a branded session, so keep it.
+- **Lede:** `quote` renders plain through `Lede` (no quote marks, no italics).
+- **No orphans:** `familySpans` / `spanClass` balance each family's grid (two up
+  from md, three up from xl); a card left alone on a row spans it and lays
+  itself out wide by container query (`@2xl` on the card).
+- **Type:** Inter via `--font-sans` in `src/index.css`. The Tailwind v3 name
+  `--font-family-sans` was ignored, so the page rendered the system font.
+
+## Present mode and seller tools (26 Sep 2026)
+
+Stuart: "Make all brochures beautiful, easy to navigate, easy to understand for
+buyers, and easy for our sellers to take the buyers through and convince them
+to buy each and every product." A seller on a screen share presses Present and
+walks the buyer through the card; the buyer gets a link to a product or to the
+plan they built together.
+
+- **Present mode** is `src/PresentMode.jsx`: the shared reference adapted to the
+  house tokens, so it behaves the same as the other brochures. Local changes:
+  `label` names the dialog (the uppercase top bar carries the logo image, never
+  the brand name), `CopyLinkButton` takes `text` and a replaceable `look`, and
+  the slide scroller clips x (a phone slide starts its slide-in 24px right).
+- **Entry points:** nav Present (labelled from md, an icon button below),
+  "Present the rate card" beside the menu's PDF button, a quiet Present on every
+  card (opens on that product; a route card opens on the route on screen), and
+  "Present these" on a goal chip.
+- **The deck is built from the page's data every time it opens** (`buildDeck` in
+  `App.jsx`, reading `CARDS`, `ticketLadder`, `RECOGNITION` and the cart), so a
+  new product, family, route pair or status appears with no edit: cover, Why
+  partner, Who's in the room, then per family in `CARDS` order a family slide
+  and one slide per card, Delegate tickets, Ticket offers, Recognition, Your
+  selection (only while the calculator has items), Next steps. Today: 66 slides
+  (cover, 2 proof, 11 families, 48 cards, 2 ticket, recognition, next steps),
+  67 with a selection. A goal deck is the cover, the families with a match, the
+  matching cards and next steps (a route card counts when either route matches,
+  as the page filter does).
+- **Slide ids are the page's anchors:** cards `p-<slug>`, families the family
+  slug, and `cover`, `about`, `audience`, `tickets`, `ticket-offers`,
+  `recognition`, `plan`, `next-steps`. `?present=` also takes a route's own
+  anchor (the two-route slide, that route marked) and a ticket row's `t-<slug>`
+  (the ladder, that row lit).
+- **URL:** `?present` opens the cover, `?present=<id>` that slide; the address
+  bar follows the slide (replaceState); closing removes `present`. A goal deck
+  lives in state only: a reload opens the full deck on the same slide.
+- **Keys:** right arrow, Space, PageDown next; left arrow, PageUp back; Home,
+  End; G the slide list; Esc closes (the slide list first). Swipe on touch.
+  Focus returns to whatever opened the deck.
+- **Product slide:** family and the card's badge as a pill, name, `PriceBlock`
+  (POA, rebooking rate), `Lede`, `TagRow`, `AddButton` through the page's
+  `addToCart` (caps, conflicts, sold, reserved), Open the card, Copy link;
+  every deliverable (`SlideDeliverables` never trims; past seven lines it sets
+  smaller); `TermsList` word for word.
+  The Nourish Bars pair, two cards in `CONFLICTS`, links to its alternative.
+- **Two-route slide (`RouteSlide`):** each route keeps a panel with its price,
+  add button, copy-link icon, lede, the lines only it carries and its own terms;
+  what both routes carry word for word (lines, terms, and the lede when it is
+  identical) is listed once, every line of it. Little shared: full-width
+  panels. At 1280x800 the heaviest pairs scroll a little; label, price and add
+  button always sit above the fold.
+- **Copy link:** every card (a route card copies the route on screen), every
+  product slide, each route panel, the ticket slide. It never carries `present`.
+- **Goal chips** (`GoalChips`, top of the product menu) use the `impact` tags,
+  the Objective filter's list; that filter is unchanged. One chip at a time, a
+  toggle: matching lines highlight, the rest dim, the count shows ("11 products
+  for Deal Flow") with Present these.
+- **Plan link:** "Copy plan link" in the calculator, on the plan slide and on
+  next steps: `?plan=<id>,<id>,...`, product ids repeated per unit (two Lanyard
+  units = `53,53`). On load each id goes through `addToCart` in link order, so
+  caps, conflicts and sold or reserved states apply and unknown or refused ids
+  drop out; then `plan` is removed (replaceState) and the calculator opens. The
+  2026 rebooking toggle is not carried: whether it applies is the buyer's to
+  confirm.
+- **One copy of every figure:** `EVENT_STATS`, `WHY_PARTNER`, `NPS_PROOF`,
+  `NPS_SOURCE`, `ROOM_LEDE`, `ROOM_PILLARS`, `RECOGNITION`, `RECOGNITION_LEDE`,
+  `RECOGNITION_NOTE`, `TICKET_OFFERS`, `TICKET_FOOTNOTE`, `REBOOKING_COPY`,
+  `VENUE_LINE` and the components `TicketStages`, `TicketLadder`,
+  `TicketOffers`, `RecognitionLevels`, `NpsTiles` feed both the page and the
+  deck. Edit them there; never retype a figure onto a slide.
+
+Rules future edits must keep:
+
+- Slides, chips and labels read the page's data: nothing new is claimed (no new
+  figures, proof, availability or sell-through) and nothing internal appears.
+- Buyer-facing words only: the page never says seller, sales desk, talk track,
+  pitch, objection or close. The button is "Present". No em dashes in new copy.
+- The brand is always NEXTPredict: inside an uppercase element use `<Brand />`
+  (it resets the case). Prediction markets are never framed as gambling or
+  iGaming in new copy, and the page names iGaming nowhere (Stuart, 26 Sep
+  2026: the about section's "This is not another iGaming expo with a new
+  banner" became "This is not a trade show with a new banner").
+- Slides render no element ids: the page stays mounted under the deck, so a
+  shared block used on a slide takes a switch like `TicketLadder anchors`.
+- The gated Start-up ticket rate is never added; the Start-Up Pass box
+  describes it without a price.
+- Stage 2's family icon is `Projector`, so `Presentation` stays the Present
+  action.
+- The nav fits one line at every width: Tickets joins at lg, Contact Sales is the
+  round mail button below 500px, the year hides below 380px. Re-measure from
+  320px up when a nav item changes (the nav is fixed, so an overflow check of
+  the page does not see it clip).
+- Keyboard focus shows a yellow ring (`:focus-visible` in `index.css`).
+- DECIDED (Stuart, 27 Sep 2026): Leadership Stage Non-Branded Panel €22,000
+  (was €19,000). The October main stage now sits above the non-branded panel
+  on NEXTPredict Focus, the 15 April prediction markets day on the New York card
+  (€20,000, down from €35,000 the same day). A one-day focus track never
+  charges more than the flagship's main stage. Stage 2 (€16,000) and Stage 3
+  (€10,000) non-branded panels are unchanged.
