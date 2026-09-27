@@ -5,11 +5,15 @@ Single-page React (Vite + Tailwind) app. Main content lives in `src/App.jsx`
 
 ## Workflow
 
-- Develop on branch `claude/2027-ticket-pricing-brochure-p79mqg`.
+- Develop on branch `claude/new-session-h6ajdg`: the live card is built from it
+  (27 Sep 2026). It supersedes `claude/2027-ticket-pricing-brochure-p79mqg`,
+  last touched 16 Sep 2026; never develop on or deploy from that branch. More
+  than one session works on this branch, so pull before every deploy.
 - Run `npm run build` to verify changes compile.
 - Commit with a clear message and push the branch.
 - `npm run deploy` (= `vite build && npx gh-pages -d dist`) publishes to
-  gh-pages once Pages is enabled for this repo.
+  `https://nextdotio.github.io/next-predict-2027/`. Confirm it prints
+  `Published`.
 - Open a fresh PR into `main` only when asked.
 
 ## Notes
