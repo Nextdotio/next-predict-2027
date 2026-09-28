@@ -1551,20 +1551,26 @@ function NpsTiles({ side = false, big = false, className = '' }) {
 // figure that is a maximum; the row keeps that line for every figure so the
 // numbers stay level. The heading turns to "Estimated reach" once a product's
 // row rests on an audience figure.
-const REACH_COLS = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3' }
+// Laid out by its own width (a container query), never the screen's: in a wide
+// box the figures stand side by side, each number over its label; in a narrow
+// one (a phone, a card two or three up) each figure is a row, the number beside
+// its label, so a value never wraps or runs out of its column.
+const REACH_COLS = { 1: '@min-[22rem]:grid-cols-1', 2: '@min-[22rem]:grid-cols-2', 3: '@min-[22rem]:grid-cols-3' }
 function ReachRow({ item, className = '' }) {
   const r = reachFor(item)
   if (!r) return null
   const pre = r.figs.some((f) => f.pre)
   return (
-    <figure className={`rounded-xl border border-brand-white/10 bg-brand-white/[0.03] px-4 py-3.5 ${className}`}>
+    <figure className={`@container rounded-xl border border-brand-white/10 bg-brand-white/[0.03] px-4 py-3.5 ${className}`}>
       <p className="text-[10px] font-black uppercase tracking-[0.18em] text-brand-gray">{r.estimate ? 'Estimated reach' : 'At a glance'}</p>
-      <div className={`mt-2.5 grid gap-3 ${REACH_COLS[r.figs.length]}`}>
+      <div className={`mt-2.5 grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 gap-y-2.5 @min-[22rem]:items-start @min-[22rem]:gap-3 ${REACH_COLS[r.figs.length]}`}>
         {r.figs.map((f) => (
-          <p key={f.label} className="min-w-0">
-            {pre && <span className="block mb-1 text-[9.5px] font-bold uppercase tracking-[0.12em] leading-none text-brand-gray">{f.pre || '\u00a0'}</span>}
-            <span className="block text-xl sm:text-2xl font-black leading-none tabular-nums text-brand-yellow">{f.value}</span>
-            <span className="mt-1.5 block text-[10.5px] sm:text-[11px] leading-snug text-brand-white/75">{f.label}</span>
+          <p key={f.label} className="contents @min-[22rem]:block @min-[22rem]:min-w-0">
+            <span className="flex items-baseline gap-1.5 whitespace-nowrap @min-[22rem]:block">
+              {pre && <span className={`${f.pre ? 'inline' : 'hidden'} @min-[22rem]:block @min-[22rem]:mb-1 text-[9.5px] font-bold uppercase tracking-[0.12em] leading-none text-brand-gray`}>{f.pre || '\u00a0'}</span>}
+              <span className="text-xl @min-[26rem]:text-2xl font-black leading-none tabular-nums text-brand-yellow @min-[22rem]:block">{f.value}</span>
+            </span>
+            <span className="text-[10.5px] @min-[26rem]:text-[11px] leading-snug text-brand-white/75 @min-[22rem]:mt-1.5 @min-[22rem]:block">{f.label}</span>
           </p>
         ))}
       </div>

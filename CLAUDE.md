@@ -333,6 +333,14 @@ wait for the 2026 actuals (22 to 23 Oct 2026) before any audience figure.
   (sessions, minutes, screens, seats, stand size, positions) and its passes,
   under "At a glance". Both PDFs print the same line under each product and
   each route (`printGlance`).
+- **Layout.** `ReachRow` is laid out by its own width, never the screen's
+  (`@container` on the figure): from 22rem the figures stand side by side,
+  each number over its label, and from 26rem the numbers go up a size; below
+  22rem each figure is a row, the number beside its label. The same row sits
+  in a phone card, a two-up card at 768 and a slide, so a screen breakpoint
+  cannot decide it (with one, "18 sqm" wrapped and "4,000" ran out of its
+  column at 320, 360 and 768). Values never wrap: measure 320 to 1440 after
+  adding a long one.
 - **Where the numbers live.** `REACH` in `src/App.jsx`, keyed by product id.
   Every count copies the product's own bullet; `passesOf` reads the pass line
   ("10 Full Event passes + 2 VIP passes + 1 Speaker pass" is 13) and
