@@ -5,12 +5,14 @@ Single-page React (Vite + Tailwind) app. Main content lives in `src/App.jsx`
 
 ## Workflow
 
-- Develop on branch `claude/2027-ticket-pricing-brochure-p79mqg`.
+- Develop on `main`. It became the source of truth on 23 Sep 2026, when the
+  working branch was merged in (PR #1). The earlier `claude/...` branches are
+  retired; do not develop on them or deploy from them.
 - Run `npm run build` to verify changes compile.
-- Commit with a clear message and push the branch.
+- Commit with a clear message and push `main`. No PR is needed unless
+  someone asks for a review first.
 - `npm run deploy` (= `vite build && npx gh-pages -d dist`) publishes to
   gh-pages once Pages is enabled for this repo.
-- Open a fresh PR into `main` only when asked.
 
 ## Notes
 
@@ -77,3 +79,29 @@ Single-page React (Vite + Tailwind) app. Main content lives in `src/App.jsx`
   master priced both routes identically, which gave the build away free.
 - A small set of held items and unvalidated concepts is intentionally NOT in
   the brochure; the list lives in the commercial master, not in this repo.
+
+## The org move — links, Pages and what to verify
+
+The repos moved from the `stuatnext` account to the `Nextdotio` org (Sep 2026).
+GitHub redirects `github.com` repo URLs and git remotes on a transfer; it does
+**not** redirect GitHub Pages. Every `stuatnext.github.io/...` URL 404s, so any
+such link left in shipped code is a dead link on a client-facing page.
+
+- The live site is `https://nextdotio.github.io/next-predict-2027/`.
+- Sweep `index.html` as well as `src/` and `public/`. `og:url` and `og:image`
+  live only in `index.html`, so fixing `src/` alone leaves the page rendering
+  correctly while still previewing against a dead URL wherever it is shared.
+  Six sites stayed stale exactly that way after the first pass.
+- `Published` from `npm run deploy` only means gh-pages accepted the push.
+  Verify the deployed artefact, not the local build: fetch the live page, pull
+  the hashed `assets/index-*.js` out of it, and grep that for
+  `stuatnext.github.io`. It should come back empty.
+
+## This repository is public
+
+`Nextdotio/next-predict-2027` is public (checked 28 Sep 2026), so everything
+tracked here is world-readable — this file and `README.md` included, not just the built site.
+Internal commercial reasoning belongs in a git-ignored file, never in a tracked
+one. Some passages here predate that check and still carry pricing rationale the
+card itself deliberately withholds, so treat anything written here as readable
+by a client or a competitor, and review before adding more.
