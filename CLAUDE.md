@@ -315,7 +315,8 @@ the Financial District, not from a new palette or face.
   and custom sessions carry "You shape the title, topic and format, in
   collaboration with the NEXT.io production and conference content team".
   The presenters keep "Full brand ownership of the content, within event
-  guidelines" (the 26 Sep rule) above it.
+  guidelines" (the 26 Sep rule) above it. Since 28 Sep the content team
+  approves every presentation for quality (see the 28 Sep section).
 - **Passes: the card is right**, not Olivia's list (lanyards stay at 2 Full
   Event passes a unit); Stuart updates the list.
 
@@ -358,3 +359,46 @@ wait for the 2026 actuals (22 to 23 Oct 2026) before any audience figure.
   1280x800, down from 14; the two-route slides shed the row under the
   panels).
 
+## Decisions after the product-list comparison (Stuart, 28 Sep 2026)
+
+- **Speaking rules** (Stuart, 28 Sep: "sponsor works in collaboration with
+  content team ... does not have full control"). Presentations (presenters,
+  the hub presentations, a Headline's slot): the partner shapes them with the
+  NEXT.io production and conference content team, who approve them for
+  quality. Custom sessions: 2 speakers nominated by the partner, title, topic
+  and description shaped together, and the content team adds 2 more speakers,
+  with no partner veto. Branded sessions: the partner nominates 1 speaker; the
+  content team controls all other speakers, topic, format and placement.
+  Non-branded panels: the partner nominates 1 speaker; the content team
+  controls topic, title, other speakers and format. Session lengths follow
+  Olivia's list.
+  On this card: the Headline's speaking opportunity is the list's 20-minute
+  presentation with slide support, brand integration and video footage;
+  custom sessions and non-branded panels are 20-30 minutes (the list). The
+  stage partners' ledes no longer promise a custom panel. `customSession`,
+  `brandedSession` and `panelSeat` in `REACH` say the same.
+- **After-movie logo for every sponsor** (Stuart, 28 Sep: "it's just a small
+  logo at the end of the video and generally most sponsors if not all
+  sponsors get that"). Cards say "Logo at the end of the ... after movie";
+  the Headline and the exclusive evenings keep their bigger billing.
+- **What Ops plans goes on the card** (Stuart, 28 Sep: "If the cards undersell
+  much of what Ops plans, add them back in"). Firm (black or green) lines from
+  Olivia's list were added to unsold products: filmed interviews, website
+  logos, welcome posts, plaques, full brand ownership and slide support on the
+  presentations, and the list's conditions as terms. Three things stay off:
+  **30-second advertisement videos** ("they are an individual product as
+  well ... we can't be risking our revenue targets if we're giving it for
+  free"), extra passes (the card is right), and anything red on the list.
+  On this card also: no room names while the venue is to be announced (the
+  list's Hudson hubs, Pier Studio and Chelsea library stay off), and the
+  Advertisement Video keeps the gallery wall until Olivia confirms the planner
+  LED wall.
+- **The Curated Introduction Package is on every summit card** (Stuart, 28
+  Sep). €15,000, 3 available: New York and NEXTPredict sell the same product
+  (brief and target-account matching, six opt-in introductions, an outcome
+  summary); Valletta sells it as an add-on with up to 5 introductions. Keep
+  them aligned when one changes.
+- **Stand prices: the card is right.** The 6x8 (Booth 2, gallery) is €135,000
+  and €119,000; the 8x4 (Booth 1, planner area) €110,000 and €97,000. Olivia's
+  28 Sep email has the two swapped, most likely from the unlabelled 16 Sep
+  list; her original sheet matched the card.
