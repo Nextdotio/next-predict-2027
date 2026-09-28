@@ -673,7 +673,7 @@ const WHY_PARTNER = {
 const NPS_PROOF = [
   ['+69', 'Partner NPS · Valletta 2026', true],
   ['+62', 'Partner NPS · New York 2026', true],
-  ['+27', 'Industry Benchmark', false],
+  ['+23', 'Industry Benchmark', false],
 ]
 const NPS_SOURCE = 'Partner Net Promoter Scores from the NEXT Summit 2026 post-event surveys; industry benchmark as reported by the survey platform.'
 

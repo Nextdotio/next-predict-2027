@@ -243,7 +243,10 @@ sales people."
 
 - **The proof is the team's**, because NEXTPredict has no survey of its own
   on file: `NPS_PROOF` (partner NPS at Valletta and New York 2026 against the
-  industry benchmark) under `NPS_SOURCE`. The first screen carries it with
+  industry benchmark) under `NPS_SOURCE`. The benchmark is +23, as the survey
+  platform's partner NPS chart shows it beside +69 and +62; the card said +27
+  until 28 Sep 2026, and the Valletta card was corrected the same day. The
+  first screen carries it with
   `WHY_PARTNER.npsIntro` (`HeroProof`, before the rate card banner), the
   deck's proof slide carries it, and both PDFs open with the same tiles and
   source. It reads the one copy of each figure: never retype one. Cards and
