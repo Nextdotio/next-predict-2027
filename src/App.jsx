@@ -118,12 +118,21 @@ const PRINT_TERMS_CSS = `.incl{padding-left:18px;margin:0}.incl li{margin-bottom
     .tlabel{font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#8a8a8a;margin-bottom:5px}
     .terms ul{list-style:none;padding:0;margin:0}
     .terms li{display:flex;gap:7px;align-items:flex-start;font-size:11px;color:#555;line-height:1.5;margin-bottom:3px}
-    .terms svg{flex:none;margin-top:3px}`
+    .terms svg{flex:none;margin-top:3px}
+    .glance{margin:8px 0 6px}
+    .glance ul{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:2px 16px;font-size:11.5px;color:#555;line-height:1.5}
+    .glance b{color:#1a1a1a;font-weight:800}`
 function printDeliverables(bullets) {
   const { items, terms } = splitBullets(bullets)
   const lis = items.map((l) => `<li>${escHtml(l)}</li>`).join('')
   const tls = terms.map((t) => `<li>${t.kind === 'avail' ? ICON_CAL : ICON_INFO}<span>${escHtml(t.text)}</span></li>`).join('')
   return `${lis ? `<ul class="incl">${lis}</ul>` : ''}${tls ? `<div class="terms"><p class="tlabel">Availability &amp; terms</p><ul>${tls}</ul></div>` : ''}`
+}
+// The card's at-a-glance row, printed on one line under the product.
+function printGlance(item) {
+  const r = reachFor(item)
+  if (!r) return ''
+  return `<div class="glance"><p class="tlabel">${r.estimate ? 'Estimated reach' : 'At a glance'}</p><ul>${r.figs.map((f) => `<li><b>${escHtml([f.pre, f.value].filter(Boolean).join(' '))}</b> ${escHtml(f.label)}</li>`).join('')}</ul>${r.note ? `<p class="tlabel" style="text-transform:none;letter-spacing:0;font-weight:400">${escHtml(r.note)}</p>` : ''}</div>`
 }
 const openPrintWindow = (html) => {
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
@@ -148,6 +157,7 @@ function downloadProposalPDF(cart, rebooking) {
       <td style="padding:12px 16px;border-bottom:1px solid #e5e5e5;vertical-align:top">
         <div style="font-weight:700">${escHtml(item.title)}</div>
         <div style="font-size:12px;color:#888;margin-top:2px">${escHtml(item.cat)}</div>
+        ${printGlance(item)}
         <div class="deliv">${printDeliverables(item.bullets)}</div>
       </td>
       <td style="padding:12px 16px;border-bottom:1px solid #e5e5e5;text-align:right;font-weight:700;vertical-align:top;white-space:nowrap">${item.poa ? 'POA' : '&#8364;' + p.toLocaleString('en-US')}</td>
@@ -255,6 +265,7 @@ function downloadRateCardPDF() {
         <div class="phead"><div><h3>${escHtml(p.title)}</h3>${a ? `<span class="avail">${a}</span>` : ''}</div>
         <div class="price">${price(p)}</div></div>
         ${lede(p)}
+        ${printGlance(p)}
         ${printDeliverables(p.bullets)}
       </div>`
       }
@@ -264,6 +275,7 @@ function downloadRateCardPDF() {
       const routes = card.options.map((p) => `<div class="route">
           <div class="rhead"><h4>${escHtml(routeLabel(card, p))}</h4><span class="rprice">${price(p)}</span></div>
           ${lede(p)}
+          ${printGlance(p)}
           ${printDeliverables(p.bullets)}
         </div>`).join('')
       return `<div class="product multi">
@@ -664,6 +676,90 @@ const NPS_PROOF = [
   ['+27', 'Industry Benchmark', false],
 ]
 const NPS_SOURCE = 'Partner Net Promoter Scores from the NEXT Summit 2026 post-event surveys; industry benchmark as reported by the survey platform.'
+
+// ─── At a glance, per product ────────────────────────────────────────────────
+// Stuart, 28 Sep 2026: the NPS row repeated on every card was "repetitive";
+// each card now counts what that product itself delivers (sessions, minutes,
+// screens, seats, positions, passes), the New York and Valletta pattern. It
+// shows no audience figure yet: NEXTPredict's first edition runs 22 to 23 Oct
+// 2026, and Stuart chose to wait for its real attendance rather than borrow
+// another event's. When it reports, add the figure as a constant, a
+// `REACH_BASIS` line for it and the estimates that rest on it (a product whose
+// row carries a basis reads "Estimated reach"). Every count here copies the
+// product's own bullet, and the passes are read from its pass line, so change
+// a bullet and its `REACH` line together. The NPS stays on the page, in the
+// deck's proof slide and at the top of both PDFs.
+const EVENT_DAYS = Number(EVENT_STATS.find(([, label]) => label === 'Event Days')[0])
+const REACH_BASIS = {}
+const fig = (value, label, pre) => ({ value: String(value), label, pre })
+const atGlance = (...figs) => ({ basis: [], figs: figs.filter(Boolean) })
+// "10 Full Event passes + 2 VIP passes + 1 Speaker pass" is 13 passes.
+const PASS_LINE = /^\d+ (Full Event|VIP|Speaker) pass(es)?( \+ \d+ (Full Event|VIP|Speaker) pass(es)?)*$/
+const passesOf = (item) => {
+  const line = item.bullets.split('\n').find((l) => PASS_LINE.test(l))
+  if (!line) return null
+  const parts = line.split(' + ').map((part) => part.match(/^(\d+) (.+?) pass/)).map(([, k, kind]) => [Number(k), kind])
+  const total = parts.reduce((sum, [k]) => sum + k, 0)
+  return parts.length === 1
+    ? fig(total, `${parts[0][1]} pass${total === 1 ? '' : 'es'}`)
+    : fig(total, `Passes: ${parts.map(([k, kind]) => `${k} ${kind}`).join(', ')}`)
+}
+const WORN = 'Days worn, check-in to last session'
+const PHOTOS = fig('Every', 'Official photo of the night, watermarked')
+const evening = (i) => atGlance(fig(1, 'Evening branded by you alone'), PHOTOS, passesOf(i))
+const sharedEvening = (i) => atGlance(fig(`1 of ${i.avail}`, 'Partners sharing the evening'), PHOTOS, passesOf(i))
+const customSession = (i) => atGlance(fig('30 min', 'Moderated session or fireside', 'Up to'), fig(2, 'C-level speakers: yours and a guest'), passesOf(i))
+const brandedSession = (i) => atGlance(fig('30 min', 'Session powered by your brand', 'Up to'), fig(1, 'C-level sponsor speaker'), passesOf(i))
+const panelSeat = (i) => atGlance(fig('30 min', 'Curated panel on your expertise', 'Up to'), fig(1, 'C-level panellist, yours'), passesOf(i))
+const stand = (where) => (i) => atGlance(fig(i.title.match(/(\d+x\d+)/)[1], where), passesOf(i))
+const room = (i) => atGlance(fig(Number(i.bullets.match(/Table and (\d+) chairs/)[1]), 'Seats at your private table'), fig(EVENT_DAYS, 'Days of your branded room'), passesOf(i))
+const REACH = {
+  1: (i) => atGlance(fig(1, 'Headline Partner, sold once'), fig('30 sec', 'Your video in conference breaks'), passesOf(i)),
+  2: evening, 3: evening, 4: evening,
+  5: sharedEvening, 6: sharedEvening, 7: sharedEvening,
+  8: (i) => atGlance(fig('Bespoke', 'Guest profile agreed with you'), passesOf(i)),
+  10: (i) => atGlance(fig(EVENT_DAYS, 'Days of Leadership Stage branding'), fig(1, 'Branded holding slide'), passesOf(i)),
+  11: (i) => atGlance(fig('20 min', 'C-level session, Day 2'), passesOf(i)),
+  13: customSession, 20: customSession, 26: customSession,
+  14: (i) => atGlance(fig('Every', 'Seat in the main hall carries your brand'), fig(EVENT_DAYS, 'Days of main-hall content'), passesOf(i)),
+  15: brandedSession, 21: brandedSession, 27: brandedSession,
+  16: panelSeat, 22: panelSeat, 28: panelSeat,
+  17: (i) => atGlance(fig(EVENT_DAYS, '20-minute presentations, one a day'), fig(EVENT_DAYS, 'Days of exclusive hub presence'), passesOf(i)),
+  18: (i) => atGlance(fig('20 min', 'Presentation on your day'), fig(1, 'Day of full hub presence'), passesOf(i)),
+  19: (i) => atGlance(fig('20 min', 'C-level keynote on Stage 2'), passesOf(i)),
+  24: (i) => atGlance(fig('20 min', 'Presentation on Stage 3, Day 1'), fig(1, 'Day of full hub presence'), passesOf(i)),
+  25: (i) => atGlance(fig('20 min', 'C-level keynote on Stage 3, Day 1'), passesOf(i)),
+  29: (i) => atGlance(fig(1, 'Workshop you host'), fig(5, 'Curated opt-in invite targets'), passesOf(i)),
+  30: () => atGlance(fig(6, 'Facilitated opt-in introductions'), fig(1, 'Outcome summary after the event')),
+  31: stand('Landmark position in the gallery'), 58: stand('Landmark position in the gallery'),
+  32: stand('Position in the delegate planning zone'), 59: stand('Position in the delegate planning zone'),
+  33: stand('Premium gallery position'), 60: stand('Premium gallery position'),
+  57: stand('Footprint from two cluster positions'),
+  34: stand('Turnkey footprint in the cluster'),
+  37: room, 38: room, 39: room, 40: room,
+  41: (i) => atGlance(fig(EVENT_DAYS, 'Days of meeting and dining area branding'), fig(1, 'Refreshment bar backdrop'), passesOf(i)),
+  42: (i) => atGlance(fig(3, 'Nourish Bars, all yours'), fig('All', 'Catering cups carry your brand'), passesOf(i)),
+  43: (i) => atGlance(fig(`1 of ${i.avail}`, 'Gallery Nourish Bars'), passesOf(i)),
+  44: (i) => atGlance(fig(2 * EVENT_DAYS, 'Breakfast and lunch services at your station'), fig(1, 'Video advertisement in the lounge'), passesOf(i)),
+  45: (i) => atGlance(fig(EVENT_DAYS, 'Days of livestream with your logo'), fig(1, 'Stream link for your own channels'), passesOf(i)),
+  46: (i) => atGlance(fig(EVENT_DAYS, 'Days of media zone branding'), passesOf(i)),
+  47: (i) => atGlance(fig(EVENT_DAYS, 'Days of press lounge branding'), passesOf(i)),
+  48: (i) => atGlance(fig('30 sec', 'Your video in conference breaks'), fig(`1 of ${i.avail}`, 'Video placements'), passesOf(i)),
+  49: (i) => atGlance(fig(2, 'Curved LED screens at registration'), fig(1, 'Branded registration desk'), passesOf(i)),
+  50: (i) => atGlance(fig(EVENT_DAYS, 'Days of cloakroom branding'), fig(1, 'LCD screen in the cloakroom'), passesOf(i)),
+  51: (i) => atGlance(fig(15, 'Branded stair risers behind registration'), fig(1, 'LCD video advertisement'), passesOf(i)),
+  52: (i) => atGlance(fig('All', 'Delegate badges carry your logo'), fig(EVENT_DAYS, WORN), passesOf(i)),
+  53: (i) => atGlance(fig('Half', 'Of delegates wear your lanyard'), fig(EVENT_DAYS, WORN), passesOf(i)),
+  54: (i) => atGlance(fig('All', 'Venue restrooms carry your brand'), fig(12, 'Branded toiletry baskets'), passesOf(i)),
+  55: (i) => atGlance(fig('All', 'Badges carry your QR to the agenda'), fig(1, 'Logo on the digital agenda'), passesOf(i)),
+  56: (i) => atGlance(fig('All', 'Badges carry your network and password'), fig(EVENT_DAYS, 'Days of logins on your network name'), passesOf(i)),
+}
+// The row for one product, with the sentences its estimates rest on (none yet).
+const reachFor = (item) => {
+  const r = REACH[item.id]?.(item)
+  if (!r) return null
+  return { ...r, estimate: r.basis.length > 0, note: r.basis.map((k) => REACH_BASIS[k]).join(' ') }
+}
 const ROOM_LEDE = 'A summit built on category fit, not badge count - the buyers, builders and rule-makers of prediction markets.'
 const ROOM_PILLARS = [
   ['The Content', 'Three stages across two days: the Leadership Stage headline programme, plus two hub stages for deeper category conversations - regulation, liquidity, sports, data and the builder economy.'],
@@ -1043,7 +1139,7 @@ function ProductCard({ card, span = '', rebooking, cartCounts, conflictedIds, on
           {multi && <OptionTiles card={card} sel={item.id} setSel={setSel} rebooking={rebooking} />}
           <PriceBlock item={item} rebooking={rebooking} featured={featured} />
           <Lede text={item.quote} featured={featured} />
-          <ProofRow className="mb-5" />
+          <ReachRow item={item} className="mb-5" />
           <TagRow item={item} featured={featured} className="hidden @2xl:flex" />
         </div>
         <div className="@2xl:w-7/12 flex-1 flex flex-col">
@@ -1450,25 +1546,35 @@ function NpsTiles({ side = false, big = false, className = '' }) {
   )
 }
 
-// ─── Proof on every card and product slide ───────────────────────────────────
-// Stuart, 27 Sep 2026: "I need the layout and proof points to be visible on
-// all brochures." NEXTPredict has no survey of its own yet, so the proof is the
-// team's: NPS_PROOF (partner NPS at the two NEXT Summits against the industry
-// benchmark), read from the one copy and set under NPS_SOURCE. The venue is to
-// be announced, so there is no floorplan to show until Event Ops confirm it.
-function ProofRow({ className = '' }) {
+// ─── At a glance, on every card and product slide ────────────────────────────
+// What this product delivers, counted (`reachFor`). A small "Up to" sits over a
+// figure that is a maximum; the row keeps that line for every figure so the
+// numbers stay level. The heading turns to "Estimated reach" once a product's
+// row rests on an audience figure.
+// Laid out by its own width (a container query), never the screen's: in a wide
+// box the figures stand side by side, each number over its label; in a narrow
+// one (a phone, a card two or three up) each figure is a row, the number beside
+// its label, so a value never wraps or runs out of its column.
+const REACH_COLS = { 1: '@min-[22rem]:grid-cols-1', 2: '@min-[22rem]:grid-cols-2', 3: '@min-[22rem]:grid-cols-3' }
+function ReachRow({ item, className = '' }) {
+  const r = reachFor(item)
+  if (!r) return null
+  const pre = r.figs.some((f) => f.pre)
   return (
-    <figure className={`rounded-xl border border-brand-white/10 bg-brand-white/[0.03] px-4 py-3.5 ${className}`}>
-      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-brand-gray">Partner NPS, NEXT Summits 2026</p>
-      <div className="mt-2.5 grid grid-cols-3 gap-3">
-        {NPS_PROOF.map(([n, label, ours]) => (
-          <p key={label} className="min-w-0">
-            <span className={`block text-xl sm:text-2xl font-black leading-none tabular-nums ${ours ? 'text-brand-yellow' : 'text-brand-gray'}`}>{n}</span>
-            <span className="mt-1.5 block text-[10.5px] sm:text-[11px] leading-snug text-brand-white/75">{label}</span>
+    <figure className={`@container rounded-xl border border-brand-white/10 bg-brand-white/[0.03] px-4 py-3.5 ${className}`}>
+      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-brand-gray">{r.estimate ? 'Estimated reach' : 'At a glance'}</p>
+      <div className={`mt-2.5 grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 gap-y-2.5 @min-[22rem]:items-start @min-[22rem]:gap-3 ${REACH_COLS[r.figs.length]}`}>
+        {r.figs.map((f) => (
+          <p key={f.label} className="contents @min-[22rem]:block @min-[22rem]:min-w-0">
+            <span className="flex items-baseline gap-1.5 whitespace-nowrap @min-[22rem]:block">
+              {pre && <span className={`${f.pre ? 'inline' : 'hidden'} @min-[22rem]:block @min-[22rem]:mb-1 text-[9.5px] font-bold uppercase tracking-[0.12em] leading-none text-brand-gray`}>{f.pre || '\u00a0'}</span>}
+              <span className="text-xl @min-[26rem]:text-2xl font-black leading-none tabular-nums text-brand-yellow @min-[22rem]:block">{f.value}</span>
+            </span>
+            <span className="text-[10.5px] @min-[26rem]:text-[11px] leading-snug text-brand-white/75 @min-[22rem]:mt-1.5 @min-[22rem]:block">{f.label}</span>
           </p>
         ))}
       </div>
-      <figcaption className="mt-3 text-[10.5px] leading-snug text-brand-gray">{NPS_SOURCE}</figcaption>
+      {r.note && <figcaption className="mt-3 text-[10.5px] leading-snug text-brand-gray">{r.note}</figcaption>}
     </figure>
   )
 }
@@ -1974,7 +2080,7 @@ function ProductSlide({ card, deck, goId }) {
         <AltLinks card={card} deck={deck} goId={goId} />
       </div>
       <div className="lg:col-span-5">
-        <ProofRow className="mb-5" />
+        <ReachRow item={item} className="mb-5" />
         <SlideDeliverables items={items} />
         <TermsList terms={terms} />
       </div>
@@ -2036,6 +2142,7 @@ function RouteSlide({ card, deck, goId }) {
                   </div>
                 </div>
                 {!sharedLede && <Lede text={o.quote} />}
+                <ReachRow item={o} className="mb-4" />
                 <SlideDeliverables items={items.filter((l) => !common.includes(l))} heading="Only on this route" small />
                 <TermsList terms={terms.filter((t) => !commonTerms.some((c) => sameTerm(c, t)))} />
               </div>
@@ -2050,7 +2157,6 @@ function RouteSlide({ card, deck, goId }) {
         )}
       </div>
       {wide && <SlideDeliverables items={common} heading="Both routes include" small cols className="mt-5" />}
-      <ProofRow className="mt-5" />
       <AltLinks card={card} deck={deck} goId={goId} />
     </div>
   )

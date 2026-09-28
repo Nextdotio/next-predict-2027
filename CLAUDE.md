@@ -238,11 +238,11 @@ sales people."
 - **The proof is the team's**, because NEXTPredict has no survey of its own
   on file: `NPS_PROOF` (partner NPS at Valletta and New York 2026 against the
   industry benchmark) under `NPS_SOURCE`. The first screen carries it with
-  `WHY_PARTNER.npsIntro` (`HeroProof`, before the rate card banner); every
-  card carries `ProofRow` under its lede; every product slide opens its case
-  column with it and a two-route slide sets it under the panels, so label,
-  price and add button stay above the fold. Both PDFs open with the same
-  tiles and source. It reads the one copy of each figure: never retype one.
+  `WHY_PARTNER.npsIntro` (`HeroProof`, before the rate card banner), the
+  deck's proof slide carries it, and both PDFs open with the same tiles and
+  source. It reads the one copy of each figure: never retype one. Cards and
+  product slides no longer repeat it (Stuart, 28 Sep 2026: "it's
+  repetitive"); each counts its own deliverables instead (below).
 - **No layout yet.** The venue is to be announced, so there is no floorplan
   or zone to show. When Event Ops confirm the venue, add one the way New York
   (floorplan spots) or Valletta (venue zones) do.
@@ -318,3 +318,43 @@ the Financial District, not from a new palette or face.
   guidelines" (the 26 Sep rule) above it.
 - **Passes: the card is right**, not Olivia's list (lanyards stay at 2 Full
   Event passes a unit); Stuart updates the list.
+
+## At a glance on every card (28 Sep 2026)
+
+Stuart, on the New York card first: "We should instead give an estimation of
+the ROI. For example, how many people walk up to registration, how many
+people wear a badge (everyone), how many people wear a lanyard (everyone)",
+then "need to do Valletta and NEXTPredict too". For NEXTPredict he chose to
+wait for the 2026 actuals (22 to 23 Oct 2026) before any audience figure.
+
+- **What shows.** `ReachRow` on every card (the route on screen), every
+  product slide (its case column) and each panel of a two-route slide, where
+  the NPS row was: up to three counts of what the product itself delivers
+  (sessions, minutes, screens, seats, stand size, positions) and its passes,
+  under "At a glance". Both PDFs print the same line under each product and
+  each route (`printGlance`).
+- **Layout.** `ReachRow` is laid out by its own width, never the screen's
+  (`@container` on the figure): from 22rem the figures stand side by side,
+  each number over its label, and from 26rem the numbers go up a size; below
+  22rem each figure is a row, the number beside its label. The same row sits
+  in a phone card, a two-up card at 768 and a slide, so a screen breakpoint
+  cannot decide it (with one, "18 sqm" wrapped and "4,000" ran out of its
+  column at 320, 360 and 768). Values never wrap: measure 320 to 1440 after
+  adding a long one.
+- **Where the numbers live.** `REACH` in `src/App.jsx`, keyed by product id.
+  Every count copies the product's own bullet; `passesOf` reads the pass line
+  ("10 Full Event passes + 2 VIP passes + 1 Speaker pass" is 13) and
+  `EVENT_DAYS` reads `EVENT_STATS`. Change a bullet and its `REACH` line
+  together; a new product needs its own line or it shows no row.
+- **After 22 to 23 Oct 2026.** Add the real attendance as a constant, a
+  `REACH_BASIS` sentence for it, and estimates on the products it covers
+  (registration, badge, lanyards, Wi-Fi, the guide, restrooms: everyone who
+  attends; stands: the expo floor). A row with a basis reads "Estimated
+  reach" and prints its basis line, the New York and Valletta pattern. Never
+  borrow New York's or Valletta's audience in the meantime.
+- **Rules.** Nothing is claimed beyond the card's own lines; buyer words
+  only; the audience is never labelled iGaming or gambling; no em dashes.
+  The deck fits better than with the NPS row (12 of 66 slides scroll at
+  1280x800, down from 14; the two-route slides shed the row under the
+  panels).
+
