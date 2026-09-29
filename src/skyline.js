@@ -85,9 +85,10 @@ export function wallStreetSVG(id = 'ws') {
 
 // The probability line: a seeded random walk that climbs across the sky, on
 // a 1000 x 400 board (the hero stretches it). Returns the line's points, the
-// area under it, and where it ends (as fractions of the board).
-export function probabilityLine() {
-  let seed = 5
+// area under it, and where it ends (as fractions of the board). `start` seeds
+// the walk: the hero uses 5, the cards' designed headers another seed.
+export function probabilityLine(start = 5) {
+  let seed = start
   const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647)
   const pts = []
   let y = 300

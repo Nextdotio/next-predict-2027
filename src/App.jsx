@@ -5,10 +5,12 @@ import {
   LineChart, Landmark, Scale, Cpu, Newspaper, Banknote, Trophy, Sparkles,
   Info, ArrowRight, ArrowUp, Crown, Martini, Mic, Presentation, MonitorPlay,
   Handshake, Store, DoorClosed, Coffee, Video, Flag, Projector, ChevronRight,
-  Award, ListChecks
+  Award, ListChecks, Eye, ScanLine, Wifi, QrCode, Radio, Shirt, Droplets, IdCard, Contact,
+  ArrowDown, Target, Building2
 } from 'lucide-react'
 import { PresentMode, usePresent, CopyLinkButton } from './PresentMode.jsx'
 import { wallStreetSVG, FIDI_VIEWBOX, probabilityLine } from './skyline.js'
+import { REGISTERED_LOGOS, PARTNER_LOGOS, PRESS_LOGOS } from './roomLogos.js'
 
 const base = import.meta.env.BASE_URL
 
@@ -131,8 +133,10 @@ function printDeliverables(bullets) {
 // The card's at-a-glance row, printed on one line under the product.
 function printGlance(item) {
   const r = reachFor(item)
-  if (!r) return ''
-  return `<div class="glance"><p class="tlabel">${r.estimate ? 'Estimated reach' : 'At a glance'}</p><ul>${r.figs.map((f) => `<li><b>${escHtml([f.pre, f.value].filter(Boolean).join(' '))}</b> ${escHtml(f.label)}</li>`).join('')}</ul>${r.note ? `<p class="tlabel" style="text-transform:none;letter-spacing:0;font-weight:400">${escHtml(r.note)}</p>` : ''}</div>`
+  const ld = leadDataLine(item)
+  const lead = ld ? `<p class="tlabel" style="margin-top:4px">Lead data: ${escHtml(ld)}</p>` : ''
+  if (!r) return lead
+  return `<div class="glance"><p class="tlabel">${r.estimate ? 'Estimated reach' : 'At a glance'}</p><ul>${r.figs.map((f) => `<li><b>${escHtml([f.pre, f.value].filter(Boolean).join(' '))}</b> ${escHtml(f.label)}</li>`).join('')}</ul>${r.note ? `<p class="tlabel" style="text-transform:none;letter-spacing:0;font-weight:400">${escHtml(r.note)}</p>` : ''}${lead}</div>`
 }
 const openPrintWindow = (html) => {
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
@@ -142,6 +146,12 @@ const openPrintWindow = (html) => {
 }
 
 // ─── PDF proposal generator ─────────────────────────────────────────────────
+// The 2026 room as printed: the proof band's four figures, then its label, the
+// accredited press and the source (no text-transform on the line that names
+// NEXTPredict).
+const roomHtml = () => `<div class="proof">${ROOM_FIGURES.map(([n, l]) => `<div><b style="color:#1a1a1a">${escHtml(n)}</b><span>${escHtml(l)}</span></div>`).join('')}</div>
+    <p class="psrc">${escHtml(ROOM_LABEL)}. Accredited press: ${escHtml(ROOM_PRESS.join(', '))}. ${escHtml(ROOM_BLOC[0])} ${escHtml(lc1(ROOM_BLOC[1]))}.</p>
+    <p class="psrc">${escHtml(ROOM_SOURCE)}</p>`
 // The NPS proof as printed: the same three tiles, the same source line.
 const proofHtml = () => `<div class="proof">${NPS_PROOF.map(([n, l, ours]) => `<div><b style="color:${ours ? '#1a1a1a' : '#888'}">${escHtml(n)}</b><span>${escHtml(l)}</span></div>`).join('')}</div>`
 
@@ -206,7 +216,9 @@ function downloadProposalPDF(cart, rebooking) {
   </div>
   <div class="body">
     ${rebooking ? '<div class="discount">&#10003; 15% rebooking rate applied to all packages below (2026 partners only).</div>' : ''}
-    <div class="label">Partner NPS, NEXT Summits 2026</div>
+    <div class="label">Who is in the room</div>
+    ${roomHtml()}
+    <div class="label" style="margin-top:22px">Partner NPS, NEXT Summits 2026</div>
     ${proofHtml()}
     <p class="psrc" style="margin-bottom:28px">${escHtml(NPS_SOURCE)}</p>
     <div class="label">Partner Recognition Level</div>
@@ -328,6 +340,7 @@ function downloadRateCardPDF() {
     <h1>NEXT<span>Predict</span> 2027</h1>
     <p>Full Partnership Rate Card &nbsp;&middot;&nbsp; October 2027 &nbsp;&middot;&nbsp; New York City &nbsp;&middot;&nbsp; Exact dates and venue to be announced &nbsp;&middot;&nbsp; Generated ${date}</p>
   </div>
+  <section><h2>Who is in the room</h2>${roomHtml()}</section>
   <section><h2>Partner NPS, NEXT Summits 2026</h2>${proofHtml()}<p class="psrc">${escHtml(NPS_SOURCE)}</p></section>
   ${body}
   <div class="foot">All prices exclude VAT. Availability subject to change without notice. Prices are all-in where stated.<br>
@@ -358,6 +371,22 @@ function useScrollAnimation(key) {
     document.querySelectorAll('[data-anim]:not([data-shown])').forEach((el) => observer.observe(el))
     return () => observer.disconnect()
   }, [key])
+}
+
+// Marks the pictures on screen (`data-inview`), so the cards' slow Ken Burns
+// runs only where it can be seen. The attribute is not a prop, so a re-render
+// never drops it (the HR Connect lesson: never mark state with a class that
+// React rewrites).
+function useInView(selector, key) {
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return undefined
+    const io = new IntersectionObserver((entries) => entries.forEach((e) => {
+      if (e.isIntersecting) e.target.setAttribute('data-inview', '')
+      else e.target.removeAttribute('data-inview')
+    }), { rootMargin: '60px 0px' })
+    document.querySelectorAll(selector).forEach((el) => io.observe(el))
+    return () => io.disconnect()
+  }, [selector, key])
 }
 
 // ─── Pricing data ───────────────────────────────────────────────────────────
@@ -509,11 +538,11 @@ const pricing = [
 
   // Private Meeting Rooms
   { id: 37, cat: 'Private Meeting Rooms', title: 'Private Meeting Room, 12 Person', price: 62000, exclusive: true, avail: null,
-    quote: '"Your own boardroom inside the event: a private branded 12-person room for the meetings that need a door."',
+    quote: '"Your own boardroom inside the event: a private branded room for 12, yours for both days, for the meetings that need a door."',
     bullets: 'Private branded meeting room for both event days\nTable and 12 chairs\nTV screen and directional signage\nBranded merchandise option\nSummit-wide general branding\nLogo on plaque outside the meeting room door, designed by NEXT.io\nLogo on the partners section of the website\nShared pre-event welcome post on social media, designed and posted by NEXT.io\n3 Full Event passes\n⚠️ Using the TV screen for your branding means it cannot show other content in the room.',
     impact: ['Deal Flow'], type: ['Networking & Hospitality'] },
   { id: 38, cat: 'Private Meeting Rooms', title: 'Private Meeting Room, 8 Person', price: 38500, exclusive: true, avail: null,
-    quote: '"A private branded 8-person room - deal space for a team that runs a full meeting diary."',
+    quote: '"A private branded room for eight, yours for both days: deal space for a team that runs a full meeting diary."',
     bullets: 'Private branded meeting room for both event days\nTable and 8 chairs\nTV screen and directional signage\nBranded merchandise option\nSummit-wide general branding\nLogo on plaque outside the meeting room door, designed by NEXT.io\nLogo on the partners section of the website\nShared pre-event welcome post on social media, designed and posted by NEXT.io\n2 Full Event passes\n⚠️ Using the TV screen for your branding means it cannot show other content in the room.',
     impact: ['Deal Flow'], type: ['Networking & Hospitality'] },
   { id: 39, cat: 'Private Meeting Rooms', title: 'Private Meeting Room, 6 Person', price: 31000, exclusive: true, avail: null,
@@ -521,7 +550,7 @@ const pricing = [
     bullets: 'Private branded meeting room for both event days\nTable and 6 chairs\nTV screen and directional signage\nBranded merchandise option\nSummit-wide general branding\nLogo on plaque outside the meeting room door, designed by NEXT.io\nLogo on the partners section of the website\nShared pre-event welcome post on social media, designed and posted by NEXT.io\n2 Full Event passes\n⚠️ Using the TV screen for your branding means it cannot show other content in the room.',
     impact: ['Deal Flow'], type: ['Networking & Hospitality'] },
   { id: 40, cat: 'Private Meeting Rooms', title: 'Private Meeting Room, 4 Person', price: 25000, exclusive: true, avail: null,
-    quote: '"A private branded 4-person room: the most efficient deal-space on the card."',
+    quote: '"A private branded room for four, yours for both days: the most efficient deal space on the card."',
     bullets: 'Private branded meeting room for both event days\nTable and 4 chairs\nTV screen and directional signage\nBranded merchandise option\nSummit-wide general branding\nLogo on plaque outside the meeting room door, designed by NEXT.io\nLogo on the partners section of the website\nShared pre-event welcome post on social media, designed and posted by NEXT.io\n2 Full Event passes\n📅 One room available.\n⚠️ Using the TV screen for your branding means it cannot show other content in the room.',
     impact: ['Deal Flow'], type: ['Networking & Hospitality'] },
 
@@ -549,7 +578,7 @@ const pricing = [
     bullets: 'Logo on the event livestream\nBranded video in stream breaks\nPre-event and daily social promotion\nEmail promotion before the stream goes live\nSponsor-use livestream link for your own channels\nSummit-wide general branding\nOnsite filmed interview with the NEXT.io media team\nLogo on the partners section of the website\nIndividual pre-event welcome post on social media, designed and posted by NEXT.io\n4 Full Event passes',
     impact: ['Brand Awareness', 'Thought Leadership'], type: ['Media'] },
   { id: 46, cat: 'Media & Content', title: 'Media Zone Sponsor', price: 65000, exclusive: true, avail: null,
-    quote: '"The room where the interviews happen: media zone branding and a hosted content presence at the centre of event coverage."',
+    quote: '"The room where the interviews happen: your brand on the media zone and its backdrop, both days, seen in the videos NEXT.io records there."',
     bullets: 'Media zone branding across both event days\nWelcome-area and backdrop branding\nDedicated social promotion\nSummit-wide general branding\nMicrophones and set-up equipment provided by NEXT.io\nNEXT.io media team can share footage on request\nLogo on the partners section of the website\nShared pre-event welcome post on social media, designed and posted by NEXT.io\n3 Full Event passes\n⚠️ Interview formats and content slots are scoped with the NEXT.io media team at contract.\n⚠️ NEXT.io holds the content rights to the interviews.',
     impact: ['Brand Awareness', 'Thought Leadership'], type: ['Media'] },
   { id: 47, cat: 'Media & Content', title: 'Press Lounge Sponsor', price: 22000, exclusive: true, avail: null,
@@ -557,41 +586,41 @@ const pricing = [
     bullets: 'Exclusive press lounge branding across both event days\nHosted presence in front of attending media\nSummit-wide general branding\nWebsite and social visibility\nLogo at the end of the post-event aftermovie\nTables and chairs provided by NEXT.io\n2 Full Event passes',
     impact: ['Brand Awareness'], type: ['Media'] },
   { id: 48, cat: 'Media & Content', title: 'Advertisement Video', price: 13500, exclusive: false, avail: 8,
-    quote: '"Thirty seconds in front of the whole room: your video in conference breaks and on the gallery video wall."',
+    quote: '"Your 30-second video plays between sessions and on the gallery video wall, out on the floor with the exhibition stands and the Nourish Bars."',
     bullets: '30-second video played during conference breaks\nPlacement on the gallery video wall\nSummit-wide general branding\nWebsite and shared social visibility\nLogo at the end of the official aftermovie\nVideo designed and supplied by you\n1 Full Event pass\n📅 Eight placements available.',
     impact: ['Brand Awareness'], type: ['Media', 'Branding & Visibility'] },
 
   // Venue Branding
   { id: 49, cat: 'Venue Branding', title: 'Online & Onsite Registration Sponsor', price: 110000, exclusive: true, avail: null,
-    quote: '"Meet every delegate before the event starts. Registration wraps the whole journey in your brand - from the booking page to the arrival desk."',
+    quote: '"Every attendee sees your brand before the first session: online when they register, then at the branded desk and the LED screens when they arrive."',
     bullets: 'Branding on the registration page, confirmation emails and digital tickets\nOnsite registration area branding\n2 curved LED screens at registration\n⚠️ Quantities and positions reflect the reference venue layout - final spec confirmed when the venue is announced\nBranded registration desk\nSummit-wide general branding\nOnsite filmed interview with the NEXT.io media team\nLogo on the agenda section of the website\nLogo on the partners section of the website\nShared pre-event welcome post on social media, designed and posted by NEXT.io\n4 Full Event passes\n⚠️ Screen content is a static graphic with text, logos or images.\n⚠️ The two screens mirror each other by default.\n⚠️ Designs include the NEXTPredict logo and follow the brand guidelines.',
     impact: ['Brand Awareness', 'Lead Generation'], type: ['Branding & Visibility'] },
   { id: 50, cat: 'Venue Branding', title: 'Cloakroom Sponsor', price: 32000, exclusive: true, avail: null,
-    quote: '"First in, last out: the cloakroom greets every coat, bag and delegate on the way in and the way home."',
+    quote: '"Seen on the way in and on the way out, both days: the cloakroom, its counter and an LCD screen carry your brand."',
     bullets: 'Cloakroom branding across both event days\n1 LCD screen in the cloakroom area\nCounter branding\nSummit-wide general branding\nWebsite and social visibility\nLogo at the end of the post-event aftermovie\n2 Full Event passes',
     impact: ['Brand Awareness'], type: ['Branding & Visibility'] },
   { id: 51, cat: 'Venue Branding', title: 'Stair Risers Sponsor', price: 31000, exclusive: true, avail: null,
-    quote: '"Fifteen stair risers behind registration, plus an LCD video position - branding every delegate climbs past all day."',
+    quote: '"In the eyeline of every arrival: fifteen branded stair risers behind registration and an LCD video advertisement."',
     bullets: 'Branding across 15 stair risers behind registration\n⚠️ Quantities and positions reflect the reference venue layout - final spec confirmed when the venue is announced\nLCD video advertisement\nSummit-wide general branding\nLogo on the partners section of the website\nShared pre-event welcome post on social media, designed and posted by NEXT.io\n2 Full Event passes',
     impact: ['Brand Awareness'], type: ['Branding & Visibility'] },
   { id: 52, cat: 'Venue Branding', title: 'Badge Sponsor', price: 32000, exclusive: true, avail: null,
-    quote: '"On every delegate, in every conversation, in every photo: your logo on all event badges."',
+    quote: '"On every attendee, from check-in to the last session: your logo in every conversation, every meeting and every photo."',
     bullets: 'Logo on all delegate badges\nSummit-wide general branding\nWebsite and shared social visibility\nLogo at the end of the official aftermovie\n2 Full Event passes',
     impact: ['Brand Awareness'], type: ['Branding & Visibility'] },
   { id: 53, cat: 'Venue Branding', title: 'Lanyard Sponsor', price: 45000, exclusive: false, avail: 2,
-    quote: '"The highest-frequency wearable branding at the event: your logo around delegates\' necks both days."',
+    quote: '"Around the neck of half the room, both days, or all of it with both units: in every conversation, every meeting and every photo."',
     bullets: 'Sold as two units - each unit brands one of the two lanyard designs, roughly half of all delegates\nSummit-wide general branding\nWebsite and social visibility\nLogo at the end of the post-event aftermovie\nLanyard colour chosen by you from our supplier\'s chart, produced by NEXT.io\n2 Full Event passes\n📅 Two units available - take both for full lanyard coverage.',
     impact: ['Brand Awareness'], type: ['Branding & Visibility'] },
   { id: 54, cat: 'Venue Branding', title: 'Restroom Sponsorship', price: 28000, exclusive: true, avail: null,
-    quote: '"Guaranteed reach, zero competition: exclusive branding across every restroom in the venue."',
+    quote: '"Guaranteed reach, zero competition: every restroom at the venue carries your brand, and no other."',
     bullets: 'Branding across all venue restrooms\nMirror vinyls and clings\n⚠️ Quantities and positions reflect the reference venue layout - final spec confirmed when the venue is announced\n12 branded toiletry baskets\nBranded merchandise option\nExclusive category visibility\nWebsite and social visibility\nLogo at the end of the post-event aftermovie\nLogo on the sponsor wall and in the logo loop on the digital screens, designed by NEXT.io\n2 Full Event passes',
     impact: ['Brand Awareness'], type: ['Branding & Visibility'] },
   { id: 55, cat: 'Venue Branding', title: 'Digital Event Guide Sponsor', price: 35000, exclusive: true, avail: null,
-    quote: '"Every time a delegate checks the agenda, they see you: the digital event guide, QR touchpoints and agenda branding."',
+    quote: '"Every time an attendee checks the agenda, they see you: your logo and QR code on every badge, on the digital agenda and on QR table tents."',
     bullets: 'Logo and QR code on the badge linking to the agenda\nLogo on the digital agenda\nBranded QR table tents across the venue\nSummit-wide general branding\nWebsite and social visibility\nLogo at the end of the post-event aftermovie\n2 Full Event passes',
     impact: ['Brand Awareness'], type: ['Branding & Visibility'] },
   { id: 56, cat: 'Venue Branding', title: 'Wi-Fi Sponsor', price: 28000, exclusive: true, avail: null,
-    quote: '"Delegates type your brand to get online: custom network name and password, plus badge visibility."',
+    quote: '"Every attendee who gets online types your brand: the network name and password are yours."',
     bullets: 'Logo on delegate badges in the Wi-Fi section\nCustom network name and password\nSummit-wide general branding\nWebsite and social visibility\nLogo at the end of the post-event aftermovie\n2 Full Event passes\n⚠️ Network name and password: 8 to 32 characters, case sensitive; the only special characters allowed are ! and @.',
     impact: ['Brand Awareness'], type: ['Branding & Visibility'] },
   { id: 58, cat: 'Exhibition', title: 'Exhibition Stand 6x8, Gallery Showcase, Space Only', price: 119000, exclusive: true, avail: null,
@@ -677,6 +706,36 @@ const NPS_PROOF = [
 ]
 const NPS_SOURCE = 'Partner Net Promoter Scores from the NEXT Summit 2026 post-event surveys; industry benchmark as reported by the survey platform.'
 
+// ─── The 2026 room: NEXT's own audience snapshot ────────────────────────────
+// Stuart, 29 Sep 2026: "some of the biggest value for any product, speaking or
+// branding, is the access to the audience. And that audience is often C-level
+// or director level, and it's also the biggest names, the biggest brands, and
+// obviously we have press attendance as well."
+// The aggregate figures of NEXT's NEXTPredict 2026 Audience Snapshot (Stuart's
+// tear sheet), registered as at 28 September 2026, for NEXTPredict 2026 (22-23
+// October 2026, Convene, 30 Hudson Yards). They prove who is in the room; they
+// are not a headcount promise and never a REACH estimate (those wait for the
+// 2026 actuals). Every figure travels with ROOM_LABEL. The snapshot's attendee
+// rows (job title and company) are never published: a company appears only as
+// a logo, never beside a title or a person.
+const ROOM_LABEL = 'Registered for NEXTPredict 2026, as at 28 September 2026'
+const ROOM_FIGURES = [
+  ['61%', 'Director level and above'],
+  ['37%', 'Founders and C-suite'],
+  ['262', 'Organisations'],
+  ['27', 'Countries'],
+]
+const ROOM_BLOC = ['28%', 'Trading and liquidity, the largest single bloc']
+// share of the audience by job title, as the snapshot reports it (director
+// level and above is the first four: 61%)
+const ROOM_SENIORITY = [
+  ['Founder / Owner', 11], ['C-Suite / MD', 26], ['VP / Head of', 15], ['Director', 9],
+  ['Manager / Lead', 7], ['Practitioner / Specialist', 16],
+]
+const ROOM_PRESS = ['The Wall Street Journal', 'Bloomberg', 'Reuters', 'CNBC', 'The New York Times', 'Fortune']
+const ROOM_SOURCE = 'Shares of attendees registered for NEXTPredict 2026 (22-23 October 2026, Convene, 30 Hudson Yards) as at 28 September 2026, from the official registration system. Seniority is classified from the job title each attendee gave. Registrations continue until the event.'
+const LOGOS_NOTE = 'Logos: a selection of the organisations registered for NEXTPredict 2026 as at 28 September 2026, and the official partners of NEXTPredict 2026.'
+
 // ─── At a glance, per product ────────────────────────────────────────────────
 // Stuart, 28 Sep 2026: the NPS row repeated on every card was "repetitive";
 // each card now counts what that product itself delivers (sessions, minutes,
@@ -744,8 +803,8 @@ const REACH = {
   45: (i) => atGlance(fig(EVENT_DAYS, 'Days of livestream with your logo'), fig(1, 'Stream link for your own channels'), passesOf(i)),
   46: (i) => atGlance(fig(EVENT_DAYS, 'Days of media zone branding'), passesOf(i)),
   47: (i) => atGlance(fig(EVENT_DAYS, 'Days of press lounge branding'), passesOf(i)),
-  48: (i) => atGlance(fig('30 sec', 'Your video in conference breaks'), fig(`1 of ${i.avail}`, 'Video placements'), passesOf(i)),
-  49: (i) => atGlance(fig(2, 'Curved LED screens at registration'), fig(1, 'Branded registration desk'), passesOf(i)),
+  48: (i) => atGlance(fig('30 sec', 'Your video, between sessions'), fig(1, 'Placement on the gallery video wall'), passesOf(i)),
+  49: (i) => atGlance(fig('Every', 'Attendee: booking page, email and ticket'), fig(2, 'Curved LED screens at registration'), passesOf(i)),
   50: (i) => atGlance(fig(EVENT_DAYS, 'Days of cloakroom branding'), fig(1, 'LCD screen in the cloakroom'), passesOf(i)),
   51: (i) => atGlance(fig(15, 'Branded stair risers behind registration'), fig(1, 'LCD video advertisement'), passesOf(i)),
   52: (i) => atGlance(fig('All', 'Delegate badges carry your logo'), fig(EVENT_DAYS, WORN), passesOf(i)),
@@ -814,6 +873,148 @@ const CARDS = categories.map((cat) => {
   return { cat, cards }
 })
 const CARD_COUNT = CARDS.reduce((n, g) => n + g.cards.length, 0)
+
+// ─── Where do I start? Four ways in ─────────────────────────────────────────
+// Stuart, 29 Sep 2026: "if someone buying comes to this, I don't think they're
+// going to know where to start, unless they know exactly that they want a
+// speaking slot, or ... branding on site." The same four ways in sit above the
+// menu on every summit card. Each maps to explicit product ids, never to a
+// guess from the tags; a card belongs to a way when any of its routes does.
+// A product can sit in two ways (the Headline speaks and brands; the curated
+// invitations and introductions are both meetings and leads).
+const WAYS = [
+  { key: 'stage', title: 'Take the stage', line: 'Presentations, panels and sessions', icon: Mic,
+    ids: [1, 11, 13, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28] },
+  { key: 'seen', title: 'Be seen by everyone', line: 'Registration, badges, lanyards, screens, video, Wi-Fi', icon: Eye,
+    ids: [1, 10, 14, 42, 43, 45, 46, 48, 49, 50, 51, 52, 53, 54, 55, 56] },
+  { key: 'meet', title: 'Meet the right people', line: 'Evenings, C-level events, meeting rooms, introductions', icon: Handshake,
+    ids: [2, 3, 4, 5, 6, 7, 8, 29, 30, 37, 38, 39, 40, 41, 44, 47] },
+  { key: 'leads', title: 'Capture leads', line: 'Exhibition stands, invitations and introductions', icon: ScanLine,
+    ids: [31, 58, 32, 59, 33, 60, 57, 34, 29, 30] },
+]
+const WAY = Object.fromEntries(WAYS.map((w) => [w.key, w]))
+
+// A lens is what the menu, the cards' order of attention and a goal deck are
+// looking through: a way in ({ kind: 'way', key }) or one of the rate card's
+// own objective tags ({ kind: 'goal', value }, the goal chips). One at a time.
+const lensLabel = (lens) => (!lens ? '' : lens.kind === 'way' ? WAY[lens.key].title : lens.value)
+const lensHas = (lens, p) => (lens.kind === 'way' ? WAY[lens.key].ids.includes(p.id) : p.impact.includes(lens.value))
+const cardHasLens = (card, lens) => card.options.some((o) => lensHas(lens, o))
+const lensCount = (lens) => CARDS.reduce((n, g) => n + g.cards.filter((c) => cardHasLens(c, lens)).length, 0)
+const sameLens = (a, b) => Boolean(a && b && a.kind === b.kind && (a.key || a.value) === (b.key || b.value))
+// the entry price of a way: its lowest open, priced product
+function wayFrom(way) {
+  const prices = way.ids.map((id) => byId[id]).filter((p) => p && !isOut(p) && !p.poa).map((p) => p.price)
+  return prices.length ? Math.min(...prices) : null
+}
+
+// ─── Family briefs ──────────────────────────────────────────────────────────
+// At most two short sentences, and only where a family has to explain its
+// value: everyone wants the stage, but branding, rooms and media sell on who
+// sees them (Stuart, 29 Sep 2026). Each is built from the family's own lines;
+// `room` adds a quiet link to the 2026 room.
+const FAMILY_BRIEFS = {
+  'NEXTworking Evening Events': { text: 'Three evenings with the whole market in one room. Own one outright, or share it: both routes sit on one card, and you book one or the other.' },
+  'Exhibition': { text: 'A stand on the floor the room walks between sessions, with a badge scanner for the conversations you start there. Turnkey or space only, on one card.' },
+  'Private Meeting Rooms': { text: 'A private branded room, yours for both event days: a door you can close for the meetings you came to have.', room: true },
+  'Hospitality & Lounges': { text: 'The meeting and dining area, the Nourish Bars and the speakers’ lounge: where attendees return between sessions.', room: true },
+  'Media & Content': { text: 'Your brand beyond the room: on the livestream, behind the interviews NEXT.io films, in its published videos and in front of the journalists covering the event.', room: true },
+  'Venue Branding': { text: 'Branding every attendee sees, from the registration page to the last session: registration, badges, lanyards, the stairs, the cloakroom, the restrooms, the event guide and the Wi-Fi.', room: true },
+}
+
+// ─── The picture at the top of every card ───────────────────────────────────
+// Stuart has no NEXTPredict photography yet (the 2026 summit runs 22-23
+// October 2026), so a card shows, in this order: NEXT's own New York 2026
+// event photography, labelled "NEXT events, New York, 2026", or Convene's own
+// imagery of 30 Hudson Yards, labelled as the 2026 venue (never the 2027
+// venue, which is still to be announced). No photograph repeats across cards.
+// A product with no honest photograph gets a designed header instead (`art`),
+// marked as an illustration. Keyed by the card's first product id. Photos with
+// legible gambling-brand messaging, a readable attendee name or a speaker
+// line-up on screen were left out or cropped, and the 2026 stage and hub
+// partners' logos on the stage walls were softened out of the rest, so no
+// 2026 sponsor reads as a NEXTPredict partner (see CLAUDE.md, 29 Sep 2026).
+const PHOTO_CREDIT = { ny: 'NEXT events, New York, 2026', venue: 'Convene, 30 Hudson Yards, the 2026 venue' }
+const NY_EVENT = 'at a NEXT event in New York, 2026'
+const AT_VENUE = 'at Convene, 30 Hudson Yards, the 2026 venue'
+const CARD_VISUAL = {
+  1: { photo: 'main-hall-side', credit: 'ny', wide: true, pos: '45% 50%', alt: `A full main hall following a panel on stage ${NY_EVENT}` },
+  2: { photo: 'nw-packed', credit: 'ny', wide: true, alt: `A packed evening networking event ${NY_EVENT}` },
+  3: { photo: 'nw-bar', credit: 'ny', alt: `Guests around the bar at an evening event ${NY_EVENT}` },
+  4: { photo: 'nw-smiles', credit: 'ny', alt: `Delegates talking over drinks at an evening reception ${NY_EVENT}` },
+  8: { photo: 'vip', credit: 'ny', alt: `Senior guests in conversation at an evening gathering ${NY_EVENT}` },
+  10: { photo: 'main-hall-stage', credit: 'ny', wide: true, pos: '52% 50%', alt: `The main stage and its audience ${NY_EVENT}` },
+  11: { photo: 'leadership-speaker', credit: 'ny', pos: '50% 18%', alt: `A speaker presenting on the Leadership Stage ${NY_EVENT}` },
+  13: { photo: 'panel-five', credit: 'ny', pos: '50% 42%', alt: `Panellists and a moderator on the main stage ${NY_EVENT}` },
+  14: { photo: 'venue-theatre', credit: 'venue', alt: `Rows of seats set theatre style in a hall ${AT_VENUE}` },
+  15: { photo: 'main-panel-4', credit: 'ny', pos: '50% 45%', alt: `A panellist speaking on the main stage ${NY_EVENT}` },
+  16: { photo: 'main-panel-wide', credit: 'ny', alt: `A five-person panel on the main stage ${NY_EVENT}` },
+  17: { photo: 'hub-room', credit: 'ny', alt: `A hub stage room set for a session ${NY_EVENT}` },
+  19: { photo: 'solo-presenter', credit: 'ny', pos: '50% 30%', alt: `A presenter delivering a keynote ${NY_EVENT}` },
+  20: { photo: 'hub-mic', credit: 'ny', alt: `Panellists with microphones in a hub session ${NY_EVENT}` },
+  21: { photo: 'hub-mic-2', credit: 'ny', alt: `A panellist speaking into a microphone in a hub session ${NY_EVENT}` },
+  22: { photo: 'hub-stage', credit: 'ny', alt: `A panel on a hub stage in front of a full room ${NY_EVENT}` },
+  24: { photo: 'venue-hub', credit: 'venue', alt: `A hub room set for a session ${AT_VENUE}` },
+  25: { photo: 'crowd', credit: 'ny', alt: `A seated audience following a session ${NY_EVENT}` },
+  26: { photo: 'audience-smile', credit: 'ny', alt: `Audience members during a session ${NY_EVENT}` },
+  27: { photo: 'audience-red', credit: 'ny', alt: `An audience watching a session ${NY_EVENT}` },
+  28: { photo: 'venue-hall', credit: 'venue', alt: `A conference hall set for sessions ${AT_VENUE}` },
+  29: { photo: 'venue-studio', credit: 'venue', alt: `A studio set with round tables for a workshop ${AT_VENUE}` },
+  30: { photo: 'intros', credit: 'ny', pos: '50% 40%', alt: `Two delegates shaking hands on a sofa ${NY_EVENT}` },
+  31: { art: 'stand', size: [6, 8] },
+  32: { art: 'stand', size: [8, 4] },
+  33: { art: 'stand', size: [6, 4] },
+  57: { art: 'stand', size: [6, 2] },
+  34: { art: 'stand', size: [3, 2] },
+  37: { photo: 'venue-boardroom', credit: 'venue', alt: `A boardroom with a long table ${AT_VENUE}` },
+  38: { photo: 'venue-boardroom-long', credit: 'venue', alt: `A boardroom set for a meeting ${AT_VENUE}` },
+  39: { photo: 'venue-boardroom-round', credit: 'venue', alt: `A meeting room with a round table ${AT_VENUE}` },
+  40: { photo: 'venue-boardroom-four', credit: 'venue', alt: `A small meeting room with a round table by the window ${AT_VENUE}` },
+  41: { photo: 'table-talk', credit: 'ny', alt: `Three guests in conversation at a table ${NY_EVENT}` },
+  42: { photo: 'venue-gallery', credit: 'venue', alt: `The gallery, with seating and a refreshment counter, ${AT_VENUE}` },
+  43: { art: 'cup' },
+  44: { photo: 'venue-lounge', credit: 'venue', alt: `Lounge seating by the windows ${AT_VENUE}` },
+  45: { art: 'live' },
+  46: { photo: 'media-camera', credit: 'ny', pos: '50% 40%', alt: `A member of the NEXT.io media team with a camera ${NY_EVENT}` },
+  47: { photo: 'venue-library', credit: 'venue', alt: `An event room with high tables and screens ${AT_VENUE}` },
+  48: { photo: 'venue-walkway', credit: 'venue', alt: `A large video wall in the walkway ${AT_VENUE}` },
+  49: { photo: 'venue-entrance', credit: 'venue', alt: `The entrance and reception desk ${AT_VENUE}` },
+  50: { art: 'hanger' },
+  51: { photo: 'venue-welcome', credit: 'venue', alt: `The welcome desk with the stairs behind it ${AT_VENUE}` },
+  52: { art: 'badge' },
+  53: { art: 'lanyard' },
+  54: { art: 'restroom' },
+  55: { art: 'guide' },
+  56: { art: 'wifi' },
+}
+const visualOf = (card) => CARD_VISUAL[card.options[0].id] || null
+
+// ─── Lead data: one rule, switched off ──────────────────────────────────────
+// Stuart, 29 Sep 2026, for every summit card: above a spend threshold a partner
+// gets opted-in scan data, below it the lead add-on; exhibitors get their own
+// booth scans; networking events can share a selection of opted-in guests;
+// never the whole database (Pierre: NEXT keeps control of its data); the size
+// of the selection matches the package. The threshold and the contact numbers
+// are not decided yet (they go to Stuart and Pierre first), so the slot is
+// built and OFF: while `on` is false no card, slide or PDF shows a lead-data
+// line, and it stays silent until the numbers are filled in too. To publish,
+// set the numbers, then `on: true`.
+const LEAD_DATA = {
+  on: false,
+  threshold: null,        // EUR spend from which a partner receives opted-in scan data
+  contacts: [],           // [[minimum spend, up to N contacts], ...], highest first
+  exhibitors: 'Your own booth scans',
+  networking: 'A selection of opted-in guests',
+  addOn: 'Lead add-on available',
+}
+function leadDataLine(item) {
+  if (!LEAD_DATA.on || !LEAD_DATA.threshold || !LEAD_DATA.contacts.length) return null
+  if (item.cat === 'Exhibition') return LEAD_DATA.exhibitors
+  if (item.cat === 'NEXTworking Evening Events') return LEAD_DATA.networking
+  if (item.poa || item.price < LEAD_DATA.threshold) return LEAD_DATA.addOn
+  const tier = LEAD_DATA.contacts.find(([min]) => item.price >= min)
+  return tier ? `Opted-in scan data, up to ${tier[1]} contacts` : null
+}
 
 // ─── Anchors ────────────────────────────────────────────────────────────────
 // Every card is `p-<slug of its title>`; a two-route card also carries an
@@ -932,43 +1133,69 @@ function splitBullets(bullets) {
   return { items, terms }
 }
 
-function TermsList({ terms }) {
+// `bare`: the list alone, for the card's "Availability & terms" accordion,
+// which carries the heading itself.
+function TermsList({ terms, bare = false }) {
   if (!terms.length) return null
+  const list = (
+    <ul className="space-y-2">
+      {terms.map((t, i) => {
+        const Icon = t.kind === 'avail' ? CalendarDays : Info
+        return (
+          <li key={i} className="flex items-start gap-2.5 text-[12.5px] leading-relaxed text-brand-gray">
+            <Icon className={`w-3.5 h-3.5 shrink-0 mt-[3px] ${t.kind === 'avail' ? 'text-brand-yellow/75' : 'text-brand-gray/70'}`} aria-hidden />
+            <span>{t.text}</span>
+          </li>
+        )
+      })}
+    </ul>
+  )
+  if (bare) return list
   return (
     <div className="mt-5 pt-4 border-t border-brand-white/10">
       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-gray mb-2.5">Availability &amp; terms</p>
-      <ul className="space-y-2">
-        {terms.map((t, i) => {
-          const Icon = t.kind === 'avail' ? CalendarDays : Info
-          return (
-            <li key={i} className="flex items-start gap-2.5 text-[12.5px] leading-relaxed text-brand-gray">
-              <Icon className={`w-3.5 h-3.5 shrink-0 mt-[3px] ${t.kind === 'avail' ? 'text-brand-yellow/75' : 'text-brand-gray/70'}`} aria-hidden />
-              <span>{t.text}</span>
-            </li>
-          )
-        })}
-      </ul>
+      {list}
     </div>
   )
 }
 
-// Every deliverable shows, always: no toggle, on a card of any width (Stuart,
-// 26 Sep 2026: "Please do include all deliverables. It's important").
-function DeliverablesList({ bullets, featured = false }) {
-  const { items, terms } = splitBullets(bullets)
+// ─── What's included · N, Availability & terms · N ──────────────────────────
+// Stuart, 29 Sep 2026: "There's just a lot to read". The card leads with the
+// value and the price; the lines sit one tap away in two accordions, each with
+// its count. Every line is still in the page (a closed <details> keeps its
+// content), in both PDFs and in full on the product's Present slide: the 26 Sep
+// rule ("Please do include all deliverables") still holds, nothing is trimmed.
+function Accordion({ title, count, children }) {
   return (
-    <>
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-gray mb-3">What&rsquo;s included</p>
-      <ul className={featured ? 'space-y-3' : 'space-y-2'}>
-        {items.map((line, i) => (
-          <li key={i} className={`flex items-start text-sm ${featured ? 'text-brand-white/90' : 'text-brand-white/80'}`}>
-            <CircleCheck className="text-brand-yellow mr-3 shrink-0 mt-0.5 w-4 h-4" aria-hidden />
-            <span className="leading-relaxed">{line}</span>
-          </li>
-        ))}
-      </ul>
-      <TermsList terms={terms} />
-    </>
+    <details className="group/acc border-t border-brand-white/10 first:border-t-0">
+      <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 py-2 text-left [&::-webkit-details-marker]:hidden">
+        <span className="text-[11px] font-black uppercase tracking-[0.16em] text-brand-white/90">{title}</span>
+        <span className="text-[11px] font-bold tabular-nums text-brand-gray" aria-label={`, ${count} ${count === 1 ? 'line' : 'lines'}`}>&middot; {count}</span>
+        <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-brand-gray transition-transform duration-200 group-open/acc:rotate-180" aria-hidden />
+      </summary>
+      <div className="pb-4 pt-1">{children}</div>
+    </details>
+  )
+}
+function CardDetails({ items, terms }) {
+  return (
+    <div className="rounded-xl border border-brand-white/10 bg-brand-white/[0.02] px-4">
+      <Accordion title={'What’s included'} count={items.length}>
+        <ul className="space-y-2">
+          {items.map((line, i) => (
+            <li key={i} className="flex items-start text-sm text-brand-white/85">
+              <CircleCheck className="text-brand-yellow mr-3 shrink-0 mt-0.5 w-4 h-4" aria-hidden />
+              <span className="leading-relaxed">{line}</span>
+            </li>
+          ))}
+        </ul>
+      </Accordion>
+      {terms.length > 0 && (
+        <Accordion title={'Availability & terms'} count={terms.length}>
+          <TermsList terms={terms} bare />
+        </Accordion>
+      )}
+    </div>
   )
 }
 
@@ -1051,10 +1278,11 @@ function CornerBadge({ item, featured }) {
   const pos = 'absolute top-0 right-0 z-20 text-[10px] font-black uppercase tracking-widest rounded-bl-xl'
   if (featured && !isOut(item)) return <div className={`${pos} bg-brand-yellow text-brand-dark px-5 py-2 shadow-md`}>✦ {label || 'Featured'}</div>
   if (!label) return null
-  const tone = item.status === 'sold' ? 'bg-brand-white/15 text-brand-white'
-    : item.status === 'reserved' ? 'bg-brand-yellow/15 text-brand-yellow'
-      : 'bg-brand-white/10 text-brand-gray'
-  return <div className={`${pos} px-4 py-1.5 ${tone}`}>{label}</div>
+  // over a photograph: a dark, blurred backing so the badge reads on any picture
+  const tone = item.status === 'sold' ? 'bg-brand-dark/90 text-brand-white'
+    : item.status === 'reserved' ? 'bg-brand-dark/90 text-brand-yellow'
+      : 'bg-brand-dark/85 text-brand-white/85'
+  return <div className={`${pos} px-4 py-1.5 backdrop-blur-sm ${tone}`}>{label}</div>
 }
 
 function TagRow({ item, featured, className = '' }) {
@@ -1093,10 +1321,14 @@ function AddButton({ item, count, conflicted, onAdd, featured }) {
 }
 
 // ─── Product card ───────────────────────────────────────────────────────────
-// One component for every card. `featured` is the gold full-row treatment; a
-// regular card that ends up alone on its row (see `spanClass`) keeps the regular
-// look but, being wide, switches to the same two-column layout by container
-// query (`@2xl`), so it never reads as a stretched narrow card.
+// The summit through line (29 Sep 2026), identical on every summit card: a
+// picture at the top, the name and one-line lede, the value row (ReachRow)
+// straight under the lede, the price with its availability and status, Add to
+// Calculator, then quiet Present and Copy link, and the lines in two
+// accordions ("What's included · N", "Availability & terms · N"). `featured`
+// is the gold full-row treatment; a card as wide as a full row (featured, or
+// alone on its row, see `spanClass`) lays itself out by container query
+// (`@2xl`): the picture becomes its left column, the offer the right.
 function ProductCard({ card, span = '', rebooking, cartCounts, conflictedIds, onAdd, onPresent }) {
   const featured = card.featured
   const multi = card.options.length > 1
@@ -1118,55 +1350,155 @@ function ProductCard({ card, span = '', rebooking, cartCounts, conflictedIds, on
   const count = cartCounts[item.id] || 0
   const conflicted = conflictedIds.has(item.id)
   const allSold = card.options.every((o) => o.status === 'sold')
+  const { items, terms } = splitBullets(item.bullets)
   const shell = featured
-    ? `col-span-full border-brand-yellow/40 bg-gradient-to-br from-brand-yellow/[0.16] via-brand-dark/95 to-brand-dark shadow-[0_0_60px_rgba(255,207,51,0.08)] hover:border-brand-yellow/70 hover:shadow-[0_0_80px_rgba(255,207,51,0.16)] ${allSold ? 'opacity-60' : ''}`
-    : `${span} bg-brand-white/[0.04] ${allSold ? 'border-brand-white/5 opacity-60' : 'border-brand-white/10 hover:border-brand-yellow/40 hover:bg-brand-white/[0.07]'}`
+    ? `col-span-full border-brand-yellow/40 bg-gradient-to-br from-brand-yellow/[0.14] via-brand-dark/95 to-brand-dark shadow-[0_0_60px_rgba(255,207,51,0.08)] hover:border-brand-yellow/70 hover:shadow-[0_0_80px_rgba(255,207,51,0.16)] ${allSold ? 'opacity-60' : ''}`
+    : `${span} bg-brand-white/[0.04] ${allSold ? 'border-brand-white/5 opacity-60' : 'border-brand-white/10 hover:border-brand-yellow/40 hover:bg-brand-white/[0.06]'}`
   return (
     <article id={productId(card)} aria-labelledby={`${productId(card)}-title`}
-      className={`jump-target clip-box @container relative flex flex-col rounded-2xl border transition-colors duration-300 ${shell}`}>
+      className={`jump-target clip-box @container relative rounded-2xl border transition-colors duration-300 ${shell}`}>
       {multi && card.options.map((o) => <span key={o.id} id={productId(o)} className="jump-target absolute top-0 left-0" aria-hidden="true" />)}
-      {featured && <div className="absolute top-0 left-0 w-80 h-80 bg-brand-yellow/8 rounded-full blur-3xl pointer-events-none" />}
       <CornerBadge item={item} featured={featured} />
-      {/* narrow: the title starts under the corner badge and runs full width; wide: side by side */}
-      <div className={`relative z-10 flex-1 flex flex-col @2xl:flex-row @2xl:gap-12 ${featured
-        ? 'px-6 sm:px-8 md:px-10 pt-12 pb-6 sm:pb-8 md:pb-10 @2xl:pt-10'
-        : 'px-5 sm:px-7 pt-10 pb-5 sm:pb-7 @2xl:pt-7'}`}>
-        <div className="@2xl:w-5/12 flex flex-col">
+      <div className="flex h-full flex-col @2xl:flex-row">
+      <CardVisual card={card} />
+      <div className={`relative z-10 flex-1 min-w-0 flex flex-col ${featured
+        ? 'px-6 sm:px-8 md:px-10 pt-6 sm:pt-7 @2xl:pt-9 pb-6 sm:pb-8 md:pb-9'
+        : 'px-5 sm:px-6 @2xl:px-8 pt-5 sm:pt-6 @2xl:pt-8 pb-5 sm:pb-6 @2xl:pb-7'}`}>
+        <div className="flex flex-col">
           <h4 id={`${productId(card)}-title`}
-            className={`font-black text-brand-white leading-tight ${featured ? 'text-[1.75rem] sm:text-3xl md:text-4xl mb-5 @2xl:pr-4' : 'text-xl @2xl:text-2xl mb-3.5'}`}>
+            className={`font-black text-brand-white leading-tight ${featured ? 'text-[1.75rem] sm:text-3xl md:text-4xl mb-4 @2xl:pr-4' : 'text-xl @2xl:text-2xl mb-3'}`}>
             {card.title}
           </h4>
-          {multi && <OptionTiles card={card} sel={item.id} setSel={setSel} rebooking={rebooking} />}
-          <PriceBlock item={item} rebooking={rebooking} featured={featured} />
           <Lede text={item.quote} featured={featured} />
           <ReachRow item={item} className="mb-5" />
-          <TagRow item={item} featured={featured} className="hidden @2xl:flex" />
-        </div>
-        <div className="@2xl:w-7/12 flex-1 flex flex-col">
-          <div className="flex-1">
-            <DeliverablesList key={item.id} bullets={item.bullets} featured={featured} />
-          </div>
-          <TagRow item={item} featured={featured} className="@2xl:hidden mt-5" />
-          <div className="mt-5 pt-5 border-t border-brand-white/10">
-            <AddButton item={item} count={count} conflicted={conflicted} onAdd={onAdd} featured={featured} />
-            {/* quiet, under the button: Present opens the deck on this product,
-                Copy link copies this card's address (a route card: the route
-                on screen, which reopens the card on it) */}
-            <div className="mt-2 -mb-2 flex flex-wrap items-center justify-end gap-x-1">
-              <button type="button" onClick={() => onPresent(productId(item))} title="Present this product full screen"
-                className={`${CARD_QUIET} ${CARD_QUIET_TONE}`}>
-                <Presentation className="w-3.5 h-3.5 shrink-0" aria-hidden /> Present
-              </button>
-              <CopyLinkButton id={productId(item)} look={CARD_QUIET} className={CARD_QUIET_TONE} />
-            </div>
+          {multi && <OptionTiles card={card} sel={item.id} setSel={setSel} rebooking={rebooking} />}
+          <PriceBlock item={item} rebooking={rebooking} featured={featured} />
+          <LeadDataBadge item={item} className="-mt-2 mb-4" />
+          <AddButton item={item} count={count} conflicted={conflicted} onAdd={onAdd} featured={featured} />
+          {/* quiet, under the button: Present opens the deck on this product,
+              Copy link copies this card's address (a route card: the route
+              on screen, which reopens the card on it) */}
+          <div className="mt-2 flex flex-wrap items-center justify-end gap-x-1">
+            <button type="button" onClick={() => onPresent(productId(item))} title="Present this product full screen"
+              className={`${CARD_QUIET} ${CARD_QUIET_TONE}`}>
+              <Presentation className="w-3.5 h-3.5 shrink-0" aria-hidden /> Present
+            </button>
+            <CopyLinkButton id={productId(item)} look={CARD_QUIET} className={CARD_QUIET_TONE} />
           </div>
         </div>
+        <div className="mt-4">
+          <CardDetails key={item.id} items={items} terms={terms} />
+        </div>
+      </div>
       </div>
     </article>
   )
 }
 const CARD_QUIET = 'inline-flex items-center gap-1.5 min-h-10 sm:min-h-9 rounded-full px-3 text-xs font-bold'
 const CARD_QUIET_TONE = 'text-brand-gray hover:text-brand-yellow hover:bg-brand-white/[0.06] transition-colors'
+
+// The lead-data line under the price. Silent while LEAD_DATA is off.
+function LeadDataBadge({ item, className = '' }) {
+  const line = leadDataLine(item)
+  if (!line) return null
+  return (
+    <p className={`inline-flex items-center gap-2 self-start rounded-full border border-brand-white/15 bg-brand-white/[0.04] px-3 py-1.5 text-[11.5px] font-bold text-brand-white/85 ${className}`}>
+      <ScanLine className="h-3.5 w-3.5 shrink-0 text-brand-yellow" aria-hidden /> Lead data: {line}
+    </p>
+  )
+}
+
+// ─── The card's picture ─────────────────────────────────────────────────────
+// A photograph with its credit line, or a designed header marked as an
+// illustration. 16:9 at the top of a card; the left column once the card is
+// wide (container query), so a wide card never ends in an empty half. The
+// slow Ken Burns runs only while the picture is on screen (`data-inview`,
+// set by useInView in App) and never under reduced motion.
+const VISUAL_BOX = 'card-visual relative shrink-0 aspect-[16/9] @2xl:aspect-auto @2xl:w-5/12 @2xl:min-h-[22rem] overflow-hidden border-b @2xl:border-b-0 @2xl:border-r border-brand-white/10 bg-[#1c1c1e]'
+function CardVisual({ card }) {
+  const v = visualOf(card)
+  if (!v) return null
+  if (v.art) {
+    return (
+      <div className={VISUAL_BOX}>
+        <CardArt v={v} />
+        <span className="absolute left-3 right-3 bottom-2 text-[9.5px] font-bold uppercase leading-snug tracking-[0.16em] text-brand-gray/75">{v.art === 'stand' ? 'Illustration · every stand to one scale' : 'Illustration'}</span>
+      </div>
+    )
+  }
+  const src = `${base}images/cards/${v.photo}.webp`
+  return (
+    <figure className={VISUAL_BOX}>
+      <img src={src} srcSet={v.wide ? `${src} 960w, ${base}images/cards/${v.photo}-wide.webp 1600w` : undefined}
+        sizes={v.wide ? '(min-width: 1280px) 1216px, 100vw' : undefined}
+        alt={v.alt} loading="lazy" decoding="async"
+        className="kenburns absolute inset-0 h-full w-full object-cover" style={v.pos ? { objectPosition: v.pos } : undefined} />
+      <div aria-hidden className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/65 to-transparent" />
+      <figcaption className="absolute left-3 right-24 bottom-2 truncate text-[10px] font-semibold text-brand-white/85 [text-shadow:0_1px_6px_rgba(0,0,0,0.85)]">{PHOTO_CREDIT[v.credit]}</figcaption>
+    </figure>
+  )
+}
+
+// Designed headers, in the hero's own language: the chart grid, a probability
+// line and one glyph, with a line taken from the product's own deliverables.
+// Stands are drawn to one scale, so the five footprints compare at a glance.
+const ART = {
+  cup: { icon: Coffee, eyebrow: 'Nourish Bar', line: 'One of the three bars, and its credenzas' },
+  live: { icon: Radio, eyebrow: 'Livestream', line: 'Your logo on the event livestream' },
+  hanger: { icon: Shirt, eyebrow: 'Cloakroom', line: 'Counter, branding and an LCD screen' },
+  badge: { icon: Contact, eyebrow: 'Badges', line: 'Your logo on all delegate badges' },
+  lanyard: { icon: IdCard, eyebrow: 'Lanyards', line: 'Two designs, each around half the room' },
+  restroom: { icon: Droplets, eyebrow: 'Restrooms', line: 'Every restroom, one brand' },
+  guide: { icon: QrCode, eyebrow: 'Digital event guide', line: 'Your logo and QR code on every badge' },
+  wifi: { icon: Wifi, eyebrow: 'Wi-Fi', line: 'Your network name and password' },
+}
+const ART_LINE = probabilityLine(11)
+function ArtBackdrop() {
+  return (
+    <svg viewBox="0 0 1000 400" preserveAspectRatio="none" aria-hidden className="absolute inset-0 h-full w-full">
+      <path d={ART_LINE.area} fill="#ffcf33" fillOpacity="0.05" />
+      <polyline points={ART_LINE.line} fill="none" stroke="#ffcf33" strokeOpacity="0.35" strokeWidth="1.5" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+    </svg>
+  )
+}
+function CardArt({ v }) {
+  if (v.art === 'stand') return <StandArt size={v.size} />
+  const a = ART[v.art]
+  const Icon = a.icon
+  return (
+    <div className="absolute inset-0">
+      <div aria-hidden className="terminal-grid absolute inset-0" />
+      <ArtBackdrop />
+      <div className="absolute inset-0 flex items-center gap-4 sm:gap-5 px-6 sm:px-8">
+        <span className="flex h-14 w-14 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-2xl border border-brand-yellow/40 bg-brand-dark/70 text-brand-yellow shadow-[0_0_30px_rgba(255,207,51,0.18)]">
+          <Icon className="h-7 w-7 sm:h-8 sm:w-8" aria-hidden />
+        </span>
+        <div className="min-w-0">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-yellow">{a.eyebrow}</p>
+          <p className="mt-1.5 text-base sm:text-lg font-black leading-snug text-brand-white text-balance">{a.line}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+// A stand's footprint on a dot grid at one fixed scale (18px to one unit of
+// the size in its name, long side across), whatever the shape of the box, so the five footprints compare
+// at a glance on the phone card, the two-up card and the wide card alike. The
+// grid is a CSS background centred on the box; an odd side shifts it half a
+// unit so the footprint's edges sit on the dots.
+const STAND_UNIT = 18
+function StandArt({ size: [a, b] }) {
+  const w = Math.max(a, b)
+  const d = Math.min(a, b)
+  const half = STAND_UNIT / 2
+  return (
+    <div aria-hidden className="stand-grid absolute inset-0 flex items-center justify-center"
+      style={{ backgroundSize: `${STAND_UNIT}px ${STAND_UNIT}px`, backgroundPosition: `calc(50% + ${w % 2 ? half : 0}px) calc(50% + ${d % 2 ? half : 0}px)` }}>
+      <div className="flex items-center justify-center rounded-[3px] border-[1.5px] border-brand-yellow bg-brand-yellow/[0.14] shadow-[0_0_28px_rgba(255,207,51,0.16)] text-[20px] font-black text-brand-yellow"
+        style={{ width: w * STAND_UNIT, height: d * STAND_UNIT }}>{`${a}x${b}`}</div>
+    </div>
+  )
+}
 
 // ─── Section heading ────────────────────────────────────────────────────────
 // Every section opens the same way: a centred uppercase heading, white with a
@@ -1184,20 +1516,23 @@ function SectionHead({ title, accent, sub, lede, children }) {
   )
 }
 
-// ─── Navigation: the product menu and the family bar ───────────────────────
+// ─── Navigation: the ways in, the product menu and the family bar ──────────
 // Stuart, 23 Sep 2026: "it's hard to find products when i have to scroll right
-// down for them". The page opens on a menu of every product and its entry
-// price, each line a link to its card; among the cards a slim bar keeps every
-// family one tap away. Clicks go through `onJump`, which brings back a card an
-// objective or format filter has hidden before it scrolls.
-// `goal`: undefined while no goal chip is on, then 'on' (the line matches the
-// goal: highlighted) or 'off' (dimmed - still listed, still a link).
-function MenuLine({ href, onClick, title, price, goal }) {
+// down for them", and 29 Sep 2026: "it's really hard to know what I should
+// select". The page opens on four ways in, then the rate card at a glance:
+// every family as a tile (picture, name, product count, "from" price) that
+// opens its product list, each line a link to its card; among the cards a slim
+// bar keeps every family one tap away. Clicks go through `onJump`, which
+// brings back a card an objective or format filter has hidden before it
+// scrolls.
+// `mark`: undefined while no lens is on, then 'on' (the line matches the lens:
+// highlighted) or 'off' (dimmed, still listed, still a link).
+function MenuLine({ href, onClick, title, price, mark }) {
   return (
-    <li className={`transition-opacity duration-200 ${goal === 'off' ? 'opacity-35' : ''}`}>
+    <li className={`transition-opacity duration-200 ${mark === 'off' ? 'opacity-35' : ''}`}>
       <a href={href} onClick={onClick}
-        className="group/row flex items-end gap-2 pl-10 pr-3 md:px-0 min-h-11 md:min-h-0 py-2.5 md:py-[6px] text-[13.5px] leading-snug">
-        <span className={`${goal === 'on' ? 'text-brand-yellow font-semibold' : 'text-brand-white/85'} group-hover/row:text-brand-yellow transition-colors`}>{title}</span>
+        className="group/row flex items-end gap-2 px-4 min-h-11 py-2.5 text-[13.5px] leading-snug">
+        <span className={`${mark === 'on' ? 'text-brand-yellow font-semibold' : 'text-brand-white/85'} group-hover/row:text-brand-yellow transition-colors`}>{title}</span>
         <span className="flex-1 min-w-4 mb-[5px] border-b border-dotted border-brand-white/20 group-hover/row:border-brand-yellow/50 transition-colors" aria-hidden />
         <span className={`shrink-0 whitespace-nowrap tabular-nums ${price.out ? 'text-[12px] font-bold uppercase tracking-wider text-brand-gray' : 'font-bold text-brand-white'}`}>
           {price.from && <span className="mr-1 text-[11px] font-medium text-brand-gray">from</span>}{price.text}
@@ -1207,36 +1542,55 @@ function MenuLine({ href, onClick, title, price, goal }) {
   )
 }
 
-// `hits`: with a goal chip on, how many of the family's products match it (the
-// phone row shows the count; a family with none is dimmed).
-function MenuBlock({ id, icon: Icon, label, from, open, onToggle, href, onJump, allLabel, hits = null, goal = null, dimmed = false, className = '', children }) {
+// the picture a family tile carries: its first card's photograph, else its
+// first designed header
+const tileVisual = (cards) => cards.map(visualOf).find((v) => v?.photo) || visualOf(cards[0])
+function TileThumb({ v, icon: Icon }) {
+  const box = 'relative block shrink-0 overflow-hidden bg-[#1c1c1e] w-16 h-16 rounded-xl sm:w-full sm:h-auto sm:aspect-[2/1] sm:rounded-none'
+  if (v?.photo) {
+    return (
+      <span className={box}>
+        <img src={`${base}images/cards/${v.photo}.webp`} alt="" loading="lazy" decoding="async"
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover/tile:scale-[1.04]" style={v.pos ? { objectPosition: v.pos } : undefined} />
+        <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-brand-dark/70 via-transparent to-transparent" />
+      </span>
+    )
+  }
+  return (
+    <span className={box}>
+      <span aria-hidden className="terminal-grid absolute inset-0" />
+      <span className="absolute inset-0 flex items-center justify-center"><Icon className="h-7 w-7 sm:h-9 sm:w-9 text-brand-yellow" aria-hidden /></span>
+    </span>
+  )
+}
+// One family: a button that opens its list. `hits`: with a lens on, how many
+// of the family's products it takes (none: the tile dims).
+function FamilyTile({ id, icon: Icon, label, count, from, visual, open, onToggle, href, onJump, allLabel, hits = null, lensName = '', dimmed = false, children }) {
   const dim = dimmed || hits === 0
   return (
-    <div className={`break-inside-avoid border-b border-brand-white/8 last:border-b-0 md:border-b-0 md:mb-7 ${className}`}>
-      {/* phone: the family is a row that opens its list */}
+    <div className={`rounded-2xl border overflow-hidden transition-[opacity,border-color,background-color] duration-200 ${dim ? 'opacity-40' : ''} ${hits ? 'border-brand-yellow/55 bg-brand-yellow/[0.05]' : 'border-brand-white/10 bg-brand-white/[0.03] hover:border-brand-white/25'}`}>
       <button type="button" onClick={onToggle} aria-expanded={open} aria-controls={id}
-        className={`md:hidden w-full flex items-center gap-3 px-3 min-h-[3.25rem] py-2 text-left transition-opacity duration-200 ${dim ? 'opacity-35' : ''}`}>
-        <Icon className="w-4 h-4 text-brand-yellow shrink-0" aria-hidden />
-        <span className="flex-1 min-w-0 text-[14px] font-bold text-brand-white leading-snug">{label}</span>
-        {hits !== null && (
-          <span className={`shrink-0 inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full text-[11px] font-black tabular-nums ${hits ? 'bg-brand-yellow text-brand-dark' : 'bg-brand-white/10 text-brand-gray'}`}>
-            {hits}<span className="sr-only"> {hits === 1 ? 'product' : 'products'} for {goal}</span>
+        className="group/tile w-full text-left flex sm:block items-center gap-3 p-2.5 sm:p-0">
+        <TileThumb v={visual} icon={Icon} />
+        <span className="flex min-w-0 flex-1 items-start gap-2 sm:px-4 sm:py-3.5">
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-2">
+              <Icon className="h-4 w-4 shrink-0 text-brand-yellow" aria-hidden />
+              <span className="text-[14.5px] font-black leading-snug text-brand-white group-hover/tile:text-brand-yellow transition-colors">{label}</span>
+            </span>
+            <span className="mt-1 block text-[12.5px] text-brand-gray tabular-nums">
+              {count} product{count === 1 ? '' : 's'}{from && <> · <strong className="font-bold text-brand-white">{from}</strong></>}
+            </span>
+            {hits ? <span className="mt-2 inline-flex items-center rounded-full bg-brand-yellow px-2 py-0.5 text-[10.5px] font-black text-brand-dark tabular-nums">{hits} for {lensName}</span> : null}
           </span>
-        )}
-        <span className="text-[12px] text-brand-gray tabular-nums whitespace-nowrap">{from || 'POA'}</span>
-        <ChevronDown className={`w-4 h-4 text-brand-gray shrink-0 transition-transform duration-300 ${open ? 'rotate-180' : ''}`} aria-hidden />
+          <ChevronDown className={`mt-1 h-4 w-4 shrink-0 text-brand-gray transition-transform duration-300 ${open ? 'rotate-180' : ''}`} aria-hidden />
+        </span>
       </button>
-      {/* desktop: the family heading links to its group */}
-      <a href={href} onClick={(e) => onJump(e, href.slice(1))} className={`group/fam hidden md:flex items-center gap-2.5 mb-2 transition-opacity duration-200 ${dim ? 'opacity-35' : ''}`}>
-        <span className="w-7 h-7 rounded-full bg-brand-yellow/15 text-brand-yellow flex items-center justify-center shrink-0"><Icon className="w-3.5 h-3.5" aria-hidden /></span>
-        <span className="text-[13.5px] font-black text-brand-white leading-tight group-hover/fam:text-brand-yellow transition-colors">{label}</span>
-        <ArrowRight className="w-3 h-3 text-brand-gray/60 group-hover/fam:text-brand-yellow transition-colors ml-auto shrink-0" aria-hidden />
-      </a>
-      <ul id={id} className={`${open ? 'block' : 'hidden'} md:block pb-2 md:pb-0`}>
+      <ul id={id} className={`${open ? 'block' : 'hidden'} border-t border-brand-white/10 py-1`}>
         {children}
-        <li className="md:hidden">
+        <li>
           <a href={href} onClick={(e) => onJump(e, href.slice(1))}
-            className="flex items-center gap-1.5 pl-10 pr-3 min-h-11 text-[11px] font-black uppercase tracking-[0.14em] text-brand-yellow">
+            className="flex items-center gap-1.5 px-4 min-h-11 text-[11px] font-black uppercase tracking-[0.14em] text-brand-yellow">
             {allLabel} <ArrowRight className="w-3.5 h-3.5" aria-hidden />
           </a>
         </li>
@@ -1247,22 +1601,26 @@ function MenuBlock({ id, icon: Icon, label, from, open, onToggle, href, onJump, 
 
 // ─── Goal chips ─────────────────────────────────────────────────────────────
 // The rate card's own objective tags (`impact`, the same list as the Objective
-// filter above the cards, whose behaviour is untouched): one chip at a time
-// highlights the products for that goal and dims the rest - the menu still lists
-// every product - and "Present these" opens a deck of just those products.
-const cardHasGoal = (card, goal) => card.options.some((o) => o.impact.includes(goal))
-const goalCount = (goal) => CARDS.reduce((n, g) => n + g.cards.filter((c) => cardHasGoal(c, goal)).length, 0)
-
-function GoalChips({ goal, setGoal, onPresent }) {
-  const n = goal ? goalCount(goal) : 0
+// filter above the cards, whose behaviour is untouched), sharing one lens with
+// the four ways in: one at a time, a toggle. The menu still lists every
+// product, lights the matches and dims the rest, and "Present these" opens a
+// deck of just those products.
+const lensLine = (lens, n) => {
+  const p = `${n} product${n === 1 ? '' : 's'}`
+  if (lens.kind === 'goal') return <>{p} for <span className="text-brand-yellow">{lens.value}</span></>
+  const t = lensLabel(lens)
+  return <>{p} to <span className="text-brand-yellow">{t.charAt(0).toLowerCase() + t.slice(1)}</span></>
+}
+function GoalChips({ lens, setLens, onPresent }) {
+  const n = lens ? lensCount(lens) : 0
   return (
     <div className="px-5 sm:px-8 py-4 border-b border-brand-white/10 bg-brand-white/[0.02]">
       <div role="group" aria-label="Show products for a goal" className="flex flex-wrap items-center gap-2">
         <span className="mr-1 text-[11px] font-black uppercase tracking-[0.16em] text-brand-gray">Show products for</span>
         {impacts.map((t) => {
-          const on = goal === t
+          const on = lens?.kind === 'goal' && lens.value === t
           return (
-            <button key={t} type="button" onClick={() => setGoal(on ? null : t)} aria-pressed={on}
+            <button key={t} type="button" onClick={() => setLens(on ? null : { kind: 'goal', value: t })} aria-pressed={on}
               className={`inline-flex items-center min-h-10 sm:min-h-9 px-3.5 rounded-full border text-[12.5px] font-bold transition-colors ${on
                 ? 'bg-brand-yellow border-brand-yellow text-brand-dark'
                 : 'border-brand-white/20 text-brand-white/85 hover:border-brand-yellow/60 hover:text-brand-yellow'}`}>
@@ -1272,14 +1630,14 @@ function GoalChips({ goal, setGoal, onPresent }) {
         })}
       </div>
       <div aria-live="polite">
-        {goal && (
+        {lens && (
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-            <p className="text-sm text-brand-white"><strong className="font-black text-brand-yellow tabular-nums">{n}</strong> product{n === 1 ? '' : 's'} for {goal}</p>
-            <button type="button" onClick={() => onPresent('', goal)}
+            <p className="text-sm font-bold text-brand-white tabular-nums">{lensLine(lens, n)}</p>
+            <button type="button" onClick={() => onPresent('', lens)}
               className="inline-flex items-center gap-2 min-h-10 sm:min-h-9 px-4 rounded-full bg-brand-yellow text-brand-dark text-[12.5px] font-black hover:brightness-110 transition">
               <Presentation className="w-4 h-4" aria-hidden /> Present these
             </button>
-            <button type="button" onClick={() => setGoal(null)}
+            <button type="button" onClick={() => setLens(null)}
               className="inline-flex items-center min-h-10 sm:min-h-9 text-[12.5px] font-bold text-brand-gray underline underline-offset-2 hover:text-brand-white">
               Show all
             </button>
@@ -1290,16 +1648,56 @@ function GoalChips({ goal, setGoal, onPresent }) {
   )
 }
 
-function ProductMenu({ onJump, onPresent }) {
-  const [open, setOpen] = useState(null)
-  const [goal, setGoal] = useState(null)
-  const toggle = (k) => setOpen((v) => (v === k ? null : k))
-  const lineGoal = (c) => (goal ? (cardHasGoal(c, goal) ? 'on' : 'off') : undefined)
-  const ticketGoal = goal ? 'off' : undefined // tickets carry no goal tags
+// ─── Where do I start? ──────────────────────────────────────────────────────
+// Directly above the menu, the same four ways in on every summit card. A way
+// sets the menu's lens (the goal-chip mechanism), so the menu below opens on
+// the families it covers with its products lit, and "Present these" presents
+// just those.
+function WaysIn({ lens, setLens, onJump }) {
+  return (
+    <section id="start" aria-labelledby="start-title" className="jump-section relative bg-brand-dark pt-12 sm:pt-16 pb-5 sm:pb-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8">
+        <h2 id="start-title" className="text-[1.75rem] sm:text-4xl font-black text-brand-white uppercase tracking-tight leading-[1.05]">Where do I <span className="text-brand-yellow">start?</span></h2>
+        <p className="mt-2 text-brand-gray text-sm sm:text-base max-w-2xl">Pick what you want from the event. The rate card below opens on the products for it.</p>
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {WAYS.map((w) => {
+            const on = lens?.kind === 'way' && lens.key === w.key
+            const n = lensCount({ kind: 'way', key: w.key })
+            const from = wayFrom(w)
+            const Icon = w.icon
+            return (
+              <button key={w.key} type="button" aria-pressed={on}
+                onClick={() => { setLens(on ? null : { kind: 'way', key: w.key }); if (!on) onJump(null, 'menu') }}
+                className={`group/way flex items-start gap-3.5 lg:flex-col lg:gap-3 xl:flex-row xl:gap-3.5 rounded-2xl border px-4 py-4 text-left transition-colors duration-200 ${on
+                  ? 'border-brand-yellow bg-brand-yellow/[0.12] shadow-[inset_0_0_0_1px_#ffcf33]'
+                  : 'border-brand-white/12 bg-brand-white/[0.04] hover:border-brand-yellow/50 hover:bg-brand-white/[0.07]'}`}>
+                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors ${on ? 'bg-brand-yellow text-brand-dark' : 'bg-brand-yellow/15 text-brand-yellow'}`}>
+                  <Icon className="h-5 w-5" aria-hidden />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[15.5px] font-black leading-tight text-brand-white group-hover/way:text-brand-yellow transition-colors">{w.title}</span>
+                  <span className="mt-1 block text-[12.5px] leading-snug text-brand-gray">{w.line}</span>
+                  <span className="mt-2 block text-[12px] font-bold tabular-nums text-brand-white/90">{from !== null && <><span className="font-medium text-brand-gray">from </span>{fmtPrice(from)} · </>}{n} products</span>
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function ProductMenu({ onJump, onPresent, lens, setLens }) {
+  // the families open with a lens on are the ones it covers
+  const [open, setOpen] = useState(() => new Set())
+  useEffect(() => {
+    setOpen(lens ? new Set(CARDS.filter(({ cards }) => cards.some((c) => cardHasLens(c, lens))).map(({ cat }) => cat)) : new Set())
+  }, [lens])
+  const toggle = (k) => setOpen((v) => { const n = new Set(v); if (n.has(k)) n.delete(k); else n.add(k); return n })
+  const lineMark = (c) => (lens ? (cardHasLens(c, lens) ? 'on' : 'off') : undefined)
   const ticketFrom = `from ${fmtUsd(Math.min(...ticketLadder.map((t) => t.eb)))}`
-  const ticketLines = ticketLadder.map((t) => (
-    <MenuLine key={t.type} href={`#${ticketId(t)}`} onClick={(e) => onJump(e, ticketId(t))} title={t.type} price={{ from: true, text: fmtUsd(t.eb) }} goal={ticketGoal} />
-  ))
+  const name = lensLabel(lens)
   return (
     <section id="menu" aria-label="Rate card at a glance" className="jump-near relative bg-brand-dark pb-16 sm:pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-8">
@@ -1308,7 +1706,7 @@ function ProductMenu({ onJump, onPresent }) {
             <div className="min-w-0 max-w-2xl">
               <p className="text-[11px] font-black uppercase tracking-[0.22em] text-brand-yellow mb-2">Rate card at a glance</p>
               <p className="text-brand-white text-lg sm:text-2xl font-bold leading-snug">{CARD_COUNT} partnership products in {CARDS.length} families, plus delegate tickets</p>
-              <p className="text-brand-gray text-[12.5px] sm:text-sm mt-1.5">Partnership prices in EUR, excluding VAT · ticket prices in USD · pick any line to open it</p>
+              <p className="text-brand-gray text-[12.5px] sm:text-sm mt-1.5">Partnership prices in EUR, excluding VAT · ticket prices in USD · open a family to see its products</p>
             </div>
             <div className="flex flex-wrap items-center gap-2.5">
               <button type="button" onClick={() => onPresent('')}
@@ -1321,47 +1719,31 @@ function ProductMenu({ onJump, onPresent }) {
               </button>
             </div>
           </div>
-          <GoalChips goal={goal} setGoal={setGoal} onPresent={onPresent} />
-          <div className="px-2 sm:px-5 md:px-8 py-2 md:pt-7 md:pb-0 md:columns-2 lg:columns-3 md:gap-8 xl:gap-12">
+          <GoalChips lens={lens} setLens={setLens} onPresent={onPresent} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 items-start gap-3 p-3 sm:p-5 md:p-6">
             {CARDS.map(({ cat, cards }) => (
-              <MenuBlock key={cat} id={`menu-${catId(cat)}`} icon={FAMILY_META[cat]?.icon || Layers} label={cat}
-                from={familyFrom(cards)} open={open === cat} onToggle={() => toggle(cat)}
-                hits={goal ? cards.filter((c) => cardHasGoal(c, goal)).length : null} goal={goal}
+              <FamilyTile key={cat} id={`menu-${catId(cat)}`} icon={FAMILY_META[cat]?.icon || Layers} label={cat}
+                count={cards.length} from={familyFrom(cards)} visual={tileVisual(cards)}
+                open={open.has(cat)} onToggle={() => toggle(cat)}
+                hits={lens ? cards.filter((c) => cardHasLens(c, lens)).length : null} lensName={name}
                 href={`#${catId(cat)}`} onJump={onJump} allLabel={`Go to ${FAMILY_META[cat]?.short || cat}`}>
                 {cards.map((c) => (
-                  <MenuLine key={c.key} href={`#${productId(c)}`} onClick={(e) => onJump(e, productId(c))} title={c.title} price={menuPrice(c)} goal={lineGoal(c)} />
+                  <MenuLine key={c.key} href={`#${productId(c)}`} onClick={(e) => onJump(e, productId(c))} title={c.title} price={menuPrice(c)} mark={lineMark(c)} />
                 ))}
-              </MenuBlock>
+              </FamilyTile>
             ))}
-            {/* phone: tickets are one more row of the list */}
-            <MenuBlock id="menu-tickets" icon={Ticket} label="Delegate Tickets" from={ticketFrom} className="md:hidden"
-              dimmed={Boolean(goal)}
-              open={open === 'tickets'} onToggle={() => toggle('tickets')} href="#tickets" onJump={onJump} allLabel="Go to Tickets">
-              {ticketLines}
-            </MenuBlock>
-          </div>
-          {/* wider screens: tickets run as one row under the families, so the columns above stay even */}
-          <div className={`hidden md:block px-8 pt-5 pb-5 border-t border-brand-white/10 transition-opacity duration-200 ${goal ? 'opacity-35' : ''}`}>
-            <a href="#tickets" onClick={(e) => onJump(e, 'tickets')} className="group/fam inline-flex items-center gap-2.5 mb-2.5">
-              <span className="w-7 h-7 rounded-full bg-brand-yellow/15 text-brand-yellow flex items-center justify-center shrink-0"><Ticket className="w-3.5 h-3.5" aria-hidden /></span>
-              <span className="text-[13.5px] font-black text-brand-white group-hover/fam:text-brand-yellow transition-colors">Delegate Tickets</span>
-              <span className="text-[11px] text-brand-gray">USD</span>
-              <ArrowRight className="w-3 h-3 text-brand-gray/60 group-hover/fam:text-brand-yellow transition-colors shrink-0" aria-hidden />
-            </a>
-            <ul className="flex flex-wrap gap-x-9 gap-y-1">
+            {/* tickets carry no goal tags, so a lens dims them */}
+            <FamilyTile id="menu-tickets" icon={Ticket} label="Delegate Tickets" count={ticketLadder.length} from={ticketFrom}
+              visual={null} dimmed={Boolean(lens)} open={open.has('tickets')} onToggle={() => toggle('tickets')}
+              href="#tickets" onJump={onJump} allLabel="Go to Tickets">
               {ticketLadder.map((t) => (
-                <li key={t.type}>
-                  <a href={`#${ticketId(t)}`} onClick={(e) => onJump(e, ticketId(t))} className="group/row inline-flex items-baseline gap-2 py-1 text-[13.5px]">
-                    <span className="text-brand-white/85 group-hover/row:text-brand-yellow transition-colors">{t.type}</span>
-                    <span className="whitespace-nowrap tabular-nums font-bold text-brand-white"><span className="mr-1 text-[11px] font-medium text-brand-gray">from</span>{fmtUsd(t.eb)}</span>
-                  </a>
-                </li>
+                <MenuLine key={t.type} href={`#${ticketId(t)}`} onClick={(e) => onJump(e, ticketId(t))} title={t.type} price={{ from: true, text: fmtUsd(t.eb) }} mark={lens ? 'off' : undefined} />
               ))}
-            </ul>
+            </FamilyTile>
           </div>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-1 px-5 sm:px-8 py-3 sm:py-4 border-t border-brand-white/10 text-[11px] font-black uppercase tracking-[0.14em]">
             <span className="basis-full sm:basis-auto text-brand-gray/70">Also on this page</span>
-            {[['Recognition', 'recognition'], ['About', 'about'], ['The Room', 'audience']].map(([t, id]) => (
+            {[["Who's in the room", 'audience'], ['Tickets', 'tickets'], ['Recognition', 'recognition'], ['ROI Calculator', 'roi-calculator']].map(([t, id]) => (
               <a key={id} href={`#${id}`} onClick={(e) => onJump(e, id)} className="inline-flex items-center gap-1.5 min-h-10 text-brand-white hover:text-brand-yellow transition-colors">
                 {t} <ArrowRight className="w-3 h-3" aria-hidden />
               </a>
@@ -1648,22 +2030,186 @@ function FidiBand() {
   )
 }
 
-// The same proof on the first screen, before a single price, with the line
-// that frames it.
-function HeroProof() {
+// ─── Logos: every one the same white mark on charcoal ──────────────────────
+// Built by scripts/build_room_logos.py from official files (NEXT's own partner
+// files on nextpredict.io, the sibling repos, Wikimedia Commons), each baked to
+// a structure-preserving white mark and trimmed to its content box, so the
+// strips read as one family. `ratio` is the mark's width over its height; a
+// mark is sized to a common area, so a long wordmark and a square emblem look
+// the same weight.
+const logoHeight = (ratio, area, min, max) => Math.round(Math.min(max, Math.max(min, Math.sqrt(area / ratio))))
+// `fit`: in a grid cell narrower than the mark (a long wordmark on a 320px
+// phone), the mark shrinks to the cell and keeps its proportions.
+function LogoMark({ logo, area = 2800, min = 15, max = 38, fit = false }) {
+  const h = logoHeight(logo.ratio, area, min, max)
   return (
-    <div className="mb-9 sm:mb-10 max-w-3xl mx-auto">
-      <p className="mb-3 lg:-mx-16 text-sm sm:text-base lg:text-sm 2xl:text-base leading-relaxed text-brand-white/80 text-pretty">{WHY_PARTNER.npsIntro}</p>
-      <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
-        {NPS_PROOF.map(([n, label, ours]) => (
-          <div key={label} className="rounded-2xl border border-brand-white/15 bg-brand-dark/60 backdrop-blur-sm px-2.5 sm:px-4 py-3.5 sm:py-4 text-center">
-            <p className={`text-[1.65rem] sm:text-4xl font-black leading-none tabular-nums ${ours ? 'text-brand-yellow' : 'text-brand-gray'}`}>{n}</p>
-            <p className="mt-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.1em] leading-snug text-brand-white/80">{label}</p>
-          </div>
+    <img src={`${base}logos/room/${logo.file}`} alt={logo.name} title={logo.name} loading="lazy" decoding="async"
+      width={Math.round(h * logo.ratio)} height={h} style={{ height: h, width: Math.round(h * logo.ratio) }}
+      className={`block shrink-0 select-none opacity-90 ${fit ? 'max-w-full object-contain' : 'max-w-none'}`} />
+  )
+}
+// Two copies of the row run end to end; hover pauses it, and under reduced
+// motion it stands still and wraps (the copy hides).
+function LogoMarquee({ logos, label }) {
+  return (
+    <div className="marquee-mask relative overflow-hidden" role="group" aria-label={label}>
+      <ul className="marquee-row flex w-max items-center gap-y-5 py-3">
+        {[...logos, ...logos].map((l, i) => (
+          <li key={`${l.key}-${i}`} className={`pr-10 sm:pr-14 ${i >= logos.length ? 'marquee-copy' : ''}`} aria-hidden={i >= logos.length ? 'true' : undefined}>
+            <LogoMark logo={l} />
+          </li>
         ))}
-      </div>
-      <p className="mt-3 text-[11px] sm:text-xs leading-relaxed text-brand-gray">{NPS_SOURCE}</p>
+      </ul>
     </div>
+  )
+}
+function LogoRow({ logos, area = 2400, max = 32, className = '' }) {
+  return (
+    <ul className={`flex flex-wrap items-center gap-x-8 sm:gap-x-10 gap-y-4 ${className}`}>
+      {logos.map((l) => <li key={l.key}><LogoMark logo={l} area={area} max={max} /></li>)}
+    </ul>
+  )
+}
+const LABEL = 'text-[10.5px] font-black uppercase tracking-[0.18em] text-brand-gray'
+const lc1 = (t) => t.charAt(0).toLowerCase() + t.slice(1)
+
+// ─── The proof band, straight after the hero ────────────────────────────────
+// The same shape on every summit card: the headline figures with their source,
+// then the logos. For NEXTPredict the figures are the 2026 room (NEXT's own
+// snapshot, always with ROOM_LABEL), the press that was accredited, the
+// registered companies as a marquee, this year's partners, and the team's
+// partner NPS. No paragraphs.
+function ProofBand() {
+  return (
+    <section id="proof" aria-labelledby="proof-title" className="proof-band jump-section relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 pb-4 sm:pb-6">
+        <div className="rounded-3xl border border-brand-white/12 bg-[#1f1f21]/80 backdrop-blur-md px-5 sm:px-8 py-6 sm:py-8 shadow-[0_40px_90px_-40px_rgba(0,0,0,0.8)]">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+            <h2 id="proof-title" className="text-[11px] sm:text-xs font-black uppercase tracking-[0.2em] text-brand-yellow">Who is in the room</h2>
+            <p className="text-[11.5px] sm:text-xs text-brand-gray">{ROOM_LABEL}</p>
+          </div>
+          <dl className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+            {ROOM_FIGURES.map(([n, l]) => (
+              <div key={l} className="flex flex-col-reverse rounded-2xl border border-brand-white/10 bg-brand-white/[0.04] px-4 py-4 sm:px-5 sm:py-5">
+                <dt className="mt-2 text-[11px] sm:text-xs font-bold uppercase tracking-[0.12em] leading-snug text-brand-white/80">{l}</dt>
+                <dd className="text-[2.35rem] sm:text-5xl font-black leading-none tabular-nums text-brand-yellow">{n}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="mt-6 flex flex-col lg:flex-row lg:items-center gap-x-8 gap-y-3">
+            <p className={`${LABEL} lg:w-40 shrink-0`}>Accredited press</p>
+            <LogoRow logos={PRESS_LOGOS} area={2300} max={30} />
+          </div>
+          <div className="mt-5 flex flex-col lg:flex-row lg:items-center gap-x-8 gap-y-1">
+            <p className={`${LABEL} lg:w-40 shrink-0`}>Registered for 2026</p>
+            <div className="min-w-0 flex-1"><LogoMarquee logos={REGISTERED_LOGOS} label="Organisations registered for NEXTPredict 2026" /></div>
+          </div>
+          <div className="mt-5 flex flex-col lg:flex-row lg:items-center gap-x-8 gap-y-3">
+            <p className={`${LABEL} lg:w-40 shrink-0`}>2026 partners</p>
+            <LogoRow logos={PARTNER_LOGOS} area={2300} max={30} />
+          </div>
+          <div className="mt-6 pt-5 border-t border-brand-white/10 flex flex-col lg:flex-row lg:items-center gap-x-8 gap-y-3">
+            <p className={`${LABEL} lg:w-40 shrink-0`}>The team&rsquo;s record</p>
+            <ul className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
+              {NPS_PROOF.map(([n, l, ours]) => (
+                <li key={l} className="flex items-baseline gap-2">
+                  <span className={`text-2xl font-black tabular-nums leading-none ${ours ? 'text-brand-yellow' : 'text-brand-gray'}`}>{n}</span>
+                  <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-brand-white/75">{l}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <p className="mt-5 text-[11px] leading-relaxed text-brand-gray">{ROOM_SOURCE} {LOGOS_NOTE} {NPS_SOURCE}</p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ─── Who's in the room: the 2026 room in full, and why partner ─────────────
+// One section where the About and The Room sections used to stack (the through
+// line: merge, don't stack): the seniority of the 2026 room, the whole logo
+// wall, then why partner with the team's partner NPS (#about lands there).
+function SeniorityBars() {
+  const max = Math.max(...ROOM_SENIORITY.map(([, v]) => v))
+  return (
+    <ul className="space-y-2.5">
+      {ROOM_SENIORITY.map(([label, v], i) => (
+        <li key={label} className="grid grid-cols-[minmax(0,9.5rem)_1fr_2.75rem] items-center gap-3">
+          <span className="text-[12.5px] text-brand-white/85 leading-tight">{label}</span>
+          <span className="h-2.5 rounded-full bg-brand-white/8 overflow-hidden" aria-hidden>
+            <span className={`block h-full rounded-full ${i < 4 ? 'bg-brand-yellow' : 'bg-brand-gray/50'}`} style={{ width: `${(v / max) * 100}%` }} />
+          </span>
+          <span className={`text-right text-sm font-black tabular-nums ${i < 4 ? 'text-brand-yellow' : 'text-brand-gray'}`}>{v}%</span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+function RoomSection() {
+  return (
+    <section id="audience" className="jump-section py-20 md:py-24 bg-brand-dark relative border-y border-brand-white/10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8">
+        <SectionHead title="Who's In" accent="The Room" lede={ROOM_LEDE} />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+          <div className="lg:col-span-5 rounded-3xl border border-brand-white/10 bg-brand-white/[0.03] p-6 sm:p-8">
+            <p className={LABEL}>Seniority, share of the room</p>
+            <p className="mt-3 text-brand-white text-lg font-bold leading-snug"><span className="text-brand-yellow font-black">{ROOM_FIGURES[0][0]}</span> {lc1(ROOM_FIGURES[0][1])}, <span className="text-brand-yellow font-black">{ROOM_FIGURES[1][0]}</span> {lc1(ROOM_FIGURES[1][1])}</p>
+            <div className="mt-5"><SeniorityBars /></div>
+            <div className="mt-6 pt-5 border-t border-brand-white/10 flex items-baseline gap-3">
+              <span className="text-3xl font-black tabular-nums text-brand-yellow">{ROOM_BLOC[0]}</span>
+              <span className="text-sm text-brand-white/85 leading-snug">{ROOM_BLOC[1]}</span>
+            </div>
+            <p className="mt-5 text-[11px] leading-relaxed text-brand-gray">{ROOM_LABEL}. {ROOM_SOURCE}</p>
+          </div>
+          <div className="lg:col-span-7">
+            <p className={LABEL}>Registered for 2026</p>
+            <ul className="mt-5 grid grid-cols-2 min-[480px]:grid-cols-3 md:grid-cols-4 gap-x-6 gap-y-7 items-center">
+              {REGISTERED_LOGOS.map((l) => <li key={l.key} className="flex min-w-0 items-center justify-center min-h-10"><LogoMark logo={l} area={2600} max={36} fit /></li>)}
+            </ul>
+            <div className="mt-8 pt-6 border-t border-brand-white/10 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <p className={LABEL}>Accredited press</p>
+                <LogoRow logos={PRESS_LOGOS} className="mt-4" area={2100} max={28} />
+              </div>
+              <div>
+                <p className={LABEL}>2026 partners</p>
+                <LogoRow logos={PARTNER_LOGOS} className="mt-4" area={2100} max={28} />
+              </div>
+            </div>
+            <p className="mt-6 text-[11px] leading-relaxed text-brand-gray">{LOGOS_NOTE}</p>
+          </div>
+        </div>
+
+        {/* the anchor is a still wrapper: the box inside animates in, and a moving target lands short */}
+        <div id="about" className="jump-section mt-14 md:mt-16">
+        <div className="bg-brand-white/5 border border-brand-white/10 rounded-3xl p-6 sm:p-10 md:p-12 relative overflow-hidden" data-anim style={anim}>
+          <div className="absolute right-0 top-0 w-96 h-96 bg-brand-yellow/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 lg:items-center">
+            <div className="lg:col-span-7 max-w-3xl">
+              <div className="inline-block bg-brand-yellow text-brand-dark font-bold px-4 py-1 rounded-sm mb-6 text-sm">WHY PARTNER</div>
+              <h3 className="text-[1.75rem] sm:text-3xl md:text-4xl font-bold text-brand-white mb-6 leading-tight">{WHY_PARTNER.title} <span className="text-brand-yellow">{WHY_PARTNER.accent}</span></h3>
+              <p className="text-base sm:text-lg text-brand-gray leading-relaxed">{WHY_PARTNER.body}</p>
+            </div>
+            <div className="lg:col-span-5">
+              <p className="text-base sm:text-lg text-brand-gray leading-relaxed">{WHY_PARTNER.npsIntro}</p>
+              <NpsTiles side className="mt-6 max-w-xl" />
+              <p className="text-xs text-brand-gray mt-4 opacity-60">{NPS_SOURCE}</p>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-8 md:mt-10" data-anim style={anim}>
+          {ROOM_PILLARS.map(([title, body]) => (
+            <div key={title} className="bg-brand-white/5 p-6 rounded-xl border border-brand-white/10 hover:border-brand-yellow transition-colors duration-300">
+              <h4 className="text-brand-yellow font-bold mb-3 uppercase">{title}</h4>
+              <p className="text-sm text-brand-gray leading-relaxed">{body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -1689,8 +2235,164 @@ function TicketsSection() {
   )
 }
 
+// ─── ROI calculator ─────────────────────────────────────────────────────────
+// New York's calculator (the through line, 29 Sep 2026: the three summit
+// cards match): the same four inputs, the same arithmetic, the same outputs.
+// Once Your selection has items its total is the investment (the 2026
+// rebooking rate applied when it is on); before that a slider stands in. Deal
+// size, leads and close rate are the buyer's own estimates, so the card claims
+// nothing about them. The selection list, the plan link and the proposal are
+// the calculator panel's own.
+function RoiSlider({ id, label, value, shown, min, max, step, onChange, lo, hi }) {
+  return (
+    <div>
+      <div className="flex justify-between gap-3 mb-1">
+        <label htmlFor={id} className="text-brand-white font-semibold">{label}</label>
+        <span className="text-brand-yellow font-bold tabular-nums">{shown}</span>
+      </div>
+      <input id={id} type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(+e.target.value)} className="range-yellow w-full cursor-pointer" />
+      <div className="flex justify-between text-xs text-brand-gray"><span>{lo}</span><span>{hi}</span></div>
+    </div>
+  )
+}
+function RoiCalculator({ cart, onRemove, rebooking }) {
+  const [investment, setInvestment] = useState(25000)
+  const [dealSize, setDealSize] = useState(50000)
+  const [leads, setLeads] = useState(15)
+  const [closeRate, setCloseRate] = useState(20)
+  const has = cart.length > 0
+  const eff = has ? planTotal(cart, rebooking) : (rebooking ? investment * 0.85 : investment)
+  const closed = Math.round(leads * (closeRate / 100) * 10) / 10
+  // revenue counts whole deals, and the line under it quotes that same number
+  const deals = Math.round(closed)
+  const revenue = deals * dealSize
+  const profit = revenue - eff
+  const roi = eff > 0 ? Math.round((profit / eff) * 100) : 0
+  const tier = resolveTier(eff, cart)
+  const next = nextSpendTier(eff, cart)
+  const reachedIdx = tier === HEADLINE_TIER ? TIERS.length - 1 : TIERS.findIndex((t) => t.name === tier.name)
+  const pct = next ? Math.min(100, ((eff - tier.min) / (next.min - tier.min)) * 100) : 100
+  return (
+    <section id="roi-calculator" className="jump-section py-20 md:py-24 bg-brand-dark relative border-y border-brand-white/10 overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+        <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-brand-yellow/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-[-10%] left-[-5%] w-96 h-96 bg-brand-white/5 rounded-full blur-3xl" />
+      </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 relative z-10">
+        <SectionHead title="Sponsorship" accent="ROI Calculator"
+          lede={<>Estimate your return on investment. Adjust the figures to your own average deal size and the engagement you expect at <Brand /> 2027.</>}>
+          <div className="mt-8 inline-block bg-brand-white/5 border border-brand-white/10 rounded-3xl px-6 py-5 md:px-12 md:py-6 shadow-lg">
+            <span className="text-brand-white uppercase tracking-widest text-xs sm:text-sm font-bold block mb-2">{has ? 'Your selection' : 'Total package investment'}</span>
+            <span className="text-4xl sm:text-5xl md:text-6xl font-black text-brand-yellow tabular-nums">{fmtPrice(Math.round(eff))}</span>
+            {rebooking && <span className="block mt-2 text-[11px] font-semibold uppercase tracking-wide text-brand-yellow/75">15% rebooking rate applied</span>}
+          </div>
+        </SectionHead>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+          <div className="lg:col-span-7 bg-brand-white/5 border border-brand-white/10 rounded-3xl p-5 sm:p-8 md:p-10">
+            <h3 className="text-xl sm:text-2xl font-bold text-brand-white mb-8 uppercase flex items-center gap-3">
+              <Target className="text-brand-yellow w-6 h-6" aria-hidden /> Your Projections
+            </h3>
+            <div className="space-y-8">
+              {has ? (
+                <div className="space-y-2">
+                  <p className="text-xs text-brand-gray uppercase tracking-widest font-bold">Your selection</p>
+                  {cart.map((item, i) => (
+                    <div key={i} className="flex items-center justify-between bg-brand-white/5 rounded-lg pl-3 pr-1 py-0.5 border border-brand-white/10">
+                      <span className="text-sm text-brand-white truncate flex-1">{item.title}</span>
+                      <span className="text-sm font-bold text-brand-yellow ml-2 shrink-0 tabular-nums">{item.poa ? 'POA' : fmtPrice(rebooking ? Math.round(item.price * 0.85) : item.price)}</span>
+                      <button type="button" onClick={() => onRemove(i)} aria-label={`Remove ${item.title}`}
+                        className="ml-1 w-10 h-10 shrink-0 flex items-center justify-center rounded-lg text-brand-gray hover:text-brand-white hover:bg-brand-white/10 transition-colors">
+                        <X className="w-3.5 h-3.5" aria-hidden />
+                      </button>
+                    </div>
+                  ))}
+                  <div className="flex justify-between pt-2 border-t border-brand-white/10">
+                    <span className="text-sm font-bold text-brand-white">Total</span>
+                    <span className="text-sm font-bold text-brand-yellow tabular-nums">{fmtPrice(planTotal(cart, rebooking))}</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1">
+                    <CopyLinkButton text={() => planLink(cart)} label="Copy plan link" done="Plan link copied" title="Copy a link that opens this selection"
+                      look="-ml-3 inline-flex items-center gap-1.5 min-h-10 rounded-full px-3 text-xs font-bold" className="text-brand-yellow hover:bg-brand-white/5" />
+                    <span className="text-xs text-brand-gray">Opens this page with the same selection.</span>
+                  </div>
+                </div>
+              ) : (
+                <RoiSlider id="roi-investment" label="Sponsorship Investment" value={investment} shown={fmtPrice(investment)}
+                  min={5000} max={500000} step={5000} onChange={setInvestment} lo="€5k" hi="€500k" />
+              )}
+              <RoiSlider id="roi-deal" label="Average Deal Size (LTV/ACV)" value={dealSize} shown={fmtPrice(dealSize)}
+                min={5000} max={500000} step={5000} onChange={setDealSize} lo="€5k" hi="€500k+" />
+              <RoiSlider id="roi-leads" label="Expected Qualified Leads" value={leads} shown={`${leads} Leads`}
+                min={1} max={100} step={1} onChange={setLeads} lo="1" hi="100+" />
+              <RoiSlider id="roi-close" label="Expected Close Rate" value={closeRate} shown={`${closeRate}%`}
+                min={1} max={100} step={1} onChange={setCloseRate} lo="1%" hi="100%" />
+            </div>
+          </div>
+
+          <div className="lg:col-span-5 space-y-6">
+            <div className="bg-brand-yellow text-brand-dark rounded-3xl p-6 sm:p-8 md:p-10 shadow-[0_0_30px_rgba(255,207,51,0.15)] relative overflow-hidden">
+              <div className="absolute top-0 right-0 opacity-10 translate-x-4 -translate-y-4" aria-hidden>
+                <TrendingUp className="w-[120px] h-[120px]" />
+              </div>
+              <h3 className="text-lg sm:text-xl font-black uppercase tracking-widest mb-8 opacity-80">Estimated Returns</h3>
+              <div className="space-y-8 relative z-10" aria-live="polite">
+                <div>
+                  <p className="text-sm font-bold uppercase tracking-widest opacity-80 mb-1">Estimated Revenue</p>
+                  <p className="text-4xl sm:text-5xl font-black tracking-tighter tabular-nums">{fmtPrice(revenue)}</p>
+                  <p className="text-sm font-medium mt-2 opacity-80">Based on {deals} closed {deals === 1 ? 'deal' : 'deals'}</p>
+                </div>
+                <div className="h-px w-full bg-brand-dark/10" />
+                <div>
+                  <p className="text-sm font-bold uppercase tracking-widest opacity-80 mb-1">Net Profit</p>
+                  <p className="text-3xl sm:text-4xl font-black tracking-tighter tabular-nums">{profit < 0 ? '−' : ''}{fmtPrice(Math.abs(Math.round(profit)))}</p>
+                </div>
+                <div className="h-px w-full bg-brand-dark/10" />
+                <div>
+                  <p className="text-sm font-bold uppercase tracking-widest opacity-80 mb-1">Projected ROI</p>
+                  <p className="text-5xl sm:text-6xl font-black tracking-tighter tabular-nums">{roi < 0 ? '−' : ''}{Math.abs(roi)}%</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-brand-white/5 border border-brand-white/10 rounded-3xl p-6 md:p-8">
+              <h4 className="text-brand-white font-bold uppercase tracking-widest text-sm mb-4">Recognition Level</h4>
+              <div className="flex justify-between items-end gap-3 mb-2">
+                <p className={`font-bold text-lg ${tier.color}`}>{tier.name} Partner</p>
+                {next && <p className="text-brand-gray text-xs text-right"><strong className="text-brand-white font-bold">{fmtPrice(Math.round(next.min - eff))}</strong> to {next.name} Partner</p>}
+              </div>
+              <div className="w-full bg-brand-dark border border-brand-white/10 rounded-full h-3 mb-6 overflow-hidden">
+                <div className="bg-brand-yellow h-full rounded-full transition-all duration-500 ease-out" style={{ width: `${pct}%` }} />
+              </div>
+              <div className="grid grid-cols-4 gap-1 text-[10px] sm:text-xs">
+                {TIERS.map((t, i) => (
+                  <div key={t.name} className={`text-center ${i <= reachedIdx ? 'text-brand-yellow font-bold' : 'text-brand-gray/60'}`}>
+                    <div className={`h-1 w-full mb-1 rounded-full ${i <= reachedIdx ? 'bg-brand-yellow' : 'bg-brand-white/10'}`} />
+                    {t.name}
+                    <div className="opacity-70 tracking-tighter">{t.min === 0 ? '<30k' : `${t.min / 1000}k`}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <a href={buildMailto(cart, rebooking)}
+              className="w-full py-4 px-4 rounded-xl font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 text-center bg-brand-yellow text-brand-dark hover:brightness-110 transition">
+              <Mail className="w-4 h-4 shrink-0" aria-hidden /> {has ? 'Enquire About Your Selection' : 'Ready to discuss your package?'}
+            </a>
+            <p className="text-center text-xs text-brand-gray -mt-3">{has ? `${cart.length} product${cart.length === 1 ? '' : 's'} pre-filled in your email` : 'Contact the partnerships team today'}</p>
+            <button type="button" onClick={() => (has ? downloadProposalPDF(cart, rebooking) : null)} aria-disabled={!has}
+              className={`w-full py-4 px-4 rounded-xl font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 transition-colors ${has ? 'bg-brand-white/10 text-brand-white hover:bg-brand-white/20' : 'bg-brand-white/5 text-brand-gray/60 cursor-not-allowed'}`}>
+              <Download className="w-4 h-4 shrink-0" aria-hidden /> {has ? 'Download PDF Proposal' : 'Add products to download the PDF'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 // ─── Calculator panel ───────────────────────────────────────────────────────
-function CalculatorPanel({ cart, onRemove, rebooking, setRebooking, open, setOpen }) {
+function CalculatorPanel({ cart, onRemove, rebooking, setRebooking, open, setOpen, onJump }) {
   const total = cart.reduce((s, i) => s + (i.poa ? 0 : (rebooking ? Math.round(i.price * 0.85) : i.price)), 0)
   const tier = resolveTier(total, cart)
   const next = nextSpendTier(total, cart)
@@ -1722,6 +2424,10 @@ function CalculatorPanel({ cart, onRemove, rebooking, setRebooking, open, setOpe
               className="h-10 px-3.5 sm:px-4 rounded-xl border border-brand-white/20 text-brand-white text-xs font-bold uppercase tracking-widest hover:border-brand-yellow transition-colors">
               {open ? 'Close' : 'Review'}
             </button>
+            <a href="#roi-calculator" onClick={(e) => { setOpen(false); onJump(e, 'roi-calculator') }} title="The ROI calculator"
+              className="hidden min-[400px]:inline-flex h-10 items-center px-3 sm:px-4 rounded-xl border border-brand-white/20 text-brand-white text-xs font-bold uppercase tracking-widest hover:border-brand-yellow transition-colors">
+              ROI
+            </a>
             <a href={buildMailto(cart, rebooking)}
               className="h-10 px-3.5 sm:px-4 rounded-xl bg-brand-yellow text-brand-dark text-xs font-black uppercase tracking-widest hover:brightness-110 transition-all inline-flex items-center gap-1.5">
               <Mail className="w-3.5 h-3.5" aria-hidden /> Enquire
@@ -1810,20 +2516,22 @@ const CARD_OF = Object.fromEntries(CARDS.flatMap(({ cards }) => cards.flatMap((c
 const ROUTE_ANCHOR = Object.fromEntries(CARDS.flatMap(({ cards }) => cards.filter((c) => c.options.length > 1)
   .flatMap((c) => c.options.map((o) => [productId(o), c]))))
 
-function buildDeck({ goal = null, hasPlan = false }) {
+function buildDeck({ lens = null, hasPlan = false }) {
   const groups = CARDS
-    .map(({ cat, cards }) => ({ cat, cards: goal ? cards.filter((c) => cardHasGoal(c, goal)) : cards }))
+    .map(({ cat, cards }) => ({ cat, cards: lens ? cards.filter((c) => cardHasLens(c, lens)) : cards }))
     .filter((g) => g.cards.length)
   const slides = [{ id: 'cover', kind: 'cover', label: 'Cover', group: 'Start', groups }]
-  if (!goal) {
-    slides.push({ id: 'about', kind: 'about', label: 'Why partner', group: 'Start' })
+  if (!lens) {
+    // the page's order: the proof band, then where to start
     slides.push({ id: 'audience', kind: 'audience', label: "Who's in the room", group: 'Start' })
+    slides.push({ id: 'about', kind: 'about', label: 'Why partner', group: 'Start' })
+    slides.push({ id: 'start', kind: 'ways', label: 'Where to start', group: 'Start' })
   }
   groups.forEach(({ cat, cards }) => {
     slides.push({ id: catId(cat), kind: 'family', label: cat, group: cat, cat, cards })
     cards.forEach((card) => slides.push({ id: productId(card), kind: card.options.length > 1 ? 'routes' : 'product', label: card.title, group: cat, cat, card }))
   })
-  if (!goal) {
+  if (!lens) {
     slides.push({ id: 'tickets', kind: 'tickets', label: 'Delegate tickets', group: 'Tickets' })
     slides.push({ id: 'ticket-offers', kind: 'ticket-offers', label: 'Ticket offers', group: 'Tickets' })
     slides.push({ id: 'recognition', kind: 'recognition', label: 'Recognition levels', group: 'Recognition' })
@@ -1831,6 +2539,11 @@ function buildDeck({ goal = null, hasPlan = false }) {
   }
   slides.push({ id: 'next-steps', kind: 'next', label: 'Next steps', group: 'Next steps' })
   return slides
+}
+// the first family slide of a lens deck, where "Present these" opens it
+const lensStart = (lens) => {
+  const g = CARDS.find(({ cards }) => cards.some((c) => cardHasLens(c, lens)))
+  return g ? catId(g.cat) : ''
 }
 
 // what a ?present= value opens: the slide, plus a route or ticket row to mark
@@ -1885,13 +2598,13 @@ function SlideDeliverables({ items, heading = 'What’s included', small = false
 // The hero, then the whole deck as a table of contents: each family (by the
 // short name its family-bar chip uses) with its product count, each a jump.
 function CoverSlide({ slide, deck, goId }) {
-  const { goal, cart } = deck
+  const { lens, cart } = deck
   const n = slide.groups.reduce((s, g) => s + g.cards.length, 0)
   const plural = (k, one) => `${k} ${one}${k === 1 ? '' : 's'}`
   const items = [
-    ...(goal ? [] : [{ id: 'about', label: 'Why partner', icon: Users }]),
+    ...(lens ? [] : [{ id: 'audience', label: "Who's in the room", icon: Users }, { id: 'start', label: 'Where to start', icon: Target }]),
     ...slide.groups.map(({ cat, cards }) => ({ id: catId(cat), label: FAMILY_META[cat]?.short || cat, icon: FAMILY_META[cat]?.icon || Layers, count: plural(cards.length, 'product') })),
-    ...(goal ? [] : [
+    ...(lens ? [] : [
       { id: 'tickets', label: 'Tickets', icon: Ticket, count: plural(ticketLadder.length, 'ticket') },
       { id: 'recognition', label: 'Recognition', icon: Award, count: plural(RECOGNITION.length, 'level') },
       ...(cart.length ? [{ id: 'plan', label: 'Your selection', icon: Calculator, count: plural(cart.length, 'item') }] : []),
@@ -1909,12 +2622,12 @@ function CoverSlide({ slide, deck, goId }) {
           <div className="mt-4 inline-block max-w-full rounded-xl bg-brand-yellow px-5 py-2.5 -skew-x-6">
             <p className="skew-x-6 text-[clamp(1.1rem,4.4vw,2rem)] font-black uppercase tracking-tighter leading-none text-brand-dark whitespace-nowrap">Partnership Rate Card</p>
           </div>
-          {goal && <p className="mt-5 text-2xl sm:text-3xl font-black leading-tight">{plural(n, 'product')} for <span className="text-brand-yellow">{goal}</span></p>}
+          {lens && <p className="mt-5 text-2xl sm:text-3xl font-black leading-tight">{lensLine(lens, n)}</p>}
           <p className="mt-5 flex items-start gap-2 text-base sm:text-lg text-brand-white/85">
             <MapPin className="w-5 h-5 mt-0.5 shrink-0 text-brand-yellow" aria-hidden />{VENUE_LINE}
           </p>
         </div>
-        {!goal && (
+        {!lens && (
           <dl className="lg:col-span-4 grid grid-cols-2 gap-2.5 sm:gap-3">
             {EVENT_STATS.map(([num, label]) => (
               <div key={label} className="flex flex-col-reverse rounded-xl border border-brand-white/10 bg-brand-white/5 px-4 py-3">
@@ -1964,28 +2677,65 @@ function AboutSlide() {
   )
 }
 
+// The proof band as a slide: the 2026 room, its press, the registered
+// companies and this year's partners, with their labels.
 function AudienceSlide() {
   return (
     <div>
-      <SlideEyebrow>The room</SlideEyebrow>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+        <SlideEyebrow>The room</SlideEyebrow>
+        <p className="text-xs sm:text-sm text-brand-gray">{ROOM_LABEL}</p>
+      </div>
       <h2 className="mt-3 text-4xl sm:text-5xl font-black uppercase tracking-tight leading-[1.05]">Who&rsquo;s In <span className="text-brand-yellow">The Room</span></h2>
-      <p className="mt-4 max-w-3xl text-lg sm:text-xl leading-relaxed text-brand-white/80">{ROOM_LEDE}</p>
-      <ul className="mt-7 grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
-        {AUDIENCE.map(([label, Icon]) => (
-          <li key={label} className="flex items-center gap-3 rounded-xl border border-brand-white/10 bg-brand-white/5 px-3.5 py-3 sm:px-4 sm:py-4">
-            <Icon className="w-5 h-5 sm:w-6 sm:h-6 shrink-0 text-brand-yellow" aria-hidden />
-            <span className="text-[11.5px] sm:text-sm font-bold uppercase tracking-wide leading-snug">{label}</span>
-          </li>
-        ))}
-      </ul>
-      <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-        {ROOM_PILLARS.map(([title, body]) => (
-          <div key={title} className="rounded-xl border border-brand-white/10 bg-brand-white/[0.03] p-5">
-            <p className="text-sm font-black uppercase text-brand-yellow">{title}</p>
-            <p className="mt-2 text-sm leading-relaxed text-brand-gray">{body}</p>
+      <dl className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+        {ROOM_FIGURES.map(([num, label]) => (
+          <div key={label} className="flex flex-col-reverse rounded-xl border border-brand-white/10 bg-brand-white/5 px-4 py-3.5">
+            <dt className="mt-1.5 text-[10.5px] sm:text-[11px] font-bold uppercase tracking-widest text-brand-white/75 leading-snug">{label}</dt>
+            <dd className="text-4xl sm:text-5xl font-black leading-none tabular-nums text-brand-yellow">{num}</dd>
           </div>
         ))}
+      </dl>
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-[9.5rem_minmax(0,1fr)] items-center gap-x-6 gap-y-3 lg:gap-y-5">
+        <p className={LABEL}>Accredited press</p>
+        <LogoRow logos={PRESS_LOGOS} area={1900} max={26} />
+        <p className={LABEL}>Registered for 2026</p>
+        <LogoRow logos={REGISTERED_LOGOS} area={1500} max={24} className="gap-x-7 sm:gap-x-8 gap-y-3.5" />
+        <p className={LABEL}>2026 partners</p>
+        <LogoRow logos={PARTNER_LOGOS} area={1900} max={26} />
       </div>
+      <p className="mt-6 text-[11px] leading-relaxed text-brand-gray">{ROOM_SOURCE} {LOGOS_NOTE}</p>
+    </div>
+  )
+}
+
+// Where to start: the page's four ways in. "Present these" turns the deck into
+// that way's deck, on its first family.
+function WaysSlide({ deck }) {
+  return (
+    <div>
+      <SlideEyebrow>Where to start</SlideEyebrow>
+      <h2 className="mt-3 text-4xl sm:text-5xl xl:text-6xl font-black tracking-tight leading-[1.03]">Four ways <span className="text-brand-yellow">in</span></h2>
+      <p className="mt-4 max-w-3xl text-lg sm:text-xl leading-relaxed text-brand-white/80">Pick what you want from the event, and the presentation shows just those products.</p>
+      <ul className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+        {WAYS.map((w) => {
+          const Icon = w.icon
+          const from = wayFrom(w)
+          const n = lensCount({ kind: 'way', key: w.key })
+          return (
+            <li key={w.key} className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl border border-brand-white/12 bg-brand-white/[0.04] p-4 sm:p-5">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-yellow/15 text-brand-yellow"><Icon className="h-6 w-6" aria-hidden /></span>
+              <div className="min-w-0 flex-1">
+                <p className="text-xl font-black leading-tight">{w.title}</p>
+                <p className="mt-1 text-sm leading-snug text-brand-gray">{w.line}</p>
+                <p className="mt-1.5 text-sm font-bold tabular-nums text-brand-white/90">{from !== null && <><span className="font-medium text-brand-gray">from </span>{fmtPrice(from)} · </>}{n} products</p>
+              </div>
+              <button type="button" onClick={() => deck.presentLens({ kind: 'way', key: w.key })} className={DECK_BTN_PRIMARY}>
+                <Presentation className="w-4 h-4" aria-hidden /> Present these
+              </button>
+            </li>
+          )
+        })}
+      </ul>
     </div>
   )
 }
@@ -1998,12 +2748,13 @@ function FamilySlide({ slide, goId, deck }) {
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
       <div className="lg:col-span-5">
         <span className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-yellow/15 text-brand-yellow"><Icon className="w-7 h-7" aria-hidden /></span>
-        <SlideEyebrow className="mt-6">{deck.goal ? `For ${deck.goal}` : 'Product family'}</SlideEyebrow>
+        <SlideEyebrow className="mt-6">{deck.lens ? `For ${lensLabel(deck.lens)}` : 'Product family'}</SlideEyebrow>
         <h2 className="mt-3 text-4xl sm:text-5xl xl:text-6xl font-black uppercase leading-[1.02] tracking-tight text-balance">{slide.cat.replace(/-/g, '‑')}</h2>
         <p className="mt-5 text-lg sm:text-xl text-brand-gray">
           <strong className="font-black text-brand-white">{n} product{n === 1 ? '' : 's'}</strong>
           {from && <> · <span className="text-brand-white">{from}</span></>}
         </p>
+        {FAMILY_BRIEFS[slide.cat] && <p className="mt-4 text-base sm:text-lg leading-relaxed text-brand-white/75">{FAMILY_BRIEFS[slide.cat].text}</p>}
       </div>
       <ul className="lg:col-span-7 divide-y divide-brand-white/10 rounded-2xl border border-brand-white/10 bg-brand-white/[0.03] px-2 sm:px-4">
         {slide.cards.map((card) => {
@@ -2059,14 +2810,17 @@ function ProductSlide({ card, deck, goId }) {
   const item = card.options[0]
   const { items, terms } = splitBullets(item.bullets)
   const id = productId(card)
+  // a long list gets the wider column, in two columns, so every line still
+  // shows and the slide stays closer to one screen
+  const long = items.length > 9
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
-      <div className="lg:col-span-7">
+    <div className={`grid grid-cols-1 lg:grid-cols-12 gap-8 ${long ? 'lg:gap-10' : 'lg:gap-14'} items-start`}>
+      <div className={long ? 'lg:col-span-5' : 'lg:col-span-7'}>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <SlideEyebrow>{card.cat}</SlideEyebrow>
           <StatusPill item={item} featured={card.featured} />
         </div>
-        <h2 className={`mt-3 sm:mt-4 font-black leading-[1.03] tracking-tight text-balance ${card.title.length > 30 ? 'text-4xl sm:text-[2.75rem]' : 'text-4xl sm:text-5xl xl:text-[3.5rem]'}`}>{card.title}</h2>
+        <h2 className={`mt-3 sm:mt-4 font-black leading-[1.03] tracking-tight text-balance ${long ? 'text-4xl' : card.title.length > 30 ? 'text-4xl sm:text-[2.75rem]' : 'text-4xl sm:text-5xl xl:text-[3.5rem]'}`}>{card.title}</h2>
         <div className="mt-5 sm:mt-6"><PriceBlock item={item} rebooking={deck.rebooking} scale="slide" /></div>
         <Lede text={item.quote} scale="slide" />
         <TagRow item={item} featured />
@@ -2079,9 +2833,9 @@ function ProductSlide({ card, deck, goId }) {
         </div>
         <AltLinks card={card} deck={deck} goId={goId} />
       </div>
-      <div className="lg:col-span-5">
+      <div className={long ? 'lg:col-span-7' : 'lg:col-span-5'}>
         <ReachRow item={item} className="mb-5" />
-        <SlideDeliverables items={items} />
+        <SlideDeliverables items={items} cols={long} />
         <TermsList terms={terms} />
       </div>
     </div>
@@ -2300,6 +3054,7 @@ function renderDeckSlide(slide, deck, { goId }) {
     case 'cover': return <CoverSlide slide={slide} deck={deck} goId={goId} />
     case 'about': return <AboutSlide />
     case 'audience': return <AudienceSlide />
+    case 'ways': return <WaysSlide deck={deck} />
     case 'family': return <FamilySlide slide={slide} deck={deck} goId={goId} />
     case 'product': return <ProductSlide card={slide.card} deck={deck} goId={goId} />
     case 'routes': return <RouteSlide card={slide.card} deck={deck} goId={goId} />
@@ -2313,20 +3068,10 @@ function renderDeckSlide(slide, deck, { goId }) {
 }
 
 // ─── App ────────────────────────────────────────────────────────────────────
-// Section order is products first: hero → product menu → rate card →
-// recognition → about → the room → tickets → rebooking. The story sections
-// used to sit between the hero and the rate card, which put the first product
-// seven phone screens down.
-const AUDIENCE = [
-  ['Prediction Market Platforms', LineChart],
-  ['Exchanges & Trading Venues', Landmark],
-  ['Market Makers & Traders', TrendingUp],
-  ['Sportsbooks & Operators', Trophy],
-  ['Data & Odds Providers', Cpu],
-  ['Payments & Fintech', Banknote],
-  ['Regulators & Legal', Scale],
-  ['Media & Research', Newspaper],
-]
+// Section order (the summit through line, 29 Sep 2026): hero → proof band →
+// where do I start → rate card at a glance → rate card → who's in the room
+// (with why partner, #about) → tickets → recognition → ROI calculator → a
+// short close. Nothing important sits below the calculator.
 
 export default function App() {
   const [activeImpact, setActiveImpact] = useState(null)
@@ -2334,7 +3079,11 @@ export default function App() {
   const [cart, setCart] = useState([])
   const [rebooking, setRebooking] = useState(false)
   const [calcOpen, setCalcOpen] = useState(false)
+  // the menu's lens: a way in or a goal chip (one at a time), shared by the
+  // ways in above the menu and the goal chips inside it
+  const [lens, setLens] = useState(null)
   useScrollAnimation(`${activeImpact}|${activeType}`)
+  useInView('.card-visual', `${activeImpact}|${activeType}`)
 
   const addToCart = useCallback((item) => {
     if (item.status === 'sold' || item.status === 'reserved') return
@@ -2445,22 +3194,26 @@ export default function App() {
 
   // ── Present mode ──
   // `present` is the ?present= value the deck was opened with (null = closed);
-  // a goal deck keeps its goal here. The page stays mounted under the deck.
+  // a lens deck (a way in or a goal chip) keeps its lens here. The page stays
+  // mounted under the deck.
   const { present, open: openPresent, close: closePresent } = usePresent()
-  const [deckGoal, setDeckGoal] = useState(null)
-  const openDeck = useCallback((id = '', goal = null) => { setDeckGoal(goal); openPresent(id) }, [openPresent])
-  const closeDeck = useCallback(() => { closePresent(); setDeckGoal(null) }, [closePresent])
+  const [deckLens, setDeckLens] = useState(null)
+  const openDeck = useCallback((id = '', l = null) => { setDeckLens(l); openPresent(id) }, [openPresent])
+  const closeDeck = useCallback(() => { closePresent(); setDeckLens(null) }, [closePresent])
   const hasPlan = cart.length > 0
-  const slides = useMemo(() => buildDeck({ goal: deckGoal, hasPlan }), [deckGoal, hasPlan])
+  const slides = useMemo(() => buildDeck({ lens: deckLens, hasPlan }), [deckLens, hasPlan])
   const start = present === null ? null : deckStart(present, slides)
+  const deckKey = deckLens ? `${deckLens.kind}:${deckLens.key || deckLens.value}` : 'all'
   const deck = {
-    goal: deckGoal, cart, rebooking, cartCounts, conflictedIds,
+    lens: deckLens, cart, rebooking, cartCounts, conflictedIds,
     focusRoute: start?.route || null, focusTicket: start?.ticket || null,
     onAdd: addToCart, onRemove: removeFromCart,
     hasSlide: (id) => slides.some((s) => s.id === id),
     // leave the deck and land on the card (or section) on the page
     openCard: (id) => { closeDeck(); onJump(null, id) },
     openCalculator: () => { closeDeck(); setCalcOpen(true) },
+    // the ways slide: the deck becomes that way's deck, on its first family
+    presentLens: (l) => openDeck(lensStart(l), l),
   }
 
   // Scroll-spy: the family whose heading has passed under the bar is the one in
@@ -2489,21 +3242,24 @@ export default function App() {
     <div className="min-h-screen bg-brand-dark text-brand-white font-sans selection:bg-brand-yellow selection:text-brand-dark pb-32">
 
       {/* ── NAV ──
-          The bar fits one line at every width: below 380px the year steps
-          aside; Present is an icon button below md and labelled from md; the
-          Contact Sales pill is a round mail button below 500px; Tickets joins
-          at lg (below it, the menu and the ticket section carry tickets). */}
+          The through line: logo left; text links Rate Card (every width),
+          Calculator (md), Tickets (lg) and The Room (xl); Present, an icon
+          below md and labelled from md; the Contact Sales pill, a round mail
+          button below 500px. Below 380px the year steps aside. The bar fits
+          one line at every width: re-measure from 320px when an item changes. */}
       <nav ref={navRef} className="fixed top-0 left-0 w-full z-40 bg-brand-dark/95 backdrop-blur-md py-3 sm:py-4 shadow-lg border-b border-brand-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex justify-between items-center gap-3">
           <a href="#" className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0 h-10">
             <img alt="NEXTPredict" className="h-6 sm:h-8 lg:h-9 w-auto object-contain" src={`${base}logos/nextpredict-logo.png`} />
             <span className="hidden min-[380px]:inline font-black text-base sm:text-xl lg:text-2xl tracking-tight text-brand-yellow">2027</span>
           </a>
-          <div className="flex items-center gap-2 min-[400px]:gap-3 sm:gap-4 md:gap-5 lg:gap-8">
-            <a href="#pricing" onClick={(e) => onJump(e, 'pricing')}
+          <div className="flex items-center gap-2 min-[400px]:gap-3 sm:gap-4 md:gap-5 xl:gap-7">
+            <a href="#start" onClick={(e) => onJump(e, 'start')}
               className="inline-flex items-center h-10 text-xs sm:text-sm font-bold uppercase tracking-wider sm:tracking-widest text-brand-white hover:text-brand-yellow transition-colors whitespace-nowrap">Rate Card</a>
-            <a href="#tickets" onClick={(e) => onJump(e, 'tickets')}
-              className="hidden lg:inline-flex items-center h-10 text-sm font-bold uppercase tracking-widest text-brand-white hover:text-brand-yellow transition-colors">Tickets</a>
+            {[['Calculator', 'roi-calculator', 'md:inline-flex'], ['Tickets', 'tickets', 'lg:inline-flex'], ['The Room', 'audience', 'xl:inline-flex']].map(([t, id, show]) => (
+              <a key={id} href={`#${id}`} onClick={(e) => onJump(e, id)}
+                className={`hidden ${show} items-center h-10 text-sm font-bold uppercase tracking-widest text-brand-white hover:text-brand-yellow transition-colors whitespace-nowrap`}>{t}</a>
+            ))}
             <button type="button" onClick={() => openDeck('')} aria-label="Present" title="Present the rate card full screen"
               className="inline-flex items-center justify-center gap-2 w-10 h-10 md:w-auto shrink-0 rounded-full md:rounded-none border border-brand-white/20 md:border-0 text-brand-white hover:text-brand-yellow hover:border-brand-yellow/60 transition-colors">
               <Presentation className="w-[18px] h-[18px] md:w-4 md:h-4" aria-hidden />
@@ -2519,45 +3275,49 @@ export default function App() {
       </nav>
 
       <main>
-        {/* ── HERO ── */}
-        <section className="relative flex flex-col items-center justify-center overflow-hidden bg-brand-dark pt-32 pb-12 sm:pb-16">
+        {/* ── HERO ──
+            One idea (the through line): the market night (ticker, probability
+            line, Lower Manhattan), the edition line, the wordmark, one date and
+            venue line and two buttons. The proof follows it, in its own band. */}
+        <section className="hero-shell relative overflow-hidden bg-brand-dark pt-32 sm:pt-36">
           <MarketTicker />
           <MarketBackdrop />
-          <div className="z-10 text-center max-w-5xl px-4 sm:px-8 w-full">
-            <p className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-brand-yellow/30 bg-brand-yellow/10 text-brand-yellow text-[10px] min-[360px]:text-[11px] sm:text-xs font-bold uppercase tracking-[0.14em] sm:tracking-[0.2em] mb-7 sm:mb-6 whitespace-nowrap">
-              <TrendingUp className="w-3.5 h-3.5 shrink-0" aria-hidden /> The Prediction Markets Summit
+          <div className="relative z-10 text-center max-w-5xl mx-auto px-4 sm:px-8">
+            <p className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-brand-yellow/30 bg-brand-yellow/10 text-brand-yellow text-[10px] min-[360px]:text-[11px] sm:text-xs font-bold uppercase tracking-[0.14em] sm:tracking-[0.2em] whitespace-nowrap">
+              <TrendingUp className="w-3.5 h-3.5 shrink-0" aria-hidden /> The Prediction Markets Summit<span className="hidden sm:inline"> · 2027 edition</span>
             </p>
-            <h1 className="text-[clamp(2.75rem,14vw,8rem)] font-black tracking-tighter text-brand-white mb-4 sm:mb-5 leading-none">
+            <h1 className="hero-title mt-6 text-[clamp(2.75rem,14vw,8rem)] font-black tracking-tighter text-brand-white leading-none">
               NEXT<span className="text-brand-yellow">Predict</span>
             </h1>
-            <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold text-brand-yellow mb-5 tracking-wide uppercase">October 2027</h2>
-            <div className="relative z-10 flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-brand-white/80 font-medium tracking-wide mb-2 uppercase text-[11px] sm:text-sm">
-              <div className="flex items-center gap-2 bg-brand-white/5 py-2 px-3.5 sm:px-4 rounded-full border border-brand-white/10">
-                <MapPin className="w-4 h-4 text-brand-yellow shrink-0" aria-hidden /> New York City
-              </div>
-              <div className="flex items-center gap-2 bg-brand-white/5 py-2 px-3.5 sm:px-4 rounded-full border border-brand-white/10">
-                <CalendarDays className="w-4 h-4 text-brand-yellow shrink-0" aria-hidden /> Exact dates &amp; venue to be announced
-              </div>
-              <div className="flex items-center gap-2 bg-brand-white/5 py-2 px-3.5 sm:px-4 rounded-full border border-brand-white/10">
-                <Layers className="w-4 h-4 text-brand-yellow shrink-0" aria-hidden /> 2 Days · 3 Stages
-              </div>
-            </div>
-            <FidiBand />
-            <div className="on-river relative"><HeroProof /></div>
-            <div className="bg-brand-yellow text-brand-dark py-4 px-6 md:py-6 md:px-12 inline-block rounded-2xl transform -skew-x-6 max-w-full">
-              <h3 className="text-[clamp(1.1rem,5.6vw,3.75rem)] font-black uppercase tracking-tighter skew-x-6 leading-none whitespace-nowrap">Partnership Rate Card</h3>
+            <p className="hero-line mt-5 sm:mt-6 text-[15px] sm:text-xl font-semibold text-brand-white/90 text-balance">
+              <CalendarDays className="inline-block w-5 h-5 -mt-1 mr-2 text-brand-yellow align-middle" aria-hidden />{VENUE_LINE}
+            </p>
+            <div className="hero-ctas mt-8 flex flex-wrap items-center justify-center gap-3">
+              <a href="#start" onClick={(e) => onJump(e, 'start')}
+                className="inline-flex items-center gap-2 min-h-12 px-7 rounded-full bg-brand-yellow text-brand-dark font-black text-sm uppercase tracking-widest hover:brightness-110 shadow-[0_0_30px_rgba(255,207,51,0.25)] transition">
+                See the rate card <ArrowDown className="w-4 h-4" aria-hidden />
+              </a>
+              <button type="button" onClick={() => openDeck('')} title="Present the rate card full screen"
+                className="inline-flex items-center gap-2 min-h-12 px-6 rounded-full border border-brand-white/25 bg-brand-dark/40 text-brand-white font-bold text-sm uppercase tracking-widest hover:border-brand-yellow hover:text-brand-yellow transition-colors">
+                <Presentation className="w-4 h-4" aria-hidden /> Present
+              </button>
             </div>
           </div>
+          <FidiBand />
         </section>
 
-        {/* ── PRODUCT MENU ── */}
-        <ProductMenu onJump={onJump} onPresent={openDeck} />
+        {/* ── PROOF BAND ── */}
+        <ProofBand />
+
+        {/* ── WHERE DO I START + PRODUCT MENU ── */}
+        <WaysIn lens={lens} setLens={setLens} onJump={onJump} />
+        <ProductMenu onJump={onJump} onPresent={openDeck} lens={lens} setLens={setLens} />
 
         {/* ── PRICING / RATE CARD ── */}
         <section id="pricing" className="jump-section relative bg-brand-dark pt-16 md:pt-20 border-t border-brand-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-8">
             <SectionHead title="Partnership" accent="Rate Card"
-              lede="Published prices in EUR, excluding VAT, all-in where stated. Where the same space is offered two ways, such as exclusive or shared, both routes sit on one card and you book one or the other.">
+              lede="Published prices in EUR, excluding VAT, all-in where stated. Where the same space is offered two ways, both routes sit on one card and you book one or the other.">
               <button type="button" onClick={downloadRateCardPDF}
                 className="mt-6 inline-flex items-center gap-2 min-h-11 px-6 rounded-full border border-brand-yellow/50 text-brand-yellow font-bold text-xs sm:text-sm uppercase tracking-widest hover:bg-brand-yellow/10 transition-colors">
                 <Download className="w-4 h-4" aria-hidden /> Download Full Rate Card
@@ -2582,9 +3342,16 @@ export default function App() {
           <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-10 md:pt-12 pb-8">
             {visibleGroups.map(({ cat, cards }) => {
               const spans = familySpans(cards)
+              const brief = FAMILY_BRIEFS[cat]
               return (
                 <div key={cat} id={catId(cat)} data-cat={cat} className="jump-target mb-16 md:mb-20 last:mb-12">
                   <FamilyHeading cat={cat} count={cards.length} />
+                  {brief && (
+                    <p className="-mt-2 sm:-mt-4 mb-6 sm:mb-8 max-w-3xl text-[14.5px] sm:text-base leading-relaxed text-brand-white/75">
+                      {brief.text}
+                      {brief.room && <> <a href="#audience" onClick={(e) => onJump(e, 'audience')} className="inline-flex items-center gap-1 font-bold text-brand-yellow underline decoration-brand-yellow/40 underline-offset-4 hover:decoration-brand-yellow">See who&rsquo;s in the room <ArrowRight className="w-3.5 h-3.5" aria-hidden /></a></>}
+                    </p>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-5 sm:gap-6">
                     {cards.map((card, i) => (
                       <ProductCard key={card.key} card={card} span={spans[i]} rebooking={rebooking}
@@ -2597,6 +3364,12 @@ export default function App() {
           </div>
         </section>
 
+        {/* ── WHO'S IN THE ROOM (and why partner, #about) ── */}
+        <RoomSection />
+
+        {/* ── TICKETS ── */}
+        <TicketsSection />
+
         {/* ── RECOGNITION LEVELS ── */}
         <section id="recognition" className="jump-section py-20 md:py-24 bg-brand-white/[0.03] relative border-y border-brand-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-8">
@@ -2608,87 +3381,17 @@ export default function App() {
           </div>
         </section>
 
-        {/* ── ABOUT ── */}
-        <section id="about" className="jump-section py-20 md:py-24 bg-brand-dark relative border-b border-brand-white/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-8">
-            <SectionHead title="The Market Is Moving." sub="Own Your Position In The Category-Defining Event" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 mb-16 md:mb-20 items-center">
-              <div data-anim style={anim}>
-                <p className="text-lg md:text-xl text-brand-gray leading-relaxed">
-                  Prediction markets moved from the margins to the mainstream - and NEXTPredict is where the
-                  category meets. Platforms, exchanges, market makers, sportsbooks, data providers, payments,
-                  regulators and the capital behind them, in one room, for two days in New York.
-                  <br /><br />
-                  This is not a trade show with a new banner. It is a summit built for one category,
-                  returning in October 2027 after its 2026 debut - where the <strong className="text-brand-yellow">Leadership Stage
-                  partnership sold out</strong>.
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-3 sm:gap-4" data-anim style={anim}>
-                {EVENT_STATS.map(([num, label], i) => (
-                  <div key={i} className="text-center px-3 py-7 sm:py-8 rounded-xl bg-brand-white/5 border border-brand-white/10 group hover:border-brand-yellow/40 transition-all duration-300">
-                    <p className="text-4xl sm:text-5xl font-black text-brand-white group-hover:text-brand-yellow transition-colors duration-300 mb-2 leading-none tabular-nums">{num}</p>
-                    <p className="text-brand-gray text-[11px] sm:text-xs uppercase tracking-widest leading-snug">{label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+        {/* ── ROI CALCULATOR ── nothing important sits below it: a short close */}
+        <RoiCalculator cart={cart} onRemove={removeFromCart} rebooking={rebooking} />
 
-            {/* from lg the proof sits beside the argument instead of under it,
-                so the box no longer ends in an empty right half */}
-            <div className="bg-brand-white/5 border border-brand-white/10 rounded-3xl p-6 sm:p-10 md:p-12 relative overflow-hidden" data-anim style={anim}>
-              <div className="absolute right-0 top-0 w-96 h-96 bg-brand-yellow/5 rounded-full blur-3xl pointer-events-none" />
-              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 lg:items-center">
-                <div className="lg:col-span-7 max-w-3xl">
-                  <div className="inline-block bg-brand-yellow text-brand-dark font-bold px-4 py-1 rounded-sm mb-6 text-sm">WHY PARTNER</div>
-                  <h4 className="text-[1.75rem] sm:text-3xl md:text-4xl font-bold text-brand-white mb-6 leading-tight">{WHY_PARTNER.title} <span className="text-brand-yellow">{WHY_PARTNER.accent}</span></h4>
-                  <p className="text-base sm:text-lg text-brand-gray leading-relaxed">{WHY_PARTNER.body}</p>
-                </div>
-                <div className="lg:col-span-5">
-                  <p className="text-base sm:text-lg text-brand-gray leading-relaxed">{WHY_PARTNER.npsIntro}</p>
-                  <NpsTiles side className="mt-6 max-w-xl" />
-                  <p className="text-xs text-brand-gray mt-4 opacity-60">{NPS_SOURCE}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── AUDIENCE ── */}
-        <section id="audience" className="jump-section py-20 md:py-24 bg-brand-dark relative border-b border-brand-white/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-8">
-            <SectionHead title="Who's In" accent="The Room" lede={ROOM_LEDE} />
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-              {AUDIENCE.map(([label, Icon], i) => (
-                <div key={label} data-anim style={{ ...anim, transitionDelay: `${i * 50}ms` }}
-                  className="flex flex-col items-center justify-center gap-3 bg-brand-white/5 border border-brand-white/10 rounded-2xl px-3 sm:px-4 py-6 sm:py-8 hover:border-brand-yellow/50 hover:bg-brand-white/8 transition-all duration-300">
-                  <Icon className="w-7 h-7 text-brand-yellow" aria-hidden />
-                  <p className="text-[12px] sm:text-sm font-bold text-brand-white text-center uppercase tracking-wide leading-snug">{label}</p>
-                </div>
-              ))}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-10 md:mt-12" data-anim style={anim}>
-              {ROOM_PILLARS.map(([title, body]) => (
-                <div key={title} className="bg-brand-white/5 p-6 rounded-xl border border-brand-white/10 hover:border-brand-yellow transition-colors duration-300">
-                  <h4 className="text-brand-yellow font-bold mb-3 uppercase">{title}</h4>
-                  <p className="text-sm text-brand-gray leading-relaxed">{body}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── TICKETS ── */}
-        <TicketsSection />
-
-        {/* ── REBOOKING / CTA ── */}
-        <section className="py-20 md:py-24 bg-brand-dark relative">
+        {/* ── CLOSE: REBOOKING AND CONTACT ── */}
+        <section className="py-16 md:py-20 bg-brand-dark relative">
           <div className="max-w-5xl mx-auto px-4 sm:px-8 text-center" data-anim style={anim}>
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-yellow/10 border border-brand-yellow/20 rounded-full text-brand-yellow text-xs font-bold tracking-widest uppercase mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-yellow/10 border border-brand-yellow/20 rounded-full text-brand-yellow text-xs font-bold tracking-widest uppercase mb-6">
               <ShieldCheck className="w-3.5 h-3.5" aria-hidden /><span>2026 Partners</span>
             </div>
-            <h2 className="text-[2rem] leading-[1.05] sm:text-4xl md:text-5xl font-black text-brand-white uppercase tracking-tight mb-6">Rebook Early. <span className="text-brand-yellow">Keep 15%.</span></h2>
-            <p className="text-base md:text-lg text-brand-gray max-w-3xl mx-auto mb-10 leading-relaxed">
+            <h2 className="text-[2rem] leading-[1.05] sm:text-4xl md:text-5xl font-black text-brand-white uppercase tracking-tight mb-5">Rebook Early. <span className="text-brand-yellow">Keep 15%.</span></h2>
+            <p className="text-base md:text-lg text-brand-gray max-w-3xl mx-auto mb-8 leading-relaxed">
               {REBOOKING_COPY} Toggle it in the calculator to see your pricing.
             </p>
             <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
@@ -2725,12 +3428,12 @@ export default function App() {
         </div>
       </footer>
 
-      <CalculatorPanel cart={cart} onRemove={removeFromCart} rebooking={rebooking} setRebooking={setRebooking} open={calcOpen} setOpen={setCalcOpen} />
+      <CalculatorPanel cart={cart} onRemove={removeFromCart} rebooking={rebooking} setRebooking={setRebooking} open={calcOpen} setOpen={setCalcOpen} onJump={onJump} />
 
       {start && (
-        <PresentMode slides={slides} startId={start.id} onClose={closeDeck}
-          title={deckGoal ? `2027 · ${deckGoal}` : '2027 · Partnership Rate Card'}
-          label={`NEXTPredict 2027 ${deckGoal ? `${deckGoal} products` : 'partnership rate card'}`}
+        <PresentMode key={deckKey} slides={slides} startId={start.id} onClose={closeDeck}
+          title={deckLens ? `2027 · ${lensLabel(deckLens)}` : '2027 · Partnership Rate Card'}
+          label={`NEXTPredict 2027 ${deckLens ? `${lensLabel(deckLens)} products` : 'partnership rate card'}`}
           logo={<img alt="NEXTPredict" src={`${base}logos/nextpredict-logo.png`} className="h-5 sm:h-6 w-auto shrink-0" />}
           renderSlide={(s, ctx) => renderDeckSlide(s, deck, ctx)} />
       )}

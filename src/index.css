@@ -159,3 +159,58 @@
 @media (prefers-reduced-motion: reduce) {
   .ticker-track, .line-draw, .line-dot, .ws-shimmer { animation: none; }
 }
+
+/* ── The summit through line (29 Sep 2026) ──
+   The ROI calculator's sliders are New York's. Card pictures zoom slowly
+   (Ken Burns) only while on screen ([data-inview], set by useInView). The
+   logo marquee runs its two copies of the row end to end, pauses on hover and
+   fades at both edges. Under reduced motion all of it stands still, and the
+   marquee wraps into a static wall with its copy hidden. */
+.range-yellow { -webkit-appearance: none; appearance: none; height: 2.5rem; background: transparent; }
+.range-yellow:focus-visible { outline: 2px solid #ffcf33; outline-offset: 2px; border-radius: 9999px; }
+.range-yellow::-webkit-slider-runnable-track { height: 0.5rem; border-radius: 9999px; background: rgba(255, 255, 255, 0.2); }
+.range-yellow::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 1.375rem; height: 1.375rem; margin-top: -0.4375rem; border-radius: 9999px; background: #ffcf33; border: 3px solid #242426; box-shadow: 0 0 0 1px #ffcf33; }
+.range-yellow::-moz-range-track { height: 0.5rem; border-radius: 9999px; background: rgba(255, 255, 255, 0.2); }
+.range-yellow::-moz-range-thumb { width: 1rem; height: 1rem; border-radius: 9999px; background: #ffcf33; border: 3px solid #242426; box-shadow: 0 0 0 1px #ffcf33; }
+
+@keyframes kenburns { from { transform: scale(1.02); } to { transform: scale(1.1) translate3d(-1.2%, -1%, 0); } }
+.card-visual .kenburns { transform: scale(1.02); transform-origin: 50% 45%; }
+.card-visual[data-inview] .kenburns { animation: kenburns 24s ease-in-out infinite alternate; }
+
+@keyframes marquee-run { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.marquee-row { animation: marquee-run 70s linear infinite; }
+.marquee-mask:hover .marquee-row { animation-play-state: paused; }
+.marquee-mask {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent);
+}
+/* the row is its logos twice over, each carrying its own right padding (no
+   flex gap), so -50% lands exactly on the start of the copy: a seamless loop */
+
+@media (prefers-reduced-motion: reduce) {
+  .card-visual[data-inview] .kenburns { animation: none; }
+  .marquee-row { animation: none; width: auto; flex-wrap: wrap; justify-content: flex-start; }
+  .marquee-row .marquee-copy { display: none; }
+  .marquee-mask { -webkit-mask-image: none; mask-image: none; }
+}
+
+/* the proof band rides up onto the river under Lower Manhattan, as the NPS
+   tiles did before it (the hero keeps its skyline edge to edge) */
+.proof-band { margin-top: calc(var(--fidi-h) * -0.42); }
+@media (min-width: 1024px) { .proof-band { margin-top: calc(var(--fidi-h) * -0.5); } }
+
+/* short desktop screens (1024x800, 1280x800, 1366x768): a tighter hero and a
+   shorter skyline keep the proof band's figures above the fixed selection
+   bar, as the NPS tiles were before the through-line redesign. Re-measure
+   there before making the hero taller. */
+@media (min-width: 640px) and (max-height: 820px) {
+  :root { --fidi-h: 200px; }
+  .hero-shell { padding-top: 7rem; }
+  .hero-title { font-size: 6.5rem; margin-top: 1rem; }
+  .hero-line { margin-top: 1rem; }
+  .hero-ctas { margin-top: 1.5rem; }
+}
+@media (min-width: 640px) and (max-height: 780px) { :root { --fidi-h: 180px; } }
+
+/* the stand footprint's dot grid (StandArt): one dot per unit of the stand's size */
+.stand-grid { background-image: radial-gradient(circle, rgba(255, 255, 255, 0.22) 1px, transparent 1.4px); }
