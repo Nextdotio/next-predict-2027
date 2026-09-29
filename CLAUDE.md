@@ -375,6 +375,12 @@ repetitive"); the second pass leads each row with the product's own coverage.
   words). Each row leads with its coverage where the lines state one; the
   Speakers' Lounge and the Media Zone say only what their lines say about who
   uses them (the VIP speakers; the interviews the NEXT.io media team films).
+  A coverage every partner gets is not a reason to buy one product, so it is
+  never a figure (trimmed 29 Sep 2026, "less is more"): the three non-branded
+  panels show the room alone (their only coverage was the shared logo loop),
+  and a days count is never dressed as coverage ("Both · Days of ... branding"
+  became "Every · Leadership Stage session, your brand" and "Every · Meal and
+  meeting in your branded area", from the lines "across both event days").
 - **Then the matched room figure**, one per product, with `ROOM_LABEL` as the
   source line: 61% director level and above, 37% founders and C-suite, 262
   organisations, 28% trading and liquidity (every stand), or the press

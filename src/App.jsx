@@ -814,7 +814,6 @@ const PHOTOS = fig('Every', 'Official photo of the night, watermarked')
 const SCANS = fig('Every', 'Visitor you scan joins your leads')
 const LISTED = fig('Every', 'Listing reads "Presented by" your brand')
 const POWERED = fig('All', 'Session branding, "Powered by" you')
-const LOOP = fig('Every', 'Logo loop on the screens includes you')
 const OWNED = (what) => fig('Full', `Brand ownership of your ${what}`)
 const HUB_SEATS = (when) => fig('Every', `Hub seat carries your brand, ${when}`)
 const covered = (cover, roomFig) => () => row(['room'], cover, roomFig)
@@ -862,8 +861,10 @@ const REACH = {
   8: covered(fig('Every', 'Guest invited to a profile you agree'), FOUNDERS),
   // the stages: a stage or hub partner, the days and seats its lines brand; a
   // presenter owns the session; a custom session is "Presented by" you, a
-  // branded one "Powered by" you; a non-branded panel keeps the logo loop
-  10: covered(fig('Both', 'Days of Leadership Stage branding'), ORGANISATIONS),
+  // branded one "Powered by" you; a non-branded panel carries no brand of its
+  // own, so it shows the room alone (the logo loop every partner gets is not a
+  // reason to buy it)
+  10: covered(fig('Every', 'Leadership Stage session, your brand'), ORGANISATIONS),
   14: covered(fig('Every', 'Seat in the main hall carries your brand'), DIRECTORS),
   17: covered(HUB_SEATS('both days'), ORGANISATIONS),
   18: covered(HUB_SEATS('on your day'), ORGANISATIONS),
@@ -872,7 +873,7 @@ const REACH = {
   19: covered(OWNED('keynote'), FOUNDERS), 25: covered(OWNED('keynote'), FOUNDERS),
   13: covered(LISTED, DIRECTORS), 20: covered(LISTED, DIRECTORS), 26: covered(LISTED, DIRECTORS),
   15: covered(POWERED, FOUNDERS), 21: covered(POWERED, FOUNDERS), 27: covered(POWERED, FOUNDERS),
-  16: covered(LOOP, DIRECTORS), 22: covered(LOOP, DIRECTORS), 28: covered(LOOP, DIRECTORS),
+  16: covered(null, DIRECTORS), 22: covered(null, DIRECTORS), 28: covered(null, DIRECTORS),
   29: (i) => row(['room'], fig(countIn(i, /^(\d+) curated opt-in invite targets/m), 'Curated invitations to your targets'), FOUNDERS),
   30: (i) => {
     const intros = countIn(i, /^(\w+) facilitated opt-in introductions/m)
@@ -884,7 +885,7 @@ const REACH = {
   57: stand(fig('Double', 'The footprint of a cluster stand')),
   34: stand(null),
   37: room, 38: room, 39: room, 40: room,
-  41: covered(fig('Both', 'Days of meeting and dining area branding'), DIRECTORS),
+  41: covered(fig('Every', 'Meal and meeting in your branded area'), DIRECTORS),
   42: () => row(['room'], fig('All', 'Three Nourish Bars carry your brand'), fig('Every', 'Catering point serves your cups'), ORGANISATIONS),
   43: covered(fig('Only', 'Brand on your bar and its credenzas'), ORGANISATIONS),
   44: () => row(['room'], fig('Only', "Brand in the VIP speakers' lounge"), fig('Every', 'Breakfast and lunch at your station'), FOUNDERS),
