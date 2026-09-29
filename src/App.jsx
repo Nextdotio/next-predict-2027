@@ -285,15 +285,19 @@ function downloadRateCardPDF() {
       // as on the page: a tile names its route and price, plus its count or status
       const tileSub = (p) => (isOut(p) ? avail(p) : !p.exclusive && p.avail ? avail(p) : '')
       const tiles = card.options.map((p) => `<div class="tile"><span class="tl">${escHtml(routeLabel(card, p))}</span><span class="tp">${price(p)}</span>${tileSub(p) ? `<span class="ta">${tileSub(p)}</span>` : ''}</div>`).join('')
-      const routes = card.options.map((p) => `<div class="route">
+      // a value row every route shares prints once, under the tiles, as on the slide
+      const glances = card.options.map((p) => printGlance(p))
+      const sharedGlance = glances.every((g) => g === glances[0])
+      const routes = card.options.map((p, k) => `<div class="route">
           <div class="rhead"><h4>${escHtml(routeLabel(card, p))}</h4><span class="rprice">${price(p)}</span></div>
           ${lede(p)}
-          ${printGlance(p)}
+          ${sharedGlance ? '' : glances[k]}
           ${printDeliverables(p.bullets)}
         </div>`).join('')
       return `<div class="product multi">
         <div class="phead"><div><h3>${escHtml(card.title)}</h3></div></div>
         <div class="tiles">${tiles}</div>
+        ${sharedGlance ? glances[0] : ''}
         ${routes}
       </div>`
     }).join('')
@@ -715,8 +719,9 @@ const NPS_SOURCE = 'Partner Net Promoter Scores from the NEXT Summit 2026 post-e
 // The aggregate figures of NEXT's NEXTPredict 2026 Audience Snapshot (Stuart's
 // tear sheet), registered as at 28 September 2026, for NEXTPredict 2026 (22-23
 // October 2026, Convene, 30 Hudson Yards). They prove who is in the room; they
-// are not a headcount promise and never a REACH estimate (those wait for the
-// 2026 actuals). Every figure travels with ROOM_LABEL. The snapshot's attendee
+// are not a headcount promise. A value row (REACH) may carry one of them as a
+// measured fact, never as an estimate (estimates wait for the 2026 actuals).
+// Every figure travels with ROOM_LABEL. The snapshot's attendee
 // rows (job title and company) are never published: a company appears only as
 // a logo, never beside a title or a person.
 const ROOM_LABEL = 'Registered for NEXTPredict 2026, as at 28 September 2026'
@@ -737,88 +742,139 @@ const ROOM_PRESS = ['The Wall Street Journal', 'Bloomberg', 'Reuters', 'CNBC', '
 const ROOM_SOURCE = 'Shares of attendees registered for NEXTPredict 2026 (22-23 October 2026, Convene, 30 Hudson Yards) as at 28 September 2026, from the official registration system. Seniority is classified from the job title each attendee gave. Registrations continue until the event.'
 const LOGOS_NOTE = 'Logos: a selection of the organisations registered for NEXTPredict 2026 as at 28 September 2026, and the official partners of NEXTPredict 2026.'
 
-// ─── At a glance, per product ────────────────────────────────────────────────
-// Stuart, 28 Sep 2026: the NPS row repeated on every card was "repetitive";
-// each card now counts what that product itself delivers (sessions, minutes,
-// screens, seats, positions, passes), the New York and Valletta pattern. It
-// shows no audience figure yet: NEXTPredict's first edition runs 22 to 23 Oct
-// 2026, and Stuart chose to wait for its real attendance rather than borrow
-// another event's. When it reports, add the figure as a constant, a
-// `REACH_BASIS` line for it and the estimates that rest on it (a product whose
-// row carries a basis reads "Estimated reach"). Every count here copies the
-// product's own bullet, and the passes are read from its pass line, so change
-// a bullet and its `REACH` line together. The NPS stays on the page, in the
-// deck's proof slide and at the top of both PDFs.
+// ─── The value row, per product ──────────────────────────────────────────────
+// Stuart, 29 Sep 2026, on the Headline's old row (sold once, a 30-second video,
+// 13 passes): "Let's be honest, these aren't exactly the best selling points
+// for a headliner. They'll be more thinking about getting their brand in front
+// of as many people as possible, the ROI of that huge spend, etc. For all these
+// numbers across all products, that needs to be the thinking."
+// A row answers one question, what do I get back for this money, in at most
+// three figures, each through one of five lenses: reach, ROI, leads, brands,
+// and networking and introductions. Availability, durations, days, passes,
+// stand sizes and item counts stay in "What's included". The figures:
+//  - the 2026 room, one figure per product, matched to what it sells:
+//    seniority for what people wear and where they gather (badges, lanyards,
+//    evenings, lounges, sessions), the 262 organisations for branding across
+//    the stages and the venue, the trading and liquidity bloc for stands, the
+//    newsrooms for press and media. Always with ROOM_LABEL as the source line;
+//  - GA4 views of the summit pages, only where top billing on the site is a
+//    lead deliverable (the Headline);
+//  - the product's own lines (introductions, invitations, seats at your table);
+//  - MEETING, an assumption, for the private rooms;
+//  - ATTENDEES_2026, once the actuals are in.
+// A cost per figure divides the product's own price by a figure in the same
+// row, rounded to the euro, "From" when the divisor is a maximum. Measured facts
+// keep the heading "At a glance" and print their source; only an assumption or
+// an estimate from the attendance reads "Estimated reach". Never New York's or
+// Valletta's audience, a NEXT.io audience, NEXTPredict's own LinkedIn following
+// or a headcount from the snapshot. The numbers that would add figures are
+// listed in CLAUDE.md.
 const EVENT_DAYS = Number(EVENT_STATS.find(([, label]) => label === 'Event Days')[0])
-const REACH_BASIS = {}
+// GA4 (the NEXTPredict property): 141,445 views of nextpredict.io's summit pages
+// from 1 Jan to 29 Sep 2026, 135,374 of them of the summit page, which lists
+// NEXT's six 2026 Official Event Partners, and 5,437 of its speakers page.
+const SUMMIT_VIEWS = '140k+'
+// NEXTPredict 2026 attendance (22 to 23 October 2026): null until Stuart has the
+// actuals, and nothing renders from it while it is null. Set it to the real
+// count and the products every attendee sees gain attendees and € per attendee,
+// under "Estimated reach" with the attendance line (see CLAUDE.md).
+const ATTENDEES_2026 = null
+// A private meeting room, fully booked: 30-minute meetings, 8 hours a day, on
+// both event days. An assumption, not an audience.
+const MEETING = { minutes: 30, hours: 8 }
+const MEETINGS = (60 / MEETING.minutes) * MEETING.hours * EVENT_DAYS
+const fmtCount = (x) => Math.round(x).toLocaleString('en-US')
+// The sentence printed under a row, by key. An estimate turns the heading to
+// "Estimated reach"; a fact prints its source and keeps "At a glance".
+const REACH_ESTIMATES = {
+  meetings: `Assumes ${MEETING.minutes}-minute meetings, ${MEETING.hours} hours a day, on both event days.`,
+  attendance: ATTENDEES_2026 ? `Estimates use the ${fmtCount(ATTENDEES_2026)} attendees at NEXTPredict 2026.` : null,
+}
+const REACH_FACTS = {
+  room: `${ROOM_LABEL}.`,
+  views: "GA4 views of nextpredict.io's summit pages, 1 Jan to 29 Sep 2026.",
+}
 const fig = (value, label, pre) => ({ value: String(value), label, pre })
-const atGlance = (...figs) => ({ basis: [], figs: figs.filter(Boolean) })
-// "10 Full Event passes + 2 VIP passes + 1 Speaker pass" is 13 passes.
-const PASS_LINE = /^\d+ (Full Event|VIP|Speaker) pass(es)?( \+ \d+ (Full Event|VIP|Speaker) pass(es)?)*$/
-const passesOf = (item) => {
-  const line = item.bullets.split('\n').find((l) => PASS_LINE.test(l))
-  if (!line) return null
-  const parts = line.split(' + ').map((part) => part.match(/^(\d+) (.+?) pass/)).map(([, k, kind]) => [Number(k), kind])
-  const total = parts.reduce((sum, [k]) => sum + k, 0)
-  return parts.length === 1
-    ? fig(total, `${parts[0][1]} pass${total === 1 ? '' : 'es'}`)
-    : fig(total, `Passes: ${parts.map(([k, kind]) => `${k} ${kind}`).join(', ')}`)
+const row = (basis, ...figs) => ({ basis, figs: figs.filter(Boolean) })
+const perHead = (item, people, label, pre) => fig(fmtPrice(Math.round(item.price / people)), label, pre)
+// the 2026 room, one figure per product (see above)
+const roomShare = (label) => ROOM_FIGURES.find(([, l]) => l === label)[0]
+const DIRECTORS = fig(roomShare('Director level and above'), 'Director level and above in the room')
+const FOUNDERS = fig(roomShare('Founders and C-suite'), 'Founders and C-suite in the room')
+const ORGANISATIONS = fig(roomShare('Organisations'), 'Organisations registered for 2026')
+const TRADING = fig(ROOM_BLOC[0], 'Trading and liquidity, the largest bloc')
+const NEWSROOMS = fig(ROOM_PRESS.length, 'National and financial newsrooms registered')
+const BILLING = fig('#1', 'Billing above every other partner')
+const inRoom = (roomFig) => () => row(['room'], roomFig)
+// A product every attendee sees (`most`: at most every attendee, the cloakroom
+// and the expo floor; `share`: half of them, a lanyard unit). Until the 2026
+// attendance is in: its own line's reach (`now`, "All" or "Half") and its room
+// figure. Then: the attendees, the room figure and the cost per attendee.
+const seenBy = (label, roomFig, { now, share = 1, most = false } = {}) => (i) => (ATTENDEES_2026
+  ? row(['attendance', 'room'], fig(fmtCount(ATTENDEES_2026 * share), label, most ? 'Up to' : undefined), roomFig,
+    perHead(i, ATTENDEES_2026 * share, 'Per attendee reached', most ? 'From' : undefined))
+  : row(['room'], now && fig(now, label), roomFig))
+// a count as the product's own line gives it ("Table and 12 chairs", "Six
+// facilitated opt-in introductions"), so a changed bullet changes the row
+const WORD_COUNT = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12 }
+const countIn = (item, re) => {
+  const m = item.bullets.match(re)[1]
+  return WORD_COUNT[m.toLowerCase()] || Number(m)
 }
-const WORN = 'Days worn, check-in to last session'
-const PHOTOS = fig('Every', 'Official photo of the night, watermarked')
-const evening = (i) => atGlance(fig(1, 'Evening branded by you alone'), PHOTOS, passesOf(i))
-const sharedEvening = (i) => atGlance(fig(`1 of ${i.avail}`, 'Partners sharing the evening'), PHOTOS, passesOf(i))
-const customSession = (i) => atGlance(fig('30 min', 'Session presented by your brand', 'Up to'), fig(2, 'Speakers you nominate, plus 2 from the content team'), passesOf(i))
-const brandedSession = (i) => atGlance(fig('30 min', 'Session powered by your brand', 'Up to'), fig(1, 'C-level speaker you nominate'), passesOf(i))
-const panelSeat = (i) => atGlance(fig('30 min', 'Curated panel on your expertise', 'Up to'), fig(1, 'C-level panellist you nominate'), passesOf(i))
-const stand = (where) => (i) => atGlance(fig(i.title.match(/(\d+x\d+)/)[1], where), passesOf(i))
-const room = (i) => atGlance(fig(Number(i.bullets.match(/Table and (\d+) chairs/)[1]), 'Seats at your private table'), fig(EVENT_DAYS, 'Days of your branded room'), passesOf(i))
+const stand = seenBy('Attendees on your floor, both days', TRADING, { most: true })
+const room = (i) => row(['meetings'],
+  fig(MEETINGS, 'Meetings at your table, both days', 'Up to'),
+  fig(countIn(i, /Table and (\d+) chairs/), 'Seats at your private table'),
+  perHead(i, MEETINGS, 'Per meeting, fully booked', 'From'))
 const REACH = {
-  1: (i) => atGlance(fig(1, 'Headline Partner, sold once'), fig('30 sec', 'Your video in conference breaks'), passesOf(i)),
-  2: evening, 3: evening, 4: evening,
-  5: sharedEvening, 6: sharedEvening, 7: sharedEvening,
-  8: (i) => atGlance(fig('Bespoke', 'Guest profile agreed with you'), passesOf(i)),
-  10: (i) => atGlance(fig(EVENT_DAYS, 'Days of Leadership Stage branding'), fig(1, 'Branded holding slide'), passesOf(i)),
-  11: (i) => atGlance(fig('20 min', 'C-level session, Day 2'), passesOf(i)),
-  13: customSession, 20: customSession, 26: customSession,
-  14: (i) => atGlance(fig('Every', 'Seat in the main hall carries your brand'), fig(EVENT_DAYS, 'Days of main-hall content'), passesOf(i)),
-  15: brandedSession, 21: brandedSession, 27: brandedSession,
-  16: panelSeat, 22: panelSeat, 28: panelSeat,
-  17: (i) => atGlance(fig(EVENT_DAYS, '20-minute presentations, one a day'), fig(EVENT_DAYS, 'Days of exclusive hub presence'), passesOf(i)),
-  18: (i) => atGlance(fig('20 min', 'Presentation on your day'), fig(1, 'Day of full hub presence'), passesOf(i)),
-  19: (i) => atGlance(fig('20 min', 'C-level keynote on Stage 2'), passesOf(i)),
-  24: (i) => atGlance(fig('20 min', 'Presentation on Stage 3, Day 1'), fig(1, 'Day of full hub presence'), passesOf(i)),
-  25: (i) => atGlance(fig('20 min', 'C-level keynote on Stage 3, Day 1'), passesOf(i)),
-  29: (i) => atGlance(fig(1, 'Workshop you host'), fig(5, 'Curated opt-in invite targets'), passesOf(i)),
-  30: () => atGlance(fig(6, 'Facilitated opt-in introductions'), fig(1, 'Outcome summary after the event')),
-  31: stand('Landmark position in the gallery'), 58: stand('Landmark position in the gallery'),
-  32: stand('Position in the delegate planning zone'), 59: stand('Position in the delegate planning zone'),
-  33: stand('Premium gallery position'), 60: stand('Premium gallery position'),
-  57: stand('Footprint from two cluster positions'),
-  34: stand('Turnkey footprint in the cluster'),
+  1: (i) => (ATTENDEES_2026
+    ? row(['attendance'], fig(fmtCount(ATTENDEES_2026), 'Attendees see your brand, both days'), BILLING, perHead(i, ATTENDEES_2026, 'Per attendee reached'))
+    : row(['views', 'room'], BILLING, fig(SUMMIT_VIEWS, 'Views of the summit pages, 2026'), ORGANISATIONS)),
+  // the evenings, both routes alike: the room's seniority (a guest count waits
+  // for the 2026 actuals)
+  2: inRoom(DIRECTORS), 5: inRoom(DIRECTORS),
+  3: inRoom(DIRECTORS), 6: inRoom(DIRECTORS),
+  4: inRoom(DIRECTORS), 7: inRoom(DIRECTORS),
+  8: inRoom(FOUNDERS),
+  // the stages: a stage partner brands the stage and the summit; a speaker faces
+  // the room (the C-suite for a C-level presentation or a powered-by session)
+  10: inRoom(ORGANISATIONS), 17: inRoom(ORGANISATIONS), 18: inRoom(ORGANISATIONS), 24: inRoom(ORGANISATIONS),
+  11: inRoom(FOUNDERS), 19: inRoom(FOUNDERS), 25: inRoom(FOUNDERS),
+  15: inRoom(FOUNDERS), 21: inRoom(FOUNDERS), 27: inRoom(FOUNDERS),
+  13: inRoom(DIRECTORS), 20: inRoom(DIRECTORS), 26: inRoom(DIRECTORS),
+  16: inRoom(DIRECTORS), 22: inRoom(DIRECTORS), 28: inRoom(DIRECTORS),
+  14: inRoom(DIRECTORS),
+  29: (i) => row(['room'], fig(countIn(i, /^(\d+) curated opt-in invite targets/m), 'Curated invitations to your targets'), FOUNDERS),
+  30: (i) => {
+    const intros = countIn(i, /^(\w+) facilitated opt-in introductions/m)
+    return row(['room'], fig(intros, 'Curated introductions to your targets'), ORGANISATIONS, perHead(i, intros, 'Per introduction'))
+  },
+  31: stand, 58: stand, 32: stand, 59: stand, 33: stand, 60: stand, 57: stand, 34: stand,
   37: room, 38: room, 39: room, 40: room,
-  41: (i) => atGlance(fig(EVENT_DAYS, 'Days of meeting and dining area branding'), fig(1, 'Refreshment bar backdrop'), passesOf(i)),
-  42: (i) => atGlance(fig(3, 'Nourish Bars, all yours'), fig('All', 'Catering cups carry your brand'), passesOf(i)),
-  43: (i) => atGlance(fig(`1 of ${i.avail}`, 'Gallery Nourish Bars'), passesOf(i)),
-  44: (i) => atGlance(fig(2 * EVENT_DAYS, 'Breakfast and lunch services at your station'), fig(1, 'Video advertisement in the lounge'), passesOf(i)),
-  45: (i) => atGlance(fig(EVENT_DAYS, 'Days of livestream with your logo'), fig(1, 'Stream link for your own channels'), passesOf(i)),
-  46: (i) => atGlance(fig(EVENT_DAYS, 'Days of media zone branding'), passesOf(i)),
-  47: (i) => atGlance(fig(EVENT_DAYS, 'Days of press lounge branding'), passesOf(i)),
-  48: (i) => atGlance(fig('30 sec', 'Your video, between sessions'), fig(1, 'Placement on the gallery video wall'), passesOf(i)),
-  49: (i) => atGlance(fig('Every', 'Attendee: booking page, email and ticket'), fig(2, 'Curved LED screens at registration'), passesOf(i)),
-  50: (i) => atGlance(fig(EVENT_DAYS, 'Days of cloakroom branding'), fig(1, 'LCD screen in the cloakroom'), passesOf(i)),
-  51: (i) => atGlance(fig(15, 'Branded stair risers behind registration'), fig(1, 'LCD video advertisement'), passesOf(i)),
-  52: (i) => atGlance(fig('All', 'Delegate badges carry your logo'), fig(EVENT_DAYS, WORN), passesOf(i)),
-  53: (i) => atGlance(fig('Half', 'Of delegates wear your lanyard'), fig(EVENT_DAYS, WORN), passesOf(i)),
-  54: (i) => atGlance(fig('All', 'Venue restrooms carry your brand'), fig(12, 'Branded toiletry baskets'), passesOf(i)),
-  55: (i) => atGlance(fig('All', 'Badges carry your QR to the agenda'), fig(1, 'Logo on the digital agenda'), passesOf(i)),
-  56: (i) => atGlance(fig('All', 'Badges carry your network and password'), fig(EVENT_DAYS, 'Days of logins on your network name'), passesOf(i)),
+  41: inRoom(DIRECTORS), 44: inRoom(FOUNDERS),
+  42: inRoom(ORGANISATIONS), 43: inRoom(ORGANISATIONS),
+  // 45, the livestream, has no row until NEXTPredict 2026 reports its viewers
+  46: inRoom(NEWSROOMS), 47: inRoom(NEWSROOMS),
+  48: inRoom(ORGANISATIONS),
+  49: seenBy('Attendees, from sign-up to check-in', ORGANISATIONS, { now: 'All' }),
+  50: seenBy('Attendees can use your cloakroom', ORGANISATIONS, { most: true }),
+  51: seenBy('Attendees check in facing your risers', ORGANISATIONS),
+  52: seenBy('Attendees wear your logo, both days', DIRECTORS, { now: 'All' }),
+  53: seenBy('Attendees wear your lanyard', FOUNDERS, { now: 'Half', share: 0.5 }),
+  54: seenBy('Attendees use your branded restrooms', ORGANISATIONS),
+  55: seenBy('Attendees carry your agenda QR code', ORGANISATIONS, { now: 'All' }),
+  56: seenBy('Attendees carry your Wi-Fi login', ORGANISATIONS, { now: 'All' }),
 }
-// The row for one product, with the sentences its estimates rest on (none yet).
+// The row for one product, with the sentences it rests on. A product with no
+// honest figure has no row.
 const reachFor = (item) => {
   const r = REACH[item.id]?.(item)
-  if (!r) return null
-  return { ...r, estimate: r.basis.length > 0, note: r.basis.map((k) => REACH_BASIS[k]).join(' ') }
+  if (!r || r.figs.length === 0) return null
+  return {
+    ...r,
+    estimate: r.basis.some((k) => REACH_ESTIMATES[k]),
+    note: r.basis.map((k) => REACH_ESTIMATES[k] || REACH_FACTS[k]).filter(Boolean).join(' '),
+  }
 }
 const ROOM_LEDE = 'A summit built on category fit, not badge count - the buyers, builders and rule-makers of prediction markets.'
 const ROOM_PILLARS = [
@@ -1953,11 +2009,12 @@ function NpsTiles({ side = false, big = false, className = '' }) {
   )
 }
 
-// ─── At a glance, on every card and product slide ────────────────────────────
-// What this product delivers, counted (`reachFor`). A small "Up to" sits over a
-// figure that is a maximum; the row keeps that line for every figure so the
-// numbers stay level. The heading turns to "Estimated reach" once a product's
-// row rests on an audience figure.
+// ─── The value row, on every card and product slide ──────────────────────────
+// What this product gives back for its price (`reachFor`). A small "Up to" sits
+// over a figure that is a maximum and "From" over a cost that is a floor; the
+// row keeps that line for every figure so the numbers stay level. The heading
+// reads "Estimated reach" only when a figure rests on an assumption or an
+// estimate; a measured fact prints its source and keeps "At a glance".
 // Laid out by its own width (a container query), never the screen's: in a wide
 // box the figures stand side by side, each number over its label; in a narrow
 // one (a phone, a card two or three up) each figure is a row, the number beside
@@ -1967,11 +2024,23 @@ function ReachRow({ item, className = '' }) {
   const r = reachFor(item)
   if (!r) return null
   const pre = r.figs.some((f) => f.pre)
+  // a single figure stays one line at every width: the number beside its label
+  const one = r.figs.length === 1
   return (
     <figure className={`@container rounded-xl border border-brand-white/10 bg-brand-white/[0.03] px-4 py-3.5 ${className}`}>
       <p className="text-[10px] font-black uppercase tracking-[0.18em] text-brand-gray">{r.estimate ? 'Estimated reach' : 'At a glance'}</p>
-      <div className={`mt-2.5 grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 gap-y-2.5 @min-[22rem]:items-start @min-[22rem]:gap-3 ${REACH_COLS[r.figs.length]}`}>
-        {r.figs.map((f) => (
+      <div className={one
+        ? 'mt-2.5 grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3'
+        : `mt-2.5 grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 gap-y-2.5 @min-[22rem]:items-start @min-[22rem]:gap-3 ${REACH_COLS[r.figs.length]}`}>
+        {r.figs.map((f) => (one ? (
+          <p key={f.label} className="contents">
+            <span className="flex items-baseline gap-1.5 whitespace-nowrap">
+              {f.pre && <span className="text-[9.5px] font-bold uppercase tracking-[0.12em] leading-none text-brand-gray">{f.pre}</span>}
+              <span className="text-xl @min-[26rem]:text-2xl font-black leading-none tabular-nums text-brand-yellow">{f.value}</span>
+            </span>
+            <span className="text-[10.5px] @min-[26rem]:text-[11px] leading-snug text-brand-white/75">{f.label}</span>
+          </p>
+        ) : (
           <p key={f.label} className="contents @min-[22rem]:block @min-[22rem]:min-w-0">
             <span className="flex items-baseline gap-1.5 whitespace-nowrap @min-[22rem]:block">
               {pre && <span className={`${f.pre ? 'inline' : 'hidden'} @min-[22rem]:block @min-[22rem]:mb-1 text-[9.5px] font-bold uppercase tracking-[0.12em] leading-none text-brand-gray`}>{f.pre || '\u00a0'}</span>}
@@ -1979,9 +2048,9 @@ function ReachRow({ item, className = '' }) {
             </span>
             <span className="text-[10.5px] @min-[26rem]:text-[11px] leading-snug text-brand-white/75 @min-[22rem]:mt-1.5 @min-[22rem]:block">{f.label}</span>
           </p>
-        ))}
+        )))}
       </div>
-      {r.note && <figcaption className="mt-3 text-[10.5px] leading-snug text-brand-gray">{r.note}</figcaption>}
+      {r.note && <figcaption className="mt-2 text-[10.5px] leading-snug text-brand-gray">{r.note}</figcaption>}
     </figure>
   )
 }
@@ -2863,7 +2932,7 @@ function ProductSlide({ card, deck, goId }) {
         <AltLinks card={card} deck={deck} goId={goId} />
       </div>
       <div className={long ? 'lg:col-span-7' : 'lg:col-span-5'}>
-        <ReachRow item={item} className="mb-5" />
+        <ReachRow item={item} className="mb-4" />
         <SlideDeliverables items={items} cols={long} />
         <TermsList terms={terms} />
       </div>
@@ -2886,6 +2955,9 @@ function RouteSlide({ card, deck, goId }) {
   const commonTerms = routes[0].terms.filter((t) => routes.every((r) => r.terms.some((u) => sameTerm(t, u))))
   const lede = stripQuotes(routes[0].o.quote)
   const sharedLede = routes.every((r) => stripQuotes(r.o.quote) === lede) ? routes[0].o.quote : null
+  // the value row too: shown once, across both panels, when every route has the same
+  const reachKey = (o) => JSON.stringify(reachFor(o))
+  const sharedReach = routes.every((r) => reachKey(r.o) === reachKey(routes[0].o))
   const openId = deck.focusRoute || productId(card)
   // Little shared (no shared terms, at most three shared lines): the panels
   // take the full width, price and add button share a row, and the shared
@@ -2906,6 +2978,7 @@ function RouteSlide({ card, deck, goId }) {
       {sharedLede && <div className="mt-4 max-w-4xl [&>p]:mb-0"><Lede text={sharedLede} featured /></div>}
       <div className="mt-5 grid grid-cols-1 xl:grid-cols-12 gap-5 xl:gap-8 items-start">
         <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${side ? (narrowSide ? 'xl:col-span-9' : 'xl:col-span-8') : 'xl:col-span-12'}`}>
+          {sharedReach && <ReachRow item={routes[0].o} className="md:col-span-2" />}
           {routes.map(({ o, items, terms }) => {
             const label = routeLabel(card, o)
             const marked = deck.focusRoute === productId(o)
@@ -2925,7 +2998,7 @@ function RouteSlide({ card, deck, goId }) {
                   </div>
                 </div>
                 {!sharedLede && <Lede text={o.quote} />}
-                <ReachRow item={o} className="mb-4" />
+                {!sharedReach && <ReachRow item={o} className="mb-4" />}
                 <SlideDeliverables items={items.filter((l) => !common.includes(l))} heading="Only on this route" small />
                 <TermsList terms={terms.filter((t) => !commonTerms.some((c) => sameTerm(c, t)))} />
               </div>
