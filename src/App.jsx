@@ -803,17 +803,34 @@ const DIRECTORS = fig(roomShare('Director level and above'), 'Director level and
 const FOUNDERS = fig(roomShare('Founders and C-suite'), 'Founders and C-suite in the room')
 const ORGANISATIONS = fig(roomShare('Organisations'), 'Organisations registered for 2026')
 const TRADING = fig(ROOM_BLOC[0], 'Trading and liquidity, the largest bloc')
-const NEWSROOMS = fig(ROOM_PRESS.length, 'National and financial newsrooms registered')
+// the press, named as the proof band names it: two of the six, the rest counted
+const NEWSROOMS = fig(ROOM_PRESS.length, `Newsrooms: ${ROOM_PRESS[1]}, ${ROOM_PRESS[2]} and more`)
 const BILLING = fig('#1', 'Billing above every other partner')
-const inRoom = (roomFig) => () => row(['room'], roomFig)
-// A product every attendee sees (`most`: at most every attendee, the cloakroom
-// and the expo floor; `share`: half of them, a lanyard unit). Until the 2026
-// attendance is in: its own line's reach (`now`, "All" or "Half") and its room
-// figure. Then: the attendees, the room figure and the cost per attendee.
-const seenBy = (label, roomFig, { now, share = 1, most = false } = {}) => (i) => (ATTENDEES_2026
-  ? row(['attendance', 'room'], fig(fmtCount(ATTENDEES_2026 * share), label, most ? 'Up to' : undefined), roomFig,
-    perHead(i, ATTENDEES_2026 * share, 'Per attendee reached', most ? 'From' : undefined))
-  : row(['room'], now && fig(now, label), roomFig))
+// Coverage, read from the product's own lines: how much of the room, the night
+// or the stage carries the brand (All, Every, Half, Only, Both, Full). It is a
+// fact, so its row keeps "At a glance". Item counts (screens, baskets, risers,
+// passes) never become coverage.
+const PHOTOS = fig('Every', 'Official photo of the night, watermarked')
+const SCANS = fig('Every', 'Visitor you scan joins your leads')
+const LISTED = fig('Every', 'Listing reads "Presented by" your brand')
+const POWERED = fig('All', 'Session branding, "Powered by" you')
+const LOOP = fig('Every', 'Logo loop on the screens includes you')
+const OWNED = (what) => fig('Full', `Brand ownership of your ${what}`)
+const HUB_SEATS = (when) => fig('Every', `Hub seat carries your brand, ${when}`)
+const covered = (cover, roomFig) => () => row(['room'], cover, roomFig)
+// A product every attendee sees (`most`: at most every attendee, the cloakroom;
+// `share`: half of them, a lanyard unit). Until the 2026 attendance is in: its
+// coverage (`cover`, from its own line) and its room figure. Then the
+// attendees and the cost per attendee join it: a coverage that already counts
+// the attendees ("All · Attendees wear your logo") becomes that number and
+// keeps the room figure; any other keeps its place first, so the family's
+// first figures still differ.
+const seenBy = (label, roomFig, { cover, share = 1, most = false }) => (i) => {
+  if (!ATTENDEES_2026) return row(['room'], cover, roomFig)
+  const people = fig(fmtCount(ATTENDEES_2026 * share), label, most ? 'Up to' : undefined)
+  const cost = perHead(i, ATTENDEES_2026 * share, 'Per attendee reached', most ? 'From' : undefined)
+  return cover.label === label ? row(['attendance', 'room'], people, roomFig, cost) : row(['attendance'], cover, people, cost)
+}
 // a count as the product's own line gives it ("Table and 12 chairs", "Six
 // facilitated opt-in introductions"), so a changed bullet changes the row
 const WORD_COUNT = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12 }
@@ -821,49 +838,71 @@ const countIn = (item, re) => {
   const m = item.bullets.match(re)[1]
   return WORD_COUNT[m.toLowerCase()] || Number(m)
 }
-const stand = seenBy('Attendees on your floor, both days', TRADING, { most: true })
+// A stand: its position, in its own line's words, then the badge scanner its
+// lines carry, then the trading and liquidity bloc. With the 2026 attendance:
+// the position, up to every attendee on the floor and the cost per attendee.
+const stand = (position) => (i) => (ATTENDEES_2026
+  ? row(['attendance'], position || SCANS, fig(fmtCount(ATTENDEES_2026), 'Attendees on your floor, both days', 'Up to'),
+    perHead(i, ATTENDEES_2026, 'Per attendee reached', 'From'))
+  : row(['room'], position, SCANS, TRADING))
 const room = (i) => row(['meetings'],
-  fig(MEETINGS, 'Meetings at your table, both days', 'Up to'),
   fig(countIn(i, /Table and (\d+) chairs/), 'Seats at your private table'),
+  fig(MEETINGS, 'Meetings at your table, both days', 'Up to'),
   perHead(i, MEETINGS, 'Per meeting, fully booked', 'From'))
 const REACH = {
   1: (i) => (ATTENDEES_2026
     ? row(['attendance'], fig(fmtCount(ATTENDEES_2026), 'Attendees see your brand, both days'), BILLING, perHead(i, ATTENDEES_2026, 'Per attendee reached'))
     : row(['views', 'room'], BILLING, fig(SUMMIT_VIEWS, 'Views of the summit pages, 2026'), ORGANISATIONS)),
-  // the evenings, both routes alike: the room's seniority (a guest count waits
-  // for the 2026 actuals)
-  2: inRoom(DIRECTORS), 5: inRoom(DIRECTORS),
-  3: inRoom(DIRECTORS), 6: inRoom(DIRECTORS),
-  4: inRoom(DIRECTORS), 7: inRoom(DIRECTORS),
-  8: inRoom(FOUNDERS),
-  // the stages: a stage partner brands the stage and the summit; a speaker faces
-  // the room (the C-suite for a C-level presentation or a powered-by session)
-  10: inRoom(ORGANISATIONS), 17: inRoom(ORGANISATIONS), 18: inRoom(ORGANISATIONS), 24: inRoom(ORGANISATIONS),
-  11: inRoom(FOUNDERS), 19: inRoom(FOUNDERS), 25: inRoom(FOUNDERS),
-  15: inRoom(FOUNDERS), 21: inRoom(FOUNDERS), 27: inRoom(FOUNDERS),
-  13: inRoom(DIRECTORS), 20: inRoom(DIRECTORS), 26: inRoom(DIRECTORS),
-  16: inRoom(DIRECTORS), 22: inRoom(DIRECTORS), 28: inRoom(DIRECTORS),
-  14: inRoom(DIRECTORS),
+  // the evenings: an exclusive partner is the night's only brand; both routes
+  // watermark the night's official photographs. A guest count waits for the
+  // 2026 actuals.
+  2: () => row(['room'], fig('Only', 'Brand on the Day 1 evening'), PHOTOS, DIRECTORS), 5: covered(PHOTOS, DIRECTORS),
+  3: () => row(['room'], fig('Only', 'Brand on the Day 2 evening'), PHOTOS, FOUNDERS), 6: covered(PHOTOS, FOUNDERS),
+  4: () => row(['room'], fig('Only', 'Brand on the pre-registration evening'), PHOTOS, ORGANISATIONS), 7: covered(PHOTOS, ORGANISATIONS),
+  8: covered(fig('Every', 'Guest invited to a profile you agree'), FOUNDERS),
+  // the stages: a stage or hub partner, the days and seats its lines brand; a
+  // presenter owns the session; a custom session is "Presented by" you, a
+  // branded one "Powered by" you; a non-branded panel keeps the logo loop
+  10: covered(fig('Both', 'Days of Leadership Stage branding'), ORGANISATIONS),
+  14: covered(fig('Every', 'Seat in the main hall carries your brand'), DIRECTORS),
+  17: covered(HUB_SEATS('both days'), ORGANISATIONS),
+  18: covered(HUB_SEATS('on your day'), ORGANISATIONS),
+  24: covered(HUB_SEATS('Day 1'), ORGANISATIONS),
+  11: covered(OWNED('session'), FOUNDERS),
+  19: covered(OWNED('keynote'), FOUNDERS), 25: covered(OWNED('keynote'), FOUNDERS),
+  13: covered(LISTED, DIRECTORS), 20: covered(LISTED, DIRECTORS), 26: covered(LISTED, DIRECTORS),
+  15: covered(POWERED, FOUNDERS), 21: covered(POWERED, FOUNDERS), 27: covered(POWERED, FOUNDERS),
+  16: covered(LOOP, DIRECTORS), 22: covered(LOOP, DIRECTORS), 28: covered(LOOP, DIRECTORS),
   29: (i) => row(['room'], fig(countIn(i, /^(\d+) curated opt-in invite targets/m), 'Curated invitations to your targets'), FOUNDERS),
   30: (i) => {
     const intros = countIn(i, /^(\w+) facilitated opt-in introductions/m)
     return row(['room'], fig(intros, 'Curated introductions to your targets'), ORGANISATIONS, perHead(i, intros, 'Per introduction'))
   },
-  31: stand, 58: stand, 32: stand, 59: stand, 33: stand, 60: stand, 57: stand, 34: stand,
+  31: stand(fig('Landmark', 'Position in the gallery')), 58: stand(fig('Landmark', 'Position in the gallery')),
+  32: stand(fig('Premium', 'Position in the delegate planning zone')), 59: stand(fig('Premium', 'Position in the delegate planning zone')),
+  33: stand(fig('Top', 'Visibility in a premium gallery position')), 60: stand(fig('Top', 'Visibility in a premium gallery position')),
+  57: stand(fig('Double', 'The footprint of a cluster stand')),
+  34: stand(null),
   37: room, 38: room, 39: room, 40: room,
-  41: inRoom(DIRECTORS), 44: inRoom(FOUNDERS),
-  42: inRoom(ORGANISATIONS), 43: inRoom(ORGANISATIONS),
-  // 45, the livestream, has no row until NEXTPredict 2026 reports its viewers
-  46: inRoom(NEWSROOMS), 47: inRoom(NEWSROOMS),
-  48: inRoom(ORGANISATIONS),
-  49: seenBy('Attendees, from sign-up to check-in', ORGANISATIONS, { now: 'All' }),
-  50: seenBy('Attendees can use your cloakroom', ORGANISATIONS, { most: true }),
-  51: seenBy('Attendees check in facing your risers', ORGANISATIONS),
-  52: seenBy('Attendees wear your logo, both days', DIRECTORS, { now: 'All' }),
-  53: seenBy('Attendees wear your lanyard', FOUNDERS, { now: 'Half', share: 0.5 }),
-  54: seenBy('Attendees use your branded restrooms', ORGANISATIONS),
-  55: seenBy('Attendees carry your agenda QR code', ORGANISATIONS, { now: 'All' }),
-  56: seenBy('Attendees carry your Wi-Fi login', ORGANISATIONS, { now: 'All' }),
+  41: covered(fig('Both', 'Days of meeting and dining area branding'), DIRECTORS),
+  42: () => row(['room'], fig('All', 'Three Nourish Bars carry your brand'), fig('Every', 'Catering point serves your cups'), ORGANISATIONS),
+  43: covered(fig('Only', 'Brand on your bar and its credenzas'), ORGANISATIONS),
+  44: () => row(['room'], fig('Only', "Brand in the VIP speakers' lounge"), fig('Every', 'Breakfast and lunch at your station'), FOUNDERS),
+  // the livestream's viewers are not the room, so it takes no room figure
+  45: () => row([], fig('Every', 'Livestream viewer sees your logo')),
+  // the media zone's lines say who films there (the NEXT.io media team), not
+  // who else uses it, so it takes no press figure; the press lounge does
+  46: covered(fig('Every', 'Media zone interview, on your backdrop'), FOUNDERS),
+  47: covered(fig('Only', 'Brand in the press lounge'), NEWSROOMS),
+  48: covered(fig('Both', 'Plays in breaks and on the gallery wall'), ORGANISATIONS),
+  49: seenBy('Attendees, from sign-up to check-in', ORGANISATIONS, { cover: fig('All', 'Attendees, from sign-up to check-in') }),
+  50: seenBy('Attendees can use your cloakroom', ORGANISATIONS, { most: true, cover: fig('Every', 'Coat checked in and out at your counter') }),
+  51: seenBy('Attendees check in facing your risers', ORGANISATIONS, { cover: fig('Every', 'Check-in, with your risers behind it') }),
+  52: seenBy('Attendees wear your logo, both days', DIRECTORS, { cover: fig('All', 'Attendees wear your logo, both days') }),
+  53: seenBy('Attendees wear your lanyard', FOUNDERS, { share: 0.5, cover: fig('Half', 'Attendees wear your lanyard') }),
+  54: seenBy('Attendees use your branded restrooms', ORGANISATIONS, { cover: fig('All', 'Venue restrooms carry your brand') }),
+  55: seenBy('Attendees carry your agenda QR code', ORGANISATIONS, { cover: fig('All', 'Attendees carry your agenda QR code') }),
+  56: seenBy('Attendees carry your Wi-Fi login', ORGANISATIONS, { cover: fig('All', 'Badges carry your network and password') }),
 }
 // The row for one product, with the sentences it rests on. A product with no
 // honest figure has no row.
@@ -2027,11 +2066,11 @@ function ReachRow({ item, className = '' }) {
   // a single figure stays one line at every width: the number beside its label
   const one = r.figs.length === 1
   return (
-    <figure className={`@container rounded-xl border border-brand-white/10 bg-brand-white/[0.03] px-4 py-3.5 ${className}`}>
+    <figure className={`@container rounded-xl border border-brand-white/10 bg-brand-white/[0.03] px-4 py-3 ${className}`}>
       <p className="text-[10px] font-black uppercase tracking-[0.18em] text-brand-gray">{r.estimate ? 'Estimated reach' : 'At a glance'}</p>
       <div className={one
-        ? 'mt-2.5 grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3'
-        : `mt-2.5 grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 gap-y-2.5 @min-[22rem]:items-start @min-[22rem]:gap-3 ${REACH_COLS[r.figs.length]}`}>
+        ? 'mt-2 grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3'
+        : `mt-2 grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 gap-y-2.5 @min-[22rem]:items-start @min-[22rem]:gap-3 ${REACH_COLS[r.figs.length]}`}>
         {r.figs.map((f) => (one ? (
           <p key={f.label} className="contents">
             <span className="flex items-baseline gap-1.5 whitespace-nowrap">
@@ -2046,11 +2085,11 @@ function ReachRow({ item, className = '' }) {
               {pre && <span className={`${f.pre ? 'inline' : 'hidden'} @min-[22rem]:block @min-[22rem]:mb-1 text-[9.5px] font-bold uppercase tracking-[0.12em] leading-none text-brand-gray`}>{f.pre || '\u00a0'}</span>}
               <span className="text-xl @min-[26rem]:text-2xl font-black leading-none tabular-nums text-brand-yellow @min-[22rem]:block">{f.value}</span>
             </span>
-            <span className="text-[10.5px] @min-[26rem]:text-[11px] leading-snug text-brand-white/75 @min-[22rem]:mt-1.5 @min-[22rem]:block">{f.label}</span>
+            <span className="text-[10.5px] @min-[26rem]:text-[11px] leading-snug text-brand-white/75 @min-[22rem]:mt-1 @min-[22rem]:block">{f.label}</span>
           </p>
         )))}
       </div>
-      {r.note && <figcaption className="mt-2 text-[10.5px] leading-snug text-brand-gray">{r.note}</figcaption>}
+      {r.note && <figcaption className="mt-1.5 text-[10.5px] leading-snug text-brand-gray">{r.note}</figcaption>}
     </figure>
   )
 }

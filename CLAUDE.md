@@ -348,61 +348,77 @@ numbers across all products, that needs to be the thinking. They need to be as
 strong as possible, focused and centred around ROI, brand visibility, business
 leads, association with the biggest brands, and networking and curated intros
 if it's in the package." This replaces the 28 Sep "At a glance" rows, which
-counted minutes, days, passes, stand sizes and screens.
+counted minutes, days, passes, stand sizes and screens. A first pass the same
+day gave 35 cards a lone room figure and whole families the same row (every
+stand 28%, every evening 61%), the repetition Stuart removed on 28 Sep ("it's
+repetitive"); the second pass leads each row with the product's own coverage.
 
 - **What a row is.** `ReachRow` answers one question, what do I get back for
   this money, in at most three figures, each through one of five lenses:
-  reach, ROI, leads, brands, networking and introductions. Availability,
-  durations, days, passes, stand sizes and item counts stay in "What's
-  included", where every line still is. The row sits on every card (the
-  route on screen), every product slide, the two-route slide (once across
-  both panels when the routes share it, in each panel when they differ) and
-  both PDFs (`printGlance`; the rate card prints a shared route row once,
-  under the tiles).
-- **Order.** The product's reason to buy first (introductions, meetings, the
-  room for speaking, who sees the brand), then its introductions or leads,
-  then brands, then second channels; a cost per figure always goes last. It
-  divides the product's own price by a figure in the same row, rounded to
-  the euro, with "From" when the divisor is a maximum.
-- **The figures, and only these** (`REACH` in `src/App.jsx`):
-  - the 2026 room, one figure per product, with `ROOM_LABEL` as the source
-    line: 61% director level and above (the evenings, the badge, the meeting
-    area, custom sessions, non-branded panels, the chair partner); 37%
-    founders and C-suite (the C-Level Event, presenters, powered-by
-    sessions, the workshop, the speakers' lounge, the lanyard); 262
-    organisations (the Headline, the stage and hub partners, the
-    introduction package, the Nourish Bars, the ad video, registration, the
-    cloakroom, the stairs, the restrooms, the guide, the Wi-Fi); 28% trading
-    and liquidity (every stand); 6 national and financial newsrooms (the
-    press lounge, the media zone; never named in the row);
-  - 140k+ views of the summit pages (GA4, the NEXTPredict property, 141,445
-    views of nextpredict.io's summit pages from 1 Jan to 29 Sep 2026), on the
-    Headline only, whose top billing on the site is a lead deliverable. A
-    partners-section logo never carries it, and GA4 has no separate agenda
-    page, so a session title on the agenda does not either;
-  - the product's own lines, read from its bullets (`countIn`): #1 billing
-    above every other partner (the Headline), 5 curated invitations (the
-    workshop), 6 curated introductions and €2,500 per introduction (the
-    package, €15,000 / 6), the seats at your private table; "All" where the
-    product's own line reaches every attendee (registration, the badge, the
-    guide's and the Wi-Fi's lines on the badge) and "Half" for a lanyard unit;
-  - `MEETING`, an assumption: 30-minute meetings, 8 hours a day, on both
-    event days, so up to 32 per room and "From €1,938 · Per meeting, fully
-    booked" on the 12-person room.
-- **Headings.** Facts (the room, GA4, the product's own lines) keep "At a
-  glance" and print their source line; only an assumption (`MEETING`) or an
-  estimate from the attendance turns a row to "Estimated reach"
-  (`REACH_ESTIMATES`, beside `REACH_FACTS`). "Up to" marks a maximum, "From"
-  a cost whose divisor is one.
+  reach, ROI, leads, brands, networking and introductions. Aim for two on
+  every card; one only where nothing else is honest. Availability,
+  durations, passes, stand sizes and counts of items (screens, baskets,
+  risers, credenzas) stay in "What's included", where every line still is.
+  The row sits on every card (the route on screen), every product slide, the
+  two-route slide (once across both panels when the routes share it, in each
+  panel when they differ) and both PDFs (`printGlance`; the rate card prints
+  a shared route row once, under the tiles).
+- **Coverage is reach.** While no audience count exists, the product's own
+  coverage, read from its own lines, is the visibility figure: All, Every,
+  Half, Only, Both, Full, #1. It says how much of the room, the night, the
+  stage or the day carries the brand: "Every · Seat in the main hall carries
+  your brand" (the chair partner), "All · Venue restrooms carry your brand",
+  "Only · Brand on the Day 1 evening" (an exclusive evening), "Every · Hub
+  seat carries your brand, both days" (a hub partner's delegate chairs),
+  "Every · Visitor you scan joins your leads" (the stands' badge scanner),
+  "Landmark · Position in the gallery" (a stand's position, in its own line's
+  words). Each row leads with its coverage where the lines state one; the
+  Speakers' Lounge and the Media Zone say only what their lines say about who
+  uses them (the VIP speakers; the interviews the NEXT.io media team films).
+- **Then the matched room figure**, one per product, with `ROOM_LABEL` as the
+  source line: 61% director level and above, 37% founders and C-suite, 262
+  organisations, 28% trading and liquidity (every stand), or the press
+  (`NEWSROOMS`: "6 · Newsrooms: Bloomberg, Reuters and more", two of
+  `ROOM_PRESS` named, as the proof band names them; the press lounge only).
+  The three evenings take three different ones (Day 1 61%, Day 2 37%, the
+  pre-registration evening 262). The livestream takes none: its viewers are
+  not the room.
+- **No family shows the same row on every card, and the first figure
+  differs product to product** (a script check on 29 Sep 2026: every family
+  passes). The evenings' labels name their night; the meeting rooms lead
+  with their seats; the stands with their position.
+- **The other figures, and only these:** 140k+ views of the summit pages
+  (GA4, the NEXTPredict property, 141,445 views of nextpredict.io's summit
+  pages from 1 Jan to 29 Sep 2026), on the Headline only, whose top billing
+  on the site is a lead deliverable (a partners-section logo never carries
+  it, and GA4 has no separate agenda page, so a session title does not
+  either); the product's own counts, read from its bullets (`countIn`): #1
+  billing above every other partner, 5 curated invitations (the workshop), 6
+  curated introductions and €2,500 per introduction (€15,000 / 6), the seats
+  at your private table; and `MEETING`, an assumption: 30-minute meetings, 8
+  hours a day, on both event days, so up to 32 per room and "From €1,938 ·
+  Per meeting, fully booked" on the 12-person room.
+- **Order.** Coverage or the product's reason to buy first (introductions,
+  seats, the room for speaking, who sees the brand), then its introductions
+  or leads, then the room figure, then second channels; a cost per figure
+  always goes last. It divides the product's own price by a figure in the
+  same row, rounded to the euro, with "From" when the divisor is a maximum.
+- **Headings.** Coverage, the room, GA4 and the product's own counts are
+  facts: they keep "At a glance" and print their source line when they have
+  one. Only an assumption (`MEETING`) or an estimate from the attendance
+  turns a row to "Estimated reach" (`REACH_ESTIMATES`, beside
+  `REACH_FACTS`). "Up to" marks a maximum, "From" a cost whose divisor is
+  one.
 - **Never:** New York's or Valletta's audience; NEXT.io's LinkedIn or any
   other NEXT.io audience; NEXTPredict's own LinkedIn following (about 1,200,
   it would weaken a row); a headcount from the snapshot; any iGaming,
   gambling or casino word.
 - **Labels** are written from the buyer's side, present tense, at most 40
-  characters (one exception: "National and financial newsrooms registered",
-  43, the wording asked for, alone in its row), with no em dashes. Values
-  never wrap: measured 320 to 1440 on the page and on every slide. A row with
-  one figure sets it on one line, the number beside its label.
+  characters, with no em dashes. The Wi-Fi row reads "All · Badges carry
+  your network and password", New York's and Valletta's wording. Values
+  never wrap or leave their column: measured 320 to 1440 on the page and on
+  every slide. A row with one figure sets it on one line, the number beside
+  its label.
 - **Layout.** `ReachRow` is laid out by its own width, never the screen's
   (`@container` on the figure): from 22rem two or three figures stand side
   by side, each number over its label, and from 26rem the numbers go up a
@@ -413,23 +429,26 @@ counted minutes, days, passes, stand sizes and screens.
   the 2026 actuals (22 to 23 Oct 2026) are in, set it to the real count: the
   Headline becomes [attendees] [#1 billing] [€ per attendee]; registration,
   the badge, the guide, the Wi-Fi, the restrooms and the stairs (behind
-  registration) show everyone who attends, a lanyard unit half of them, and
-  the cloakroom and every stand "Up to" everyone ("From" their cost), each
-  with € per attendee, under "Estimated reach" with the attendance line.
-  Tried with 1,000 in a scratch build on 29 Sep 2026; shipped null. Never
-  borrow New York's or Valletta's audience in the meantime.
+  registration) show everyone who attends, a lanyard unit half of them, the
+  cloakroom and every stand "Up to" everyone ("From" their cost), each with
+  € per attendee, under "Estimated reach" with the attendance line. A
+  coverage that already counts the attendees ("All · Attendees wear your
+  logo") becomes the number; any other keeps its place first, so the first
+  figures still differ. Tried with 1,000 in a scratch build on 29 Sep 2026;
+  shipped null. Never borrow New York's or Valletta's audience meanwhile.
 - **Numbers that would add figures** (none on file yet): the 2026
   attendance (above); guests at each NEXTworking evening and at the C-Level
   Event (guests, € per guest); seats per stage once the 2027 venue and plan
   are confirmed (seats in the room, € per seat, for every speaking product
-  and the chair partner); NEXTPredict 2026 livestream viewers (the Livestream
-  Sponsor has no row until then); a speakers' count (the speakers' lounge);
-  badge scans per stand at NEXTPredict 2026 (the stands); accredited
-  journalists at NEXTPredict 2026 (the press lounge). Opted-in contacts only
-  once `LEAD_DATA.on` is true.
-- **Counts on 29 Sep 2026:** 47 of 48 cards carry a row (43 "At a glance", 4
-  "Estimated reach"): 6 with three figures, 6 with two, 35 with one. The deck
-  at 1280x800: 23 of 67 slides scroll (25 before), none sideways.
+  and the chair partner); NEXTPredict 2026 livestream viewers (the
+  Livestream Sponsor's second figure); a speakers' count (the speakers'
+  lounge); badge scans per stand at NEXTPredict 2026 (the stands);
+  accredited journalists at NEXTPredict 2026 (the press lounge). Opted-in
+  contacts only once `LEAD_DATA.on` is true.
+- **Counts on 29 Sep 2026:** all 48 cards carry a row (44 "At a glance", 4
+  "Estimated reach"): 15 with three figures, 32 with two, 1 with one (the
+  Livestream Sponsor). The deck at 1280x800: 25 of 67 slides scroll (25
+  before the rows, 23 after the first pass), none sideways.
 
 ## Decisions after the product-list comparison (Stuart, 28 Sep 2026)
 
@@ -591,9 +610,9 @@ Lower Manhattan.
   steps: 67 slides, 68 with a selection. A way or a goal chip gives a lens
   deck (cover, its families, its cards, next steps). Measured with Inter
   loaded (scrollHeight over clientHeight): 25 of 67 slides scroll at
-  1280x800 (26 of 66 before; 23 of 67 since the value rows), none sideways; at 390 every long slide scrolls
-  vertically and none sideways. Long product slides set their deliverables
-  in two columns.
+  1280x800 (26 of 66 before; 25 again with the value rows), none sideways;
+  at 390 every long slide scrolls vertically and none sideways. Long product
+  slides set their deliverables in two columns.
 - **Motion:** a slow Ken Burns on card photos while on screen
   (`data-inview`), the logo marquee; both still under reduced motion, where
   the marquee wraps.
