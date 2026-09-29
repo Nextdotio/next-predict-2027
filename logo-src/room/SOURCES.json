@@ -1,0 +1,268 @@
+{
+ "partners": [
+  {
+   "key": "mrkts",
+   "name": "mrkts",
+   "file": "mrkts.png",
+   "ratio": 7.059,
+   "source": "https://nextpredict.io/wp-content/uploads/2026/04/mrkts_logo_transparent_inverted.png"
+  },
+  {
+   "key": "morgan-stanley",
+   "name": "Morgan Stanley",
+   "file": "morgan-stanley.png",
+   "ratio": 6.923,
+   "source": "https://nextpredict.io/wp-content/uploads/2026/04/MS_Standard_Logo_2022_White.png"
+  },
+  {
+   "key": "rolr",
+   "name": "Rolr",
+   "file": "rolr.png",
+   "ratio": 3.194,
+   "source": "https://nextpredict.io/wp-content/uploads/2026/04/HR-Resized-.png"
+  },
+  {
+   "key": "edge-markets",
+   "name": "EDGE Markets",
+   "file": "edge-markets.png",
+   "ratio": 2.808,
+   "source": "https://nextpredict.io/wp-content/uploads/2026/04/EDGE-Markets-Bicolor-Logotype-on-Light-Background.png"
+  },
+  {
+   "key": "radar",
+   "name": "Radar",
+   "file": "radar.png",
+   "ratio": 4.225,
+   "source": "https://nextpredict.io/wp-content/uploads/2026/04/Radar_logo-RGB_black-3.png"
+  },
+  {
+   "key": "betconstruct-ai",
+   "name": "BetConstruct AI",
+   "file": "betconstruct-ai.png",
+   "ratio": 11.613,
+   "source": "https://nextpredict.io/wp-content/uploads/2026/09/Untitled-design-8.jpg"
+  }
+ ],
+ "press": [
+  {
+   "key": "wsj",
+   "name": "The Wall Street Journal",
+   "file": "wsj.png",
+   "ratio": 11.613,
+   "source": "https://commons.wikimedia.org/wiki/File:The_Wall_Street_Journal_Logo.svg"
+  },
+  {
+   "key": "bloomberg",
+   "name": "Bloomberg",
+   "file": "bloomberg.png",
+   "ratio": 5.433,
+   "source": "https://commons.wikimedia.org/wiki/File:Bloomberg_logo-2556aaa618.svg"
+  },
+  {
+   "key": "reuters",
+   "name": "Reuters",
+   "file": "reuters.png",
+   "ratio": 3.65,
+   "source": "https://commons.wikimedia.org/wiki/File:Reuters_logo_2024.svg"
+  },
+  {
+   "key": "cnbc",
+   "name": "CNBC",
+   "file": "cnbc.png",
+   "ratio": 1.267,
+   "source": "https://commons.wikimedia.org/wiki/File:CNBC_logo.svg"
+  },
+  {
+   "key": "nyt",
+   "name": "The New York Times",
+   "file": "nyt.png",
+   "ratio": 6.526,
+   "source": "https://static01.nyt.com/images/misc/NYT_logo_rss_250x40.png"
+  },
+  {
+   "key": "fortune",
+   "name": "Fortune",
+   "file": "fortune.png",
+   "ratio": 4.35,
+   "source": "https://commons.wikimedia.org/wiki/File:Fortune_magazine_logo_2016.svg"
+  }
+ ],
+ "registered": [
+  {
+   "key": "cboe",
+   "name": "Cboe Global Markets",
+   "file": "cboe.png",
+   "ratio": 2.908,
+   "source": "https://commons.wikimedia.org/wiki/File:Cboe_Global_Markets_Logo.svg"
+  },
+  {
+   "key": "cme-group",
+   "name": "CME Group",
+   "file": "cme-group.png",
+   "ratio": 6.606,
+   "source": "https://commons.wikimedia.org/wiki/File:CME_Group_Logo.svg"
+  },
+  {
+   "key": "nasdaq",
+   "name": "Nasdaq",
+   "file": "nasdaq.png",
+   "ratio": 3.508,
+   "source": "https://commons.wikimedia.org/wiki/File:NASDAQ_Logo.svg"
+  },
+  {
+   "key": "interactive-brokers",
+   "name": "Interactive Brokers",
+   "file": "interactive-brokers.png",
+   "ratio": 6.792,
+   "source": "https://commons.wikimedia.org/wiki/File:Interactive_Brokers_Logo_(2014).svg"
+  },
+  {
+   "key": "goldman-sachs",
+   "name": "Goldman Sachs",
+   "file": "goldman-sachs.png",
+   "ratio": 2.308,
+   "source": "https://commons.wikimedia.org/wiki/File:Goldman_Sachs_2022_Black.svg"
+  },
+  {
+   "key": "jump-trading",
+   "name": "Jump Trading",
+   "file": "jump-trading.png",
+   "ratio": 1.2,
+   "source": "https://commons.wikimedia.org/wiki/File:Jump_Trading_logo.svg"
+  },
+  {
+   "key": "susquehanna",
+   "name": "Susquehanna",
+   "file": "susquehanna.png",
+   "ratio": 11.429,
+   "source": "https://commons.wikimedia.org/wiki/File:Susquehanna_International_Group_Logo.png"
+  },
+  {
+   "key": "citi",
+   "name": "Citi",
+   "file": "citi.png",
+   "ratio": 1.733,
+   "source": "https://commons.wikimedia.org/wiki/File:Citi_logo_March_2023.svg"
+  },
+  {
+   "key": "kalshi",
+   "name": "Kalshi",
+   "file": "kalshi.png",
+   "ratio": 3.417,
+   "source": "https://commons.wikimedia.org/wiki/File:Kalshi-logo-2026.svg"
+  },
+  {
+   "key": "drw",
+   "name": "DRW",
+   "file": "drw.png",
+   "ratio": 3.033,
+   "source": "https://commons.wikimedia.org/wiki/File:DRW_Holdings.png"
+  },
+  {
+   "key": "millennium",
+   "name": "Millennium",
+   "file": "millennium.png",
+   "ratio": 7.059,
+   "source": "https://www.mlp.com/wp-content/uploads/2024/03/logo-mlp.png"
+  },
+  {
+   "key": "jefferies",
+   "name": "Jefferies",
+   "file": "jefferies.png",
+   "ratio": 4.667,
+   "source": "https://commons.wikimedia.org/wiki/File:Jefferies_logo.svg"
+  },
+  {
+   "key": "sgx",
+   "name": "SGX Group",
+   "file": "sgx.png",
+   "ratio": 5.475,
+   "source": "https://commons.wikimedia.org/wiki/File:SGX_gradient_logo_(PNG).png"
+  },
+  {
+   "key": "macquarie",
+   "name": "Macquarie",
+   "file": "macquarie.png",
+   "ratio": 5.65,
+   "source": "https://www.macquarie.com/assets/macq/site-wide-assets/common-icons/macquarie-logo.svg"
+  },
+  {
+   "key": "aqr",
+   "name": "AQR",
+   "file": "aqr.png",
+   "ratio": 1.0,
+   "source": "https://commons.wikimedia.org/wiki/File:AQR_Capital_Management_Logo.png"
+  },
+  {
+   "key": "stripe",
+   "name": "Stripe",
+   "file": "stripe.png",
+   "ratio": 2.4,
+   "source": "https://commons.wikimedia.org/wiki/File:Stripe_Logo,_revised_2016.svg"
+  },
+  {
+   "key": "plaid",
+   "name": "Plaid",
+   "file": "plaid.png",
+   "ratio": 2.633,
+   "source": "https://commons.wikimedia.org/wiki/File:Plaid_logo.svg"
+  },
+  {
+   "key": "fiserv",
+   "name": "Fiserv",
+   "file": "fiserv.png",
+   "ratio": 1.992,
+   "source": "https://commons.wikimedia.org/wiki/File:Fiserv_logo.svg"
+  },
+  {
+   "key": "transunion",
+   "name": "TransUnion",
+   "file": "transunion.png",
+   "ratio": 3.775,
+   "source": "https://commons.wikimedia.org/wiki/File:TransUnion_logo.svg"
+  },
+  {
+   "key": "business-insider",
+   "name": "Business Insider",
+   "file": "business-insider.png",
+   "ratio": 11.429,
+   "source": "https://commons.wikimedia.org/wiki/File:Business_Insider_2023_logo.svg"
+  },
+  {
+   "key": "coindesk",
+   "name": "CoinDesk",
+   "file": "coindesk.png",
+   "ratio": 5.25,
+   "source": "https://www.coindesk.com/ (the header wordmark; its CSS-variable fills set to black so it draws outside the page, nothing else changed)"
+  },
+  {
+   "key": "yahoo-sports",
+   "name": "Yahoo Sports",
+   "file": "yahoo-sports.png",
+   "ratio": 6.792,
+   "source": "https://commons.wikimedia.org/wiki/File:Yahoo_Sports_New_Logo.png"
+  },
+  {
+   "key": "law360",
+   "name": "Law360",
+   "file": "law360.png",
+   "ratio": 4.017,
+   "source": "https://static.law360news.com/images/law360-logo-navy-2023.png"
+  },
+  {
+   "key": "fanduel",
+   "name": "FanDuel",
+   "file": "fanduel.png",
+   "ratio": 5.692,
+   "source": "next-2027/logo-src/operators/fanduel.svg"
+  },
+  {
+   "key": "draftkings",
+   "name": "DraftKings",
+   "file": "draftkings.png",
+   "ratio": 1.975,
+   "source": "next-2027/logo-src/operators/DraftKings.png"
+  }
+ ],
+ "partner_page": "https://nextpredict.io/summits/the-worlds-prediction-markets-summit/"
+}
