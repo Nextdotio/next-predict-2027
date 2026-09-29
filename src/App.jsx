@@ -238,6 +238,7 @@ function downloadProposalPDF(cart, rebooking) {
     <p style="font-size:11px;color:#777;margin:-20px 0 32px 0;line-height:1.5">
       Your Partner Recognition Level is determined by the combined total of the ${cart.length} product${cart.length === 1 ? '' : 's'} listed below. It carries no additional charge and adds no further products or activations. Eligible spend covers NEXTPredict 2027 only.
     </p>
+    ${planLeadLine(total) ? `<div class="label">Lead data</div><p style="font-size:14px;font-weight:700;margin-bottom:4px">${escHtml(planLeadLine(total))}.</p><p style="font-size:11px;color:#777;margin-bottom:32px;line-height:1.5">${escHtml(leadDataRule())}</p>` : ''}
     <div class="label">Selected Packages</div>
     <table>
       <thead><tr><th>Package &amp; Deliverables</th><th style="text-align:right">Investment</th></tr></thead>
@@ -342,6 +343,7 @@ function downloadRateCardPDF() {
   </div>
   <section><h2>Who is in the room</h2>${roomHtml()}</section>
   <section><h2>Partner NPS, NEXT Summits 2026</h2>${proofHtml()}<p class="psrc">${escHtml(NPS_SOURCE)}</p></section>
+  ${leadDataRule() ? `<section><h2>Lead data</h2><p style="font-size:12.5px;color:#333">${escHtml(leadDataRule())}</p></section>` : ''}
   ${body}
   <div class="foot">All prices exclude VAT. Availability subject to change without notice. Prices are all-in where stated.<br>
   Exclusive and shared routes over the same physical inventory are alternatives, never sold together.<br>
@@ -988,31 +990,55 @@ const CARD_VISUAL = {
 }
 const visualOf = (card) => CARD_VISUAL[card.options[0].id] || null
 
-// ─── Lead data: one rule, switched off ──────────────────────────────────────
-// Stuart, 29 Sep 2026, for every summit card: above a spend threshold a partner
-// gets opted-in scan data, below it the lead add-on; exhibitors get their own
-// booth scans; networking events can share a selection of opted-in guests;
-// never the whole database (Pierre: NEXT keeps control of its data); the size
-// of the selection matches the package. The threshold and the contact numbers
-// are not decided yet (they go to Stuart and Pierre first), so the slot is
-// built and OFF: while `on` is false no card, slide or PDF shows a lead-data
-// line, and it stays silent until the numbers are filled in too. To publish,
-// set the numbers, then `on: true`.
+// ─── Lead data: one rule on total spend, switched off ───────────────────────
+// Stuart, 29 Sep 2026: the opted-in selection follows the partner's TOTAL
+// spend (the plan total the recognition level reads), never one product's
+// price: from €30,000 up to 50 opted-in contacts, from €60,000 up to 100, from
+// €100,000 up to 150. Stands keep their own booth scans; networking evenings
+// share a selection of opted-in guests; below €30,000 nothing (NEXTPredict
+// sells no lead add-on); never the full attendee list (Pierre: NEXT keeps
+// control of its data). OFF until Pierre confirms the numbers in writing:
+// while `on` is false nothing shows on the page, the deck or either PDF.
+// Switched on, the rule line opens the rate card and the rate-card PDF, a plan
+// that reaches a tier says so in the selection, the ROI calculator, the plan
+// slide and the proposal, and the stand and evening cards carry their own
+// line. No card shows a contact number.
 const LEAD_DATA = {
   on: false,
-  threshold: null,        // EUR spend from which a partner receives opted-in scan data
-  contacts: [],           // [[minimum spend, up to N contacts], ...], highest first
+  tiers: [[100000, 150], [60000, 100], [30000, 50]], // [minimum total spend in EUR, up to N opted-in contacts], highest first
   exhibitors: 'Your own booth scans',
   networking: 'A selection of opted-in guests',
-  addOn: 'Lead add-on available',
 }
+const leadDataLive = () => LEAD_DATA.on && LEAD_DATA.tiers.length > 0
+// the one rule line
+function leadDataRule() {
+  if (!leadDataLive()) return null
+  const steps = [...LEAD_DATA.tiers].reverse().map(([min, n], k) => `up to ${n}${k ? '' : ' opted-in contacts'} from ${fmtPrice(min)}`)
+  const list = steps.length > 1 ? `${steps.slice(0, -1).join(', ')} and ${steps[steps.length - 1]}` : steps[0]
+  return `Lead data follows your total spend: ${list}, never the full attendee list. Stands keep their own booth scans, and networking evenings share a selection of opted-in guests.`
+}
+// the plan's own line, once its total reaches a tier
+function planLeadLine(total) {
+  if (!leadDataLive()) return null
+  const tier = LEAD_DATA.tiers.find(([min]) => total >= min)
+  return tier ? `Your plan includes up to ${tier[1]} opted-in contacts` : null
+}
+// a card's own line: only the stands and the evenings carry one
 function leadDataLine(item) {
-  if (!LEAD_DATA.on || !LEAD_DATA.threshold || !LEAD_DATA.contacts.length) return null
+  if (!leadDataLive()) return null
   if (item.cat === 'Exhibition') return LEAD_DATA.exhibitors
   if (item.cat === 'NEXTworking Evening Events') return LEAD_DATA.networking
-  if (item.poa || item.price < LEAD_DATA.threshold) return LEAD_DATA.addOn
-  const tier = LEAD_DATA.contacts.find(([min]) => item.price >= min)
-  return tier ? `Opted-in scan data, up to ${tier[1]} contacts` : null
+  return null
+}
+// the plan line as the page sets it: under the level, with the scan mark
+function PlanLeadLine({ total, className = '' }) {
+  const line = planLeadLine(total)
+  if (!line) return null
+  return (
+    <p className={`flex items-start gap-2 text-sm font-semibold text-brand-white/90 ${className}`}>
+      <ScanLine className="mt-0.5 h-4 w-4 shrink-0 text-brand-yellow" aria-hidden /> <span>{line}</span>
+    </p>
+  )
 }
 
 // ─── Anchors ────────────────────────────────────────────────────────────────
@@ -2374,6 +2400,7 @@ function RoiCalculator({ cart, onRemove, rebooking }) {
                   </div>
                 ))}
               </div>
+              {has && <PlanLeadLine total={eff} className="mt-5" />}
             </div>
 
             <a href={buildMailto(cart, rebooking)}
@@ -2475,6 +2502,7 @@ function CalculatorPanel({ cart, onRemove, rebooking, setRebooking, open, setOpe
             <div className="border-t border-brand-white/10 pt-4 space-y-1 mb-6">
               <div className="flex justify-between text-sm text-brand-gray"><span>Recognition level</span><span className={`font-black uppercase ${tier.color}`}>{tier.name} Partner</span></div>
               {next && <div className="flex justify-between text-xs text-brand-gray/70"><span>Next level</span><span>{fmtPrice(next.min - total)} to {next.name}</span></div>}
+              {cart.length > 0 && <PlanLeadLine total={total} className="pt-1 text-xs" />}
               <div className="flex justify-between text-lg font-black text-brand-white pt-2"><span>Total</span><span className="text-brand-yellow tabular-nums">{fmtPrice(total)}</span></div>
             </div>
             <div className="space-y-3">
@@ -2976,6 +3004,7 @@ function PlanSlide({ deck }) {
           {next && <span className="text-brand-gray"> · {fmtPrice(next.min - total)} to {next.name}</span>}
         </p>
         <div className="mt-4 rounded-xl border border-brand-white/10 bg-brand-white/[0.03] py-2"><TierProgress total={total} cart={cart} /></div>
+        <PlanLeadLine total={total} className="mt-3" />
         <p className="mt-3 text-xs text-brand-gray">
           {rebooking ? <span className="font-semibold uppercase tracking-wide text-brand-yellow/80">15% rebooking rate applied · </span> : null}
           Prices in EUR, excluding VAT
@@ -3319,6 +3348,11 @@ export default function App() {
           <div className="max-w-7xl mx-auto px-4 sm:px-8">
             <SectionHead title="Partnership" accent="Rate Card"
               lede="Published prices in EUR, excluding VAT, all-in where stated. Where the same space is offered two ways, both routes sit on one card and you book one or the other.">
+              {leadDataRule() && (
+                <p className="mt-4 mx-auto max-w-3xl text-sm leading-relaxed text-brand-white/85">
+                  <ScanLine className="mr-1.5 -mt-0.5 inline h-4 w-4 text-brand-yellow" aria-hidden />{leadDataRule()}
+                </p>
+              )}
               <button type="button" onClick={downloadRateCardPDF}
                 className="mt-6 inline-flex items-center gap-2 min-h-11 px-6 rounded-full border border-brand-yellow/50 text-brand-yellow font-bold text-xs sm:text-sm uppercase tracking-widest hover:bg-brand-yellow/10 transition-colors">
                 <Download className="w-4 h-4" aria-hidden /> Download Full Rate Card

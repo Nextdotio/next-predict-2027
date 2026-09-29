@@ -248,20 +248,48 @@
    "file": "law360.png",
    "ratio": 4.017,
    "source": "https://static.law360news.com/images/law360-logo-navy-2023.png"
-  },
+  }
+ ],
+ "excluded": [
   {
    "key": "fanduel",
    "name": "FanDuel",
-   "file": "fanduel.png",
-   "ratio": 5.692,
-   "source": "next-2027/logo-src/operators/fanduel.svg"
+   "reason": "sportsbook; the snapshot also files it under Trading & Liquidity. No sportsbook or casino brand on any NEXTPredict wall, even where the snapshot files it under trading (Stuart, 29 Sep 2026)"
   },
   {
    "key": "draftkings",
    "name": "DraftKings",
-   "file": "draftkings.png",
-   "ratio": 1.975,
-   "source": "next-2027/logo-src/operators/DraftKings.png"
+   "reason": "sportsbook; the snapshot also files it under Trading & Liquidity. No sportsbook or casino brand on any NEXTPredict wall, even where the snapshot files it under trading (Stuart, 29 Sep 2026)"
+  },
+  {
+   "key": "fanatics",
+   "name": "Fanatics",
+   "reason": "sportsbook. No sportsbook or casino brand on any NEXTPredict wall, even where the snapshot files it under trading (Stuart, 29 Sep 2026)"
+  },
+  {
+   "key": "betmgm",
+   "name": "BetMGM",
+   "reason": "sportsbook and casino. No sportsbook or casino brand on any NEXTPredict wall, even where the snapshot files it under trading (Stuart, 29 Sep 2026)"
+  },
+  {
+   "key": "hard-rock-digital",
+   "name": "Hard Rock Digital",
+   "reason": "sportsbook and casino. No sportsbook or casino brand on any NEXTPredict wall, even where the snapshot files it under trading (Stuart, 29 Sep 2026)"
+  },
+  {
+   "key": "rush-street-interactive",
+   "name": "Rush Street Interactive",
+   "reason": "casino and sportsbook. No sportsbook or casino brand on any NEXTPredict wall, even where the snapshot files it under trading (Stuart, 29 Sep 2026)"
+  },
+  {
+   "key": "betfair",
+   "name": "Betfair",
+   "reason": "betting exchange and sportsbook. No sportsbook or casino brand on any NEXTPredict wall, even where the snapshot files it under trading (Stuart, 29 Sep 2026)"
+  },
+  {
+   "key": "better-collective",
+   "name": "Better Collective",
+   "reason": "sports betting media. No sportsbook or casino brand on any NEXTPredict wall, even where the snapshot files it under trading (Stuart, 29 Sep 2026)"
   }
  ],
  "partner_page": "https://nextpredict.io/summits/the-worlds-prediction-markets-summit/"

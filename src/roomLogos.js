@@ -42,6 +42,4 @@ export const REGISTERED_LOGOS = [
   {"key": "coindesk", "name": "CoinDesk", "file": "coindesk.png", "ratio": 5.25},
   {"key": "yahoo-sports", "name": "Yahoo Sports", "file": "yahoo-sports.png", "ratio": 6.792},
   {"key": "law360", "name": "Law360", "file": "law360.png", "ratio": 4.017},
-  {"key": "fanduel", "name": "FanDuel", "file": "fanduel.png", "ratio": 5.692},
-  {"key": "draftkings", "name": "DraftKings", "file": "draftkings.png", "ratio": 1.975},
 ]

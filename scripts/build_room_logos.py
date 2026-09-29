@@ -18,11 +18,10 @@ attending companies and also sponsors of this year's event"):
   in the snapshot's speaker list is NOT shown (that is a question for
   Stuart), and no company is taken from anywhere else. Files come from the
   sibling repos first, then Wikimedia Commons or the company's own site.
-  A company the snapshot files only under "Operators & Gaming" is left off
-  (prediction markets are never framed as gambling on this card): FanDuel and
-  DraftKings are shown because the snapshot also files both under "Trading &
-  Liquidity"; BetMGM, Fanatics, Hard Rock Digital, Rush Street Interactive,
-  Betfair and Better Collective are not.
+  No sportsbook or casino brand on any NEXTPredict wall, even where the
+  snapshot files it under trading (Stuart, 29 Sep 2026): EXCLUDED below
+  names them with the reason, and the build stops if one is listed in a
+  table, so a rebuild can never bring one back.
   Left off for want of an official file (29 Sep 2026), though registered:
   Galaxy Digital, Crypto.com, GSR, TP ICAP, Chicago Trading Company,
   tastytrade, MarketAxess, BGC Group, Oppenheimer, Talos, Underdog, Sportico,
@@ -78,8 +77,7 @@ PRESS = [
     ('fortune', 'Fortune', 'fortune.svg', 'paper', COMMONS + 'Fortune_magazine_logo_2016.svg'),
 ]
 # Led by the room's largest blocs: trading and exchanges, then finance,
-# technology and payments, media, and the two sports platforms the snapshot
-# files under trading and liquidity.
+# technology and payments, and media.
 REGISTERED = [
     ('cboe', 'Cboe Global Markets', 'cboe.svg', 'paper', COMMONS + 'Cboe_Global_Markets_Logo.svg'),
     ('cme-group', 'CME Group', 'cme-group.svg', 'paper', COMMONS + 'CME_Group_Logo.svg'),
@@ -104,9 +102,35 @@ REGISTERED = [
     ('coindesk', 'CoinDesk', 'coindesk.svg', 'paper', 'https://www.coindesk.com/ (the header wordmark; its CSS-variable fills set to black so it draws outside the page, nothing else changed)'),
     ('yahoo-sports', 'Yahoo Sports', 'yahoo-sports.png', 'paper', COMMONS + 'Yahoo_Sports_New_Logo.png'),
     ('law360', 'Law360', 'law360.png', 'paper', 'https://static.law360news.com/images/law360-logo-navy-2023.png'),
-    ('fanduel', 'FanDuel', 'fanduel.svg', 'paper', HUB + 'fanduel.svg'),
-    ('draftkings', 'DraftKings', 'draftkings.png', 'shape', HUB + 'DraftKings.png'),
 ]
+
+
+# Never on a NEXTPredict wall, whatever the snapshot files them under (Stuart,
+# 29 Sep 2026: "no sportsbook brand on NEXTPredict"; the rule covers casino
+# brands too). The build stops if any of these appears in a table above.
+SPORTSBOOK_RULE = 'No sportsbook or casino brand on any NEXTPredict wall, even where the snapshot files it under trading (Stuart, 29 Sep 2026)'
+EXCLUDED = {
+    'fanduel': ('FanDuel', 'sportsbook; the snapshot also files it under Trading & Liquidity'),
+    'draftkings': ('DraftKings', 'sportsbook; the snapshot also files it under Trading & Liquidity'),
+    'fanatics': ('Fanatics', 'sportsbook'),
+    'betmgm': ('BetMGM', 'sportsbook and casino'),
+    'hard-rock-digital': ('Hard Rock Digital', 'sportsbook and casino'),
+    'rush-street-interactive': ('Rush Street Interactive', 'casino and sportsbook'),
+    'betfair': ('Betfair', 'betting exchange and sportsbook'),
+    'better-collective': ('Better Collective', 'sports betting media'),
+}
+
+
+def norm(s):
+    return ''.join(ch for ch in s.lower() if ch.isalnum())
+
+
+def check_excluded(*tables):
+    names = {norm(k) for k in EXCLUDED} | {norm(v[0]) for v in EXCLUDED.values()}
+    for table in tables:
+        for key, name, *_ in table:
+            if norm(key) in names or norm(name) in names:
+                sys.exit(f'{name} is excluded: {SPORTSBOOK_RULE}. Take it out of the table.')
 
 
 def plate_ink(rgb, alpha):
@@ -178,6 +202,7 @@ def build(entries, group, missing):
 
 
 def main():
+    check_excluded(PARTNERS, PRESS, REGISTERED)
     os.makedirs(OUT, exist_ok=True)
     missing = []
     partners = build(PARTNERS, 'partners', missing)
@@ -198,7 +223,8 @@ def main():
           f'export const PRESS_LOGOS = [\n{rows(press)},\n]\n'
           f'export const REGISTERED_LOGOS = [\n{rows(registered)},\n]\n')
     open(MANIFEST, 'w', encoding='utf-8').write(js)
-    json.dump({'partners': partners, 'press': press, 'registered': registered, 'partner_page': NEXT_PAGE},
+    excluded = [{'key': k, 'name': n, 'reason': f'{why}. {SPORTSBOOK_RULE}'} for k, (n, why) in EXCLUDED.items()]
+    json.dump({'partners': partners, 'press': press, 'registered': registered, 'excluded': excluded, 'partner_page': NEXT_PAGE},
               open(os.path.join(SRC, 'SOURCES.json'), 'w'), indent=1)
     print(f'partners {len(partners)}, press {len(press)}, registered {len(registered)}')
     if missing:

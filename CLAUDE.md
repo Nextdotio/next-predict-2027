@@ -466,10 +466,15 @@ Lower Manhattan.
   Partners on NEXT's NEXTPredict 2026 summit page, from the files NEXT
   publishes there. "Registered for 2026" and the press are organisations on
   the snapshot's attendee list (never a speaker-only company, never one found
-  only by searching), led by exchanges, trading and finance. A company the
-  snapshot files only under "Operators & Gaming" stays off the wall. A
-  company with no official file stays off too; the build script lists who is
-  shown and why the rest are not.
+  only by searching), led by exchanges, trading and finance. **No sportsbook
+  or casino brand on any NEXTPredict wall, even where the snapshot files it
+  under trading (Stuart, 29 Sep 2026).** `EXCLUDED` in the build script names
+  each one with its reason (FanDuel, DraftKings, Fanatics, BetMGM, Hard Rock
+  Digital, Rush Street Interactive, Betfair, Better Collective), `SOURCES.json`
+  records them under `excluded`, and the build stops if one is listed in a
+  table, so a rebuild can never bring one back. A company with no official
+  file stays off too; the build script lists who is shown and why the rest
+  are not (23 registered companies on the wall since 29 Sep 2026).
 - **Where do I start?** (`WAYS`): Take the stage, Be seen by everyone, Meet
   the right people, Capture leads, each mapped to explicit product ids, each
   with its "from" price and count. Picking one sets the shared lens (the goal
@@ -508,11 +513,22 @@ Lower Manhattan.
   qualified leads, close rate and deal size give deals, revenue, return and
   ROI, with the recognition level; Enquire, the proposal PDF and Copy plan
   link. The selection panel links to it.
-- **Lead data** (`LEAD_DATA`, `leadDataLine`, `LeadDataBadge`) is one config,
-  switched off (`on: false`, no threshold, no tiers): no card, slide or PDF
-  shows a lead-data line until Stuart and Pierre confirm the threshold and
-  the contact numbers. Turning it on publishes an entitlement, so it needs
-  their written numbers.
+- **Lead data** is one rule on TOTAL spend (Stuart, 29 Sep 2026), in one
+  config (`LEAD_DATA`), switched OFF (`on: false`) until Pierre confirms the
+  numbers in writing. `tiers`: from €30,000 of total spend (the plan total the
+  recognition level reads), up to 50 opted-in contacts; from €60,000, up to
+  100; from €100,000, up to 150. Stands keep their own booth scans and
+  networking evenings share a selection of opted-in guests; below €30,000
+  nothing (NEXTPredict sells no lead add-on); never the full attendee list.
+  Switched on: the one rule line (`leadDataRule`) opens the rate card and the
+  rate-card PDF; a plan that reaches a tier gets "Your plan includes up to N
+  opted-in contacts" (`planLeadLine`, `PlanLeadLine`) in the selection panel,
+  the ROI calculator, the plan slide and the proposal; the stand and evening
+  cards (and their PDF lines) say their own line through `LeadDataBadge`, and
+  no card shows a contact number. Tested switched on in a scratch build (29
+  Sep 2026): €25,000 shows nothing, €35,000 up to 50, €70,000 up to 100,
+  €120,000 up to 150. Turning it on publishes an entitlement: only with
+  Pierre's written numbers.
 - **The deck** follows the page: cover, Who's in the room, Why partner,
   Where to start (the four ways; each opens its own deck), then the families
   and cards, tickets, ticket offers, recognition, your selection, next
