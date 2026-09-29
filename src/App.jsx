@@ -700,11 +700,10 @@ const WHY_PARTNER = {
   npsIntro: 'A new event, but not an unproven team - partners score the NEXT Summit editions far above the industry norm:',
 }
 const NPS_PROOF = [
-  ['+69', 'Partner NPS · Valletta 2026', true],
-  ['+62', 'Partner NPS · New York 2026', true],
-  ['+27', 'Industry Benchmark', false],
+  ['+69', 'Partner NPS · Valletta 2026 · benchmark +23', true],
+  ['+62', 'Partner NPS · New York 2026 · benchmark +21', true],
 ]
-const NPS_SOURCE = 'Partner Net Promoter Scores from the NEXT Summit 2026 post-event surveys; industry benchmark as reported by the survey platform.'
+const NPS_SOURCE = 'Partner Net Promoter Scores from the NEXT Summit 2026 post-event surveys; each industry benchmark as that event\u2019s survey report gives it.'
 
 // ─── The 2026 room: NEXT's own audience snapshot ────────────────────────────
 // Stuart, 29 Sep 2026: "some of the biggest value for any product, speaking or
@@ -1971,7 +1970,9 @@ function ReachRow({ item, className = '' }) {
 const TICKER = [
   ['New York City', 'October 2027'],
   ...EVENT_STATS.map(([v, l]) => [l, v]),
-  ...NPS_PROOF.map(([v, l]) => [l, v]),
+  // the tape shows each score without its benchmark: the label's "+23" would
+  // run straight into the score. The tiles, the proof band and the PDFs keep it.
+  ...NPS_PROOF.map(([v, l]) => [l.replace(/ · benchmark \+\d+$/, ''), v]),
 ]
 function MarketTicker() {
   const row = (copy) => TICKER.map(([label, value]) => (

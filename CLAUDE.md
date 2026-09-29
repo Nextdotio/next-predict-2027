@@ -242,8 +242,13 @@ This needs to be hugely convincing to the buyer and hugely helpful for our
 sales people."
 
 - **The proof is the team's**, because NEXTPredict has no survey of its own
-  on file: `NPS_PROOF` (partner NPS at Valletta and New York 2026 against the
-  industry benchmark) under `NPS_SOURCE`. The first screen carries it with
+  on file: `NPS_PROOF` (partner NPS at Valletta and New York 2026, each
+  against its own report's industry benchmark: +69 vs +23 from the Valletta
+  July 2026 Explori report, +62 vs +21 from the New York April 2026 one)
+  under `NPS_SOURCE`. Until 29 Sep 2026 a third tile said "+27 Industry
+  Benchmark", which neither report carries; Explori benchmarks are rolling
+  36-month averages, so each score keeps its own. The ticker shows the
+  scores without the benchmark (the label's "+23" ran into the score). The first screen carries it with
   `WHY_PARTNER.npsIntro` (`HeroProof`, before the rate card banner; since 29
   Sep 2026 it is one line of the proof band, `ProofBand`), the
   deck's proof slide carries it, and both PDFs open with the same tiles and
