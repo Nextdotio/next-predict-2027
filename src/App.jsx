@@ -680,7 +680,7 @@ const TICKET_OFFERS = [
   { title: 'Team of Three', icon: Users,
     body: <>Bring your team: three Full Event passes at <strong className="text-brand-yellow">15% off</strong> the prevailing Full Event stage price. Available in every stage. Not combinable with any other offer.</> },
   { title: 'Start-Up Pass', icon: Sparkles,
-    body: <>A gated flat rate for qualifying start-ups - application-based, capped for the event and limited to one per company. Apply via <a className="text-brand-yellow font-semibold" href="mailto:sales@next.io?subject=NEXTPredict 2027 Start-Up Pass">sales@next.io</a>.</> },
+    body: <>A gated flat rate for qualifying start-ups - application-based, capped for the event and limited to two per company. Apply via <a className="text-brand-yellow font-semibold" href="mailto:sales@next.io?subject=NEXTPredict 2027 Start-Up Pass">sales@next.io</a>.</> },
   { title: 'Operators & Regulators', icon: Scale,
     body: <>Verified operators and regulators attend at the preferential rate above - roughly half the Full Event price at every stage. Verification is confirmed before the ticket is issued.</> },
 ]

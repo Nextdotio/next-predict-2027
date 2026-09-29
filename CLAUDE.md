@@ -221,6 +221,10 @@ Rules future edits must keep:
   shared block used on a slide takes a switch like `TicketLadder anchors`.
 - The gated Start-up ticket rate is never added; the Start-Up Pass box
   describes it without a price.
+  It allows up to two tickets per qualifying company (Stuart's email "Re: 2027
+  rate cards for review + Bizzabo pages live this week", 3 Sep 2026, quoting
+  his 1 Sep structure; applied 29 Sep 2026 with his go-ahead). It said one
+  per company until then, from the 27 Aug framework.
 - Stage 2's family icon is `Projector`, so `Presentation` stays the Present
   action.
 - The nav fits one line at every width: Tickets joins at lg, Contact Sales is the
