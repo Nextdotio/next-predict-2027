@@ -91,10 +91,12 @@ and "beautify the brochures". The page is now products first.
   recognition → about → the room (#audience) → tickets → rebooking. About and
   The Room used to sit above the rate card and put the first product seven
   phone screens down. The nav "Rate Card" link shows at every width.
+  (Superseded 29 Sep 2026: see "The summit through line" at the end.)
 - **`ProductMenu`** lists every card with its entry price (`menuPrice`: "from"
   the lowest open route, POA, or Sold / Reserved from `PRODUCT_STATUS`), every
   family heading links to its group, and tickets link to their ladder rows
-  (`t-<slug>`). On phones each family is a row that opens its list.
+  (`t-<slug>`). On phones each family is a row that opens its list. (Since 29
+  Sep 2026 every family is a tile with a picture; see the end of this file.)
 - **`FamilyBar`** is `position: sticky` inside #pricing, so it leaves with the
   section; IntersectionObserver scroll-spy lights the family in view and a
   phone keeps that chip scrolled into view.
@@ -118,7 +120,10 @@ and "beautify the brochures". The page is now products first.
   "Availability & terms" block (`TermsList`), word for word, with small icons -
   never pills, never red. Every deliverable shows on every card, with no
   toggle, whatever the card's width (Stuart, 26 Sep 2026: "Please do include
-  all deliverables. It's important"). Both PDFs mirror this, every line; they
+  all deliverables. It's important"). (Superseded on the card only, 29 Sep
+  2026: the summit spec folds both lists into "What's included · N" and
+  "Availability & terms · N" accordions; every line stays in the page, on the
+  slide and in both PDFs.) Both PDFs mirror this, every line; they
   also write NEXTPredict with no `text-transform`. The three Presenter cards
   carry "Full brand ownership of the content, within event guidelines" (the
   2026 spec's line, restored 26 Sep 2026): it is what separates a keynote from
@@ -154,7 +159,8 @@ plan they built together.
   and one slide per card, Delegate tickets, Ticket offers, Recognition, Your
   selection (only while the calculator has items), Next steps. Today: 66 slides
   (cover, 2 proof, 11 families, 48 cards, 2 ticket, recognition, next steps),
-  67 with a selection. A goal deck is the cover, the families with a match, the
+  67 with a selection. (29 Sep 2026: 67, 68 with a selection; the order is
+  in "The summit through line" below.) A goal deck is the cover, the families with a match, the
   matching cards and next steps (a route card counts when either route matches,
   as the page filter does).
 - **Slide ids are the page's anchors:** cards `p-<slug>`, families the family
@@ -238,7 +244,8 @@ sales people."
 - **The proof is the team's**, because NEXTPredict has no survey of its own
   on file: `NPS_PROOF` (partner NPS at Valletta and New York 2026 against the
   industry benchmark) under `NPS_SOURCE`. The first screen carries it with
-  `WHY_PARTNER.npsIntro` (`HeroProof`, before the rate card banner), the
+  `WHY_PARTNER.npsIntro` (`HeroProof`, before the rate card banner; since 29
+  Sep 2026 it is one line of the proof band, `ProofBand`), the
   deck's proof slide carries it, and both PDFs open with the same tiles and
   source. It reads the one copy of each figure: never retype one. Cards and
   product slides no longer repeat it (Stuart, 28 Sep 2026: "it's
@@ -402,3 +409,114 @@ wait for the 2026 actuals (22 to 23 Oct 2026) before any audience figure.
   and €119,000; the 8x4 (Booth 1, planner area) €110,000 and €97,000. Olivia's
   28 Sep email has the two swapped, most likely from the unlabelled 16 Sep
   list; her original sheet matched the card.
+
+## The summit through line (29 Sep 2026)
+
+Stuart, after New York and Valletta: "make sure there's a through line ...
+less is more ... focus on value, ROI, the price obviously". The three summit
+cards now share one shape (the brief: hero, proof band, "Where do I start?",
+family tiles, one card anatomy, ROI calculator, lead-data slot); each keeps
+its own scenery. This card keeps the market night: ticker, probability line,
+Lower Manhattan.
+
+- **Section order:** hero → proof band (`ProofBand`, #proof) → Where do I
+  start (`WaysIn`, #start) → product menu (#menu) → rate card (#pricing) →
+  who's in the room (`RoomSection`, #audience, with Why partner at #about) →
+  tickets → recognition → ROI calculator (#roi-calculator) → a short close
+  (rebooking and contact) → footer. Nav: Rate Card (to #start, every width),
+  Calculator from md, Tickets from lg, The Room from xl, Present, Contact
+  Sales.
+- **The hero is one idea:** eyebrow "The Prediction Markets Summit · 2027
+  edition" (the edition drops below sm), the wordmark, one date and venue
+  line (`VENUE_LINE`), See the rate card and Present. No countdown: the dates
+  are not announced. The chips, the skewed rate-card block and `HeroProof`
+  are gone. On short desktop screens (`max-height: 820px` / `780px` in
+  index.css) the hero tightens and the band shortens, so the proof figures
+  stay above the fixed selection bar at 1024x800, 1280x800, 1366x768 and
+  1440x900. Re-measure there before making the hero taller.
+- **The proof band is the audience** (Stuart: "the biggest value for any
+  product ... is the access to the audience"). It reads NEXT's NEXTPredict
+  2026 Audience Snapshot (https://stuatnext.github.io/next-predict/), and
+  every figure carries `ROOM_LABEL`, "Registered for NEXTPredict 2026, as at
+  28 September 2026": 61% director level and above, 37% founders and
+  C-suite, 262 organisations, 27 countries (`ROOM_FIGURES`), trading and
+  liquidity the largest bloc at 28% (`ROOM_BLOC`), the seniority split
+  (`ROOM_SENIORITY`, in the room section) and the accredited press
+  (`ROOM_PRESS`). Then the logos, then the team's record (`NPS_PROOF`), then
+  one source footnote (`ROOM_SOURCE`, `LOGOS_NOTE`, `NPS_SOURCE`). Rules: no
+  job title next to a company or a person, no person's name, never the
+  attendee list itself; companies only as logos or names. These are proof
+  of who is in the room, never `REACH` estimates (those wait for the 2026
+  actuals, above). When the snapshot is refreshed, change the date in
+  `ROOM_LABEL` and `ROOM_SOURCE` with the figures.
+- **Logo walls** are built by `scripts/build_room_logos.py` (the hub's
+  white-mark bake) from pristine files in `logo-src/room/` (SVGs are drawn
+  once by `scripts/raster_room_logos.mjs`); `public/logos/room/` and
+  `src/roomLogos.js` are build output. Every file's source is in
+  `logo-src/room/SOURCES.json`. "2026 partners" are the six Official Event
+  Partners on NEXT's NEXTPredict 2026 summit page, from the files NEXT
+  publishes there. "Registered for 2026" and the press are organisations on
+  the snapshot's attendee list (never a speaker-only company, never one found
+  only by searching), led by exchanges, trading and finance. A company the
+  snapshot files only under "Operators & Gaming" stays off the wall. A
+  company with no official file stays off too; the build script lists who is
+  shown and why the rest are not.
+- **Where do I start?** (`WAYS`): Take the stage, Be seen by everyone, Meet
+  the right people, Capture leads, each mapped to explicit product ids, each
+  with its "from" price and count. Picking one sets the shared lens (the goal
+  chips use the same one): the menu lights those products, opens their
+  families and offers Present these. A new product joins a way only when its
+  id is added there.
+- **The menu** is family tiles (picture, name, product count, "from" price);
+  a tile opens its list, and every line still links to its card.
+- **Card anatomy:** picture, name, lede, the value row (`ReachRow`), option
+  tiles, price and status, the lead-data slot, Add, quiet Present and Copy
+  link, then "What's included · N" and "Availability & terms · N" as
+  collapsed accordions (every line is in the page, on the slide and in both
+  PDFs). A card alone on a row lays out picture-left.
+- **Card pictures** (`CARD_VISUAL`, keyed by the card's first product id): 35
+  photographs and 13 designed headers, none repeated. Photos are NEXT's own
+  New York 2026 event photography, captioned "NEXT events, New York, 2026",
+  or Convene's imagery of 30 Hudson Yards, captioned "Convene, 30 Hudson
+  Yards, the 2026 venue" (never the 2027 venue, and no Convene room names:
+  the room-name rule above). `scripts/card_photos.py` builds them (sources,
+  crops and the softening are all in it). Left out: shots with sportsbook or
+  iGaming signage, sponsor-branded chairs or booths, a speaker line-up or a
+  readable name on screen. The 2026 stage and hub partners' logos on the
+  stage walls are softened out, so no 2026 sponsor reads as a NEXTPredict
+  partner. A product with no honest photograph gets a designed header marked
+  "Illustration" (`ART`); the five stands are footprints drawn to one scale
+  (`StandArt`). Replace them with NEXTPredict photography after the 2026
+  summit.
+- **Selling the quieter products** (Stuart: "branding on site is usually
+  harder to sell than the speaking slots"): the branding, meeting-room,
+  ad-video and Media Zone ledes say who sees it and how often, from each
+  card's own lines only (every attendee at registration, on every badge,
+  between sessions, recorded in the media zone). Family briefs
+  (`FAMILY_BRIEFS`) are two sentences at most and point to the room.
+- **ROI calculator** (`RoiCalculator`, #roi-calculator) is New York's: the
+  plan total (or an investment slider when the plan is empty), expected
+  qualified leads, close rate and deal size give deals, revenue, return and
+  ROI, with the recognition level; Enquire, the proposal PDF and Copy plan
+  link. The selection panel links to it.
+- **Lead data** (`LEAD_DATA`, `leadDataLine`, `LeadDataBadge`) is one config,
+  switched off (`on: false`, no threshold, no tiers): no card, slide or PDF
+  shows a lead-data line until Stuart and Pierre confirm the threshold and
+  the contact numbers. Turning it on publishes an entitlement, so it needs
+  their written numbers.
+- **The deck** follows the page: cover, Who's in the room, Why partner,
+  Where to start (the four ways; each opens its own deck), then the families
+  and cards, tickets, ticket offers, recognition, your selection, next
+  steps: 67 slides, 68 with a selection. A way or a goal chip gives a lens
+  deck (cover, its families, its cards, next steps). Measured with Inter
+  loaded (scrollHeight over clientHeight): 25 of 67 slides scroll at
+  1280x800 (26 of 66 before), none sideways; at 390 every long slide scrolls
+  vertically and none sideways. Long product slides set their deliverables
+  in two columns.
+- **Motion:** a slow Ken Burns on card photos while on screen
+  (`data-inview`), the logo marquee; both still under reduced motion, where
+  the marquee wraps.
+- **Checks to keep:** rendered innerText has no iGaming, gambling or casino,
+  no NEXTPREDICT in capitals and no em dash; the nav fits one line from 320;
+  no sideways scroll at 320 to 1440; deep links, `?plan=` and `?present=`
+  land; both PDFs carry the room label and every deliverable.

@@ -23,6 +23,12 @@ attending companies and also sponsors of this year's event"):
   DraftKings are shown because the snapshot also files both under "Trading &
   Liquidity"; BetMGM, Fanatics, Hard Rock Digital, Rush Street Interactive,
   Betfair and Better Collective are not.
+  Left off for want of an official file (29 Sep 2026), though registered:
+  Galaxy Digital, Crypto.com, GSR, TP ICAP, Chicago Trading Company,
+  tastytrade, MarketAxess, BGC Group, Oppenheimer, Talos, Underdog, Sportico,
+  Front Office Sports, American Banker, Pensions & Investments and The
+  Atlantic (the Commons file under that name is another company's). Add one
+  by dropping its untouched official file into logo-src/room and a row here.
 
 Every PNG is baked to a structure-preserving white mark with the hub's
 method (next-2027/scripts/build_logos.py): luminance maps to opacity, so a
