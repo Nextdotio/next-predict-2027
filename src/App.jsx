@@ -439,15 +439,15 @@ const pricing = [
   // Leadership Stage
   { id: 10, cat: 'Leadership Stage', title: 'Leadership Stage Partner', price: 125000, exclusive: true, avail: null, featured: true,
     quote: '"Put your brand on the main stage of the prediction markets calendar. The Leadership Stage carries the headline content both days - and it sold out in 2026."',
-    bullets: 'Leadership Stage area branding across both event days\nStage artwork and branded holding slide\nSummit-wide general branding\nWebsite and social visibility\nLogo at the end of the post-event aftermovie\n2x digital LED side-stage returns next to the stage, designed by partner\n2x branded columns in the Leadership Stage room (A and B), designed by partner\nOnsite filmed interview with the NEXT.io media team\nLogo on the agenda section of the website\n4 Full Event passes\n📅 Sold out in 2026 - one partner only.\n⚠️ The Leadership Stage Presenter slot is sold separately.\n⚠️ The LED returns show static images only, no video.\n⚠️ Partner designs follow the NEXT.io brand guidelines and include the event logo with the headline partner\'s logo.',
+    bullets: 'Leadership Stage area branding across both event days\nStage artwork and branded holding slide\nThe Leadership Stage is livestreamed, with your branding on stage\nSummit-wide general branding\nWebsite and social visibility\nLogo at the end of the post-event aftermovie\n2x digital LED side-stage returns next to the stage, designed by partner\n2x branded columns in the Leadership Stage room (A and B), designed by partner\nOnsite filmed interview with the NEXT.io media team\nLogo on the agenda section of the website\n4 Full Event passes\n📅 Sold out in 2026 - one partner only.\n⚠️ The Leadership Stage Presenter slot is sold separately.\n⚠️ The LED returns show static images only, no video.\n⚠️ Partner designs follow the NEXT.io brand guidelines and include the event logo with the headline partner\'s logo.',
     impact: ['Category Leadership', 'Brand Awareness', 'Thought Leadership'], type: ['Speaking & Content', 'Branding & Visibility'] },
   { id: 11, cat: 'Leadership Stage', title: 'Leadership Stage Presenter', price: 95000, exclusive: true, avail: null,
     quote: '"The single biggest speaking slot of the event: one exclusive C-level presentation on the Leadership Stage, Day 2. One slot. One brand."',
-    bullets: '20-minute C-level presentation, interview or featured session on the Leadership Stage\nFull brand ownership of the content, within event guidelines\nYou shape the title, topic and format, in collaboration with the NEXT.io production and conference content team\nFull AV and production support\n"Presented by" session title on agenda, website and screens\nLogo on the sponsor wall and in the logo loop on the digital screens, designed by NEXT.io\nOnsite filmed interview with the NEXT.io media team\nIndividual pre-event welcome post on social media, designed and posted by NEXT.io\n3 Full Event passes + 1 Speaker pass\n📅 Exclusive - one slot, Day 2 only.\n⚠️ The NEXT.io conference content team approves the presentation for quality.',
+    bullets: '20-minute C-level presentation, interview or featured session on the Leadership Stage\nFull brand ownership of the content, within event guidelines\nYou shape the title, topic and format, in collaboration with the NEXT.io production and conference content team\nFull AV and production support\nYour session is livestreamed on the main-stage stream\n"Presented by" session title on agenda, website and screens\nLogo on the sponsor wall and in the logo loop on the digital screens, designed by NEXT.io\nOnsite filmed interview with the NEXT.io media team\nIndividual pre-event welcome post on social media, designed and posted by NEXT.io\n3 Full Event passes + 1 Speaker pass\n📅 Exclusive - one slot, Day 2 only.\n⚠️ The NEXT.io conference content team approves the presentation for quality.',
     impact: ['Thought Leadership', 'Category Leadership'], type: ['Speaking & Content'] },
   { id: 13, cat: 'Leadership Stage', title: 'Leadership Stage Custom Session', price: 60000, exclusive: false, avail: 2,
     quote: '"Two of your speakers on the main stage in a session presented by your brand, shaped with the NEXT.io content team, who add two more voices."',
-    bullets: '2 speakers nominated by you, plus 2 added by the NEXT.io content team\n20-30 minute session\nYou shape the title, topic and description, in collaboration with the NEXT.io production and conference content team\n"Presented by" session title on agenda, website and screens\nLogo on the sponsor wall and in the logo loop on the digital screens, designed by NEXT.io\nShared pre-event welcome post on social media, designed and posted by NEXT.io\n1 Full Event pass + 2 Speaker passes\n📅 One slot per day, subject to content approval.\n⚠️ The content team adds 2 further speakers; you have no veto over these selections.',
+    bullets: '2 speakers nominated by you, plus 2 added by the NEXT.io content team\n20-30 minute session\nYour session is livestreamed on the main-stage stream\nYou shape the title, topic and description, in collaboration with the NEXT.io production and conference content team\n"Presented by" session title on agenda, website and screens\nLogo on the sponsor wall and in the logo loop on the digital screens, designed by NEXT.io\nShared pre-event welcome post on social media, designed and posted by NEXT.io\n1 Full Event pass + 2 Speaker passes\n📅 One slot per day, subject to content approval.\n⚠️ The content team adds 2 further speakers; you have no veto over these selections.',
     impact: ['Thought Leadership'], type: ['Speaking & Content'] },
   { id: 14, cat: 'Leadership Stage', title: 'Leadership Stage Chair Partner', price: 45000, exclusive: true, avail: null,
     quote: '"Every seat in the main conference room, both days. Chair branding puts your logo in every audience shot of the headline programme."',
@@ -455,11 +455,11 @@ const pricing = [
     impact: ['Brand Awareness'], type: ['Branding & Visibility'] },
   { id: 15, cat: 'Leadership Stage', title: 'Leadership Stage Branded Session', price: 30000, exclusive: false, avail: 6,
     quote: '"A \'Powered by\' session on the main stage: 25-30 minutes with your C-level speaker in the conversation, in front of the whole event."',
-    bullets: '"Powered by" session, 25-30 minutes\n1 C-level speaker nominated by you\nSession branding on agenda, website and screens\nLogo on the sponsor wall and in the logo loop on the digital screens, designed by NEXT.io\nShared pre-event welcome post on social media, designed and posted by NEXT.io\n1 Full Event pass + 1 Speaker pass\n📅 Six slots across the two days, subject to programme.\n⚠️ The content team controls all other speakers, topic, format and placement.',
+    bullets: '"Powered by" session, 25-30 minutes\n1 C-level speaker nominated by you\nYour session is livestreamed on the main-stage stream\nSession branding on agenda, website and screens\nLogo on the sponsor wall and in the logo loop on the digital screens, designed by NEXT.io\nShared pre-event welcome post on social media, designed and posted by NEXT.io\n1 Full Event pass + 1 Speaker pass\n📅 Six slots across the two days, subject to programme.\n⚠️ The content team controls all other speakers, topic, format and placement.',
     impact: ['Thought Leadership'], type: ['Speaking & Content'] },
   { id: 16, cat: 'Leadership Stage', title: 'Leadership Stage Non-Branded Panel', price: 22000, exclusive: false, avail: 4,
     quote: '"A seat on a curated main-stage panel aligned to your expertise - editorial participation with your leadership in the conversation."',
-    bullets: 'Curated panel participation aligned to your expertise\n20-30 minute session, with 1 C-level speaker nominated by you\nNo brand attribution on the session - editorial format\nPartner logo on the website\nLogo on the sponsor wall and in the logo loop on the digital screens, designed by NEXT.io\nShared pre-event welcome post on social media, designed and posted by NEXT.io\n1 Speaker pass\n📅 Programme-controlled inventory.\n⚠️ The content team controls the topic, title, all other speakers and the format.',
+    bullets: 'Curated panel participation aligned to your expertise\n20-30 minute session, with 1 C-level speaker nominated by you\nYour session is livestreamed on the main-stage stream\nNo brand attribution on the session - editorial format\nPartner logo on the website\nLogo on the sponsor wall and in the logo loop on the digital screens, designed by NEXT.io\nShared pre-event welcome post on social media, designed and posted by NEXT.io\n1 Speaker pass\n📅 Programme-controlled inventory.\n⚠️ The content team controls the topic, title, all other speakers and the format.',
     impact: ['Thought Leadership'], type: ['Speaking & Content'] },
 
   // Stage 2 Hub
@@ -817,6 +817,15 @@ const POWERED = fig('All', 'Session branding, "Powered by" you')
 const OWNED = (what) => fig('Full', `Brand ownership of your ${what}`)
 const HUB_SEATS = (when) => fig('Every', `Hub seat carries your brand, ${when}`)
 const covered = (cover, roomFig) => () => row(['room'], cover, roomFig)
+// The Leadership Stage is NEXTPredict's main stage, and it is livestreamed
+// (Stuart, 30 Sep 2026: "yes NYC and NEXTPredict are livestreamed on main
+// stage"), which its products' lines now say. No viewer count is on file for
+// NEXTPredict, and never New York's or Valletta's, so the stream enters as
+// coverage, after the product's own first figure and before the room figure.
+// A 2026 viewer count, once the actuals are in, replaces the word.
+const STREAMED = fig('Streamed', 'Your session goes out on the livestream')
+const STREAMED_STAGE = fig('Streamed', 'Your stage branding, on the livestream')
+const onStream = (cover, stream, roomFig) => () => row(['room'], cover, stream, roomFig)
 // A product every attendee sees (`most`: at most every attendee, the cloakroom;
 // `share`: half of them, a lanyard unit). Until the 2026 attendance is in: its
 // coverage (`cover`, from its own line) and its room figure. Then the
@@ -864,16 +873,16 @@ const REACH = {
   // branded one "Powered by" you; a non-branded panel carries no brand of its
   // own, so it shows the room alone (the logo loop every partner gets is not a
   // reason to buy it)
-  10: covered(fig('Every', 'Leadership Stage session, your brand'), ORGANISATIONS),
+  10: onStream(fig('Every', 'Leadership Stage session, your brand'), STREAMED_STAGE, ORGANISATIONS),
   14: covered(fig('Every', 'Seat in the main hall carries your brand'), DIRECTORS),
   17: covered(HUB_SEATS('both days'), ORGANISATIONS),
   18: covered(HUB_SEATS('on your day'), ORGANISATIONS),
   24: covered(HUB_SEATS('Day 1'), ORGANISATIONS),
-  11: covered(OWNED('session'), FOUNDERS),
+  11: onStream(OWNED('session'), STREAMED, FOUNDERS),
   19: covered(OWNED('keynote'), FOUNDERS), 25: covered(OWNED('keynote'), FOUNDERS),
-  13: covered(LISTED, DIRECTORS), 20: covered(LISTED, DIRECTORS), 26: covered(LISTED, DIRECTORS),
-  15: covered(POWERED, FOUNDERS), 21: covered(POWERED, FOUNDERS), 27: covered(POWERED, FOUNDERS),
-  16: covered(null, DIRECTORS), 22: covered(null, DIRECTORS), 28: covered(null, DIRECTORS),
+  13: onStream(LISTED, STREAMED, DIRECTORS), 20: covered(LISTED, DIRECTORS), 26: covered(LISTED, DIRECTORS),
+  15: onStream(POWERED, STREAMED, FOUNDERS), 21: covered(POWERED, FOUNDERS), 27: covered(POWERED, FOUNDERS),
+  16: onStream(null, STREAMED, DIRECTORS), 22: covered(null, DIRECTORS), 28: covered(null, DIRECTORS),
   29: (i) => row(['room'], fig(countIn(i, /^(\d+) curated opt-in invite targets/m), 'Curated invitations to your targets'), FOUNDERS),
   30: (i) => {
     const intros = countIn(i, /^(\w+) facilitated opt-in introductions/m)

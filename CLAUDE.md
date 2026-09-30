@@ -381,6 +381,20 @@ repetitive"); the second pass leads each row with the product's own coverage.
   and a days count is never dressed as coverage ("Both · Days of ... branding"
   became "Every · Leadership Stage session, your brand" and "Every · Meal and
   meeting in your branded area", from the lines "across both event days").
+- **The main stage is livestreamed** (Stuart, 30 Sep 2026: "yes NYC and
+  NEXTPredict are livestreamed on main stage"; the Leadership Stage is
+  NEXTPredict's main stage). The Presenter, the Custom Session, the Branded
+  Session and the Non-Branded Panel carry "Your session is livestreamed on
+  the main-stage stream", and the Leadership Stage Partner "The Leadership
+  Stage is livestreamed, with your branding on stage" (all five unsold; a
+  sold or reserved product's lines never change). No viewer count is on file
+  for NEXTPredict, and New York's and Valletta's 3,500 is never borrowed, so
+  the stream enters as coverage (`STREAMED`, `STREAMED_STAGE`): "Streamed ·
+  Your session goes out on the livestream" (the Partner: "Streamed · Your
+  stage branding, on the livestream"), after the product's own first figure
+  and before the room figure. The Non-Branded Panel leads with it, so it has
+  two figures again; the Stage 2 and Stage 3 panels are not streamed and keep
+  the room alone. The Livestream Sponsor's row is unchanged.
 - **Then the matched room figure**, one per product, with `ROOM_LABEL` as the
   source line: 61% director level and above, 37% founders and C-suite, 262
   organisations, 28% trading and liquidity (every stand), or the press
@@ -441,20 +455,25 @@ repetitive"); the second pass leads each row with the product's own coverage.
   coverage that already counts the attendees ("All · Attendees wear your
   logo") becomes the number; any other keeps its place first, so the first
   figures still differ. Tried with 1,000 in a scratch build on 29 Sep 2026;
-  shipped null. Never borrow New York's or Valletta's audience meanwhile.
+  shipped null. Never borrow New York's or Valletta's audience meanwhile. If
+  the actuals include livestream viewers, the number replaces "Streamed" on
+  the five Leadership Stage rows (a viewer figure, under "Estimated reach"
+  with its basis line) and becomes the Livestream Sponsor's second figure.
 - **Numbers that would add figures** (none on file yet): the 2026
   attendance (above); guests at each NEXTworking evening and at the C-Level
   Event (guests, € per guest); seats per stage once the 2027 venue and plan
   are confirmed (seats in the room, € per seat, for every speaking product
   and the chair partner); NEXTPredict 2026 livestream viewers (the
-  Livestream Sponsor's second figure); a speakers' count (the speakers'
+  Livestream Sponsor's second figure, and the number in place of "Streamed"
+  on the Leadership Stage rows); a speakers' count (the speakers'
   lounge); badge scans per stand at NEXTPredict 2026 (the stands);
   accredited journalists at NEXTPredict 2026 (the press lounge). Opted-in
   contacts only once `LEAD_DATA.on` is true.
-- **Counts on 29 Sep 2026:** all 48 cards carry a row (44 "At a glance", 4
-  "Estimated reach"): 15 with three figures, 32 with two, 1 with one (the
-  Livestream Sponsor). The deck at 1280x800: 25 of 67 slides scroll (25
-  before the rows, 23 after the first pass), none sideways.
+- **Counts on 30 Sep 2026:** all 48 cards carry a row (44 "At a glance", 4
+  "Estimated reach"): 19 with three figures, 26 with two, 3 with one (the
+  Livestream Sponsor and the Stage 2 and Stage 3 non-branded panels). The
+  deck at 1280x800: 26 of 67 slides scroll (25 before the livestream lines,
+  which lengthened the five Leadership Stage slides), none sideways.
 
 ## Decisions after the product-list comparison (Stuart, 28 Sep 2026)
 
@@ -615,10 +634,11 @@ Lower Manhattan.
   and cards, tickets, ticket offers, recognition, your selection, next
   steps: 67 slides, 68 with a selection. A way or a goal chip gives a lens
   deck (cover, its families, its cards, next steps). Measured with Inter
-  loaded (scrollHeight over clientHeight): 25 of 67 slides scroll at
-  1280x800 (26 of 66 before; 25 again with the value rows), none sideways;
-  at 390 every long slide scrolls vertically and none sideways. Long product
-  slides set their deliverables in two columns.
+  loaded (scrollHeight over clientHeight): 26 of 67 slides scroll at
+  1280x800 since the livestream lines of 30 Sep 2026 (25 with the value rows,
+  26 of 66 before them), none sideways; at 390 every long slide scrolls
+  vertically and none sideways. Long product slides set their deliverables
+  in two columns.
 - **Motion:** a slow Ken Burns on card photos while on screen
   (`data-inview`), the logo marquee; both still under reduced motion, where
   the marquee wraps.
